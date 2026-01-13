@@ -56,7 +56,7 @@ export default defineComponent({
             {tabName.value === "Staff" && <Staff />}
             {tabName.value === "Finance" && <Finance />}
             {tabName.value === "Video" && <Video />}
-            {tabName.value === "Dashboard" && <DashBoard />}
+            {tabName.value === "DashBoard" && <DashBoard />}
             {tabName.value === "Meet" && <Meet />}
           </motion.div>
         )}

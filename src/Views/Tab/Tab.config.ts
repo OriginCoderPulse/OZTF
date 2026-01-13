@@ -6,13 +6,13 @@
 /** 项目状态颜色配置 */
 const projectStatusColor: PSC = {
   /** 规划中状态 - 黄色 */
-  Planning: "#ffe066",
+  Planning: "#feebc3",
   /** 进行中状态 - 绿色 */
-  InProgress: "#93dab2",
-  /** 已完成状态 - 蓝色 */
-  Completed: "#93c5da",
-  /** 暂停状态 - 橙色 */
-  OnHold: "#f98f71",
+  InProgress: "#d5f5e3",
+  /** 已完成状态 - 绿色 */
+  Completed: "#9ae6b4",
+  /** 暂停状态 - 粉色 */
+  OnHold: "#fbb6ce",
   /** 已取消状态 - 灰色 */
   Cancelled: "#b9b7b3",
 };

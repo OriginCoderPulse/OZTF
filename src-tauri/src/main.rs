@@ -15,8 +15,6 @@ use scopeguard;
 use serde::{Deserialize, Serialize};
 use tokio::fs as async_fs;
 
-// 全局下载状态管理，避免多个下载同时进行
-static DOWNLOAD_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
 
 // 全局操作队列管理，避免阻塞主线程
 lazy_static! {
@@ -607,58 +605,17 @@ async fn close_meeting_window(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn download_file(file_url: String, file_name: String) -> Result<String, String> {
-    // 获取信号量许可，避免过多并发下载
+async fn save_file_to_downloads(file_data: Vec<u8>, file_name: String) -> Result<String, String> {
+    // 获取信号量许可
     let permit = OPERATION_SEMAPHORE
         .acquire()
         .await
         .map_err(|_| "系统繁忙，请稍后再试".to_string())?;
 
-    // 检查是否有下载正在进行
-    if DOWNLOAD_IN_PROGRESS.swap(true, Ordering::SeqCst) {
-        drop(permit);
-        return Err("另一个下载正在进行中，请稍后再试".to_string());
-    }
-
-
-    // 确保在函数结束时重置状态
+    // 确保在函数结束时释放许可
     let _guard = scopeguard::guard((), |_| {
-        DOWNLOAD_IN_PROGRESS.store(false, Ordering::SeqCst);
+        drop(permit);
     });
-
-    // 创建具有超时的HTTP客户端
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30)) // 30秒超时
-        .connect_timeout(std::time::Duration::from_secs(10)) // 连接超时10秒
-        .build()
-        .map_err(|e| format!("创建HTTP客户端失败: {}", e))?;
-
-    // 下载文件
-    let response = client
-        .get(&file_url)
-        .send()
-        .await
-        .map_err(|e| format!("下载请求失败: {}", e))?;
-
-    if !response.status().is_success() {
-        return Err(format!("下载失败, 状态码: {}", response.status()));
-    }
-
-    // 获取文件大小，检查是否过大
-    let content_length = response.content_length().unwrap_or(0);
-    if content_length > 100 * 1024 * 1024 {
-        // 限制100MB
-        return Err("文件过大，无法下载".to_string());
-    }
-
-    // 获取文件内容，带超时
-    let content = tokio::time::timeout(
-        std::time::Duration::from_secs(60), // 60秒读取超时
-        response.bytes(),
-    )
-    .await
-    .map_err(|_| "下载超时".to_string())?
-    .map_err(|e| format!("读取文件内容失败: {}", e))?;
 
     // 获取用户下载目录
     let download_dir = dirs::download_dir().ok_or_else(|| "无法获取下载目录".to_string())?;
@@ -680,7 +637,7 @@ async fn download_file(file_url: String, file_name: String) -> Result<String, St
     // 写入文件，带超时
     tokio::time::timeout(
         std::time::Duration::from_secs(30), // 30秒写入超时
-        async_fs::write(&file_path, &content),
+        async_fs::write(&file_path, &file_data),
     )
     .await
     .map_err(|_| "写入文件超时".to_string())?
@@ -691,10 +648,9 @@ async fn download_file(file_url: String, file_name: String) -> Result<String, St
         .ok_or_else(|| "文件路径包含无效字符".to_string())?
         .to_string();
 
-
-    drop(permit); // 显式释放许可
     Ok(file_path_str)
 }
+
 
 fn main() {
     // 设置tokio运行时，确保异步操作不会阻塞主线程
@@ -713,7 +669,7 @@ fn main() {
                 stop_nfc_monitoring,
                 restart_nfc_monitoring,
                 close_meeting_window,
-                download_file
+                save_file_to_downloads
             ])
             .setup(|_app| {
                 // 应用启动时初始化NFC系统 - 使用异步任务

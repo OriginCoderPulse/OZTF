@@ -13,8 +13,6 @@ export default defineComponent({
     const microphoneState = ref(false);
     const cameraState = ref(false);
 
-    console.log(params)
-
     return () => (
       <div class="meet-room">
         <div class="meet-main">

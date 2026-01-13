@@ -5,7 +5,7 @@ export default defineComponent({
     name: 'Svg',
     props: {
         svgPath: {
-            type: [String, Array] as PropType<string | string[]>,
+            type: [String, Array, Object] as PropType<string | string[] | Array<{ path: string; fill?: string }>>,
             required: true
         },
         width: {
@@ -51,16 +51,32 @@ export default defineComponent({
                 height={props.height}
                 class={props.class}
             >
-                {Array.isArray(props.svgPath) ? props.svgPath.map((path: string, index: number) => (
-                    <path 
-                        key={`path-${index}`} 
-                        d={path} 
-                        fill={props.fill}
-                        stroke={props.stroke || undefined}
-                        strokeWidth={props.strokeWidth || undefined}
-                        strokeLinecap={props.strokeLinecap || undefined}
-                    ></path>
-                )) : (
+                {Array.isArray(props.svgPath) ? props.svgPath.map((item: any, index: number) => {
+                    // 支持对象数组格式 { path: string, fill?: string }
+                    if (typeof item === 'object' && item.path) {
+                        return (
+                            <path 
+                                key={`path-${index}`} 
+                                d={item.path} 
+                                fill={item.fill || props.fill}
+                                stroke={props.stroke || undefined}
+                                strokeWidth={props.strokeWidth || undefined}
+                                strokeLinecap={props.strokeLinecap || undefined}
+                            ></path>
+                        );
+                    }
+                    // 支持字符串数组格式
+                    return (
+                        <path 
+                            key={`path-${index}`} 
+                            d={item as string} 
+                            fill={props.fill}
+                            stroke={props.stroke || undefined}
+                            strokeWidth={props.strokeWidth || undefined}
+                            strokeLinecap={props.strokeLinecap || undefined}
+                        ></path>
+                    );
+                }) : (
                     <path 
                         d={props.svgPath as string} 
                         fill={props.fill}

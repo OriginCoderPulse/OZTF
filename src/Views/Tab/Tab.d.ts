@@ -43,14 +43,16 @@ interface TabItem {
 
 /** 项目状态颜色接口 */
 interface PSC {
+  /** 规划中状态颜色 */
+  Planning: string;
   /** 进行中状态颜色 */
-  "In Progress": string;
-  /** 待处理状态颜色 */
-  Pending: string;
-  /** 检查中状态颜色 */
-  Checking: string;
-  /** 完成状态颜色 */
+  InProgress: string;
+  /** 已完成状态颜色 */
   Completed: string;
+  /** 暂停状态颜色 */
+  OnHold: string;
+  /** 已取消状态颜色 */
+  Cancelled: string;
 }
 
 /** 权限背景颜色接口 */

@@ -1,5 +1,5 @@
 class GlobalConfig {
-  appName = "Test";
+  appName = "壹零贰肆";
   urls = {
     initial: {
       method: "POST",
@@ -49,9 +49,9 @@ class GlobalConfig {
       retry: false,
       cache: false,
     },
-    exportFeatures: {
+    projectFeatureExport: {
       method: "POST",
-      path: ["feature", "export"],
+      path: ["project", "feature", "export"],
       retry: false,
       cache: false,
     },
@@ -66,6 +66,12 @@ class GlobalConfig {
       path: ["staff", "salary-level-stats"],
       retry: true,
       cache: true,
+    },
+    projectGetRole: {
+      method: "POST",
+      path: ["project", "getRole"],
+      retry: true,
+      cache: false,
     },
   };
 }

@@ -100,6 +100,15 @@
             backdrop-filter: blur(50px);
           }
 
+          .occupation {
+            width: fit-content;
+            padding: 3px 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #c5c2c2;
+            backdrop-filter: blur(50px);
+          }
+
           span {
             display: inline-block;
             max-width: 100%;

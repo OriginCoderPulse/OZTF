@@ -24,36 +24,44 @@ export default defineComponent({
       const dateIcon = historyVideoConfig.icon;
       const dateCur = new Date().toLocaleDateString();
 
-      return datedays.map((date) => {
-        if (date === dateCur) {
-          return {
-            date,
-            timeList: Array.from(
+      return datedays.map((date, index) => {
+        const timeList = date === dateCur
+          ? Array.from(
               { length: new Date().getHours() },
               (_, i) => `${i.toString().padStart(2, "0")}:00`,
-            ),
-            icon: dateIcon[new Date(date).getDay()],
-            fold: false,
-          };
-        } else {
-          return {
-            date,
-            timeList: Array.from(
+            )
+          : Array.from(
               { length: 24 },
               (_, i) => `${i.toString().padStart(2, "0")}:00`,
-            ),
-            icon: dateIcon[new Date(date).getDay()],
-            fold: true,
-          };
-        }
+            );
+        
+        // 为每个时间项添加索引，避免后续使用 indexOf
+        const timeListWithIndex = timeList.map((time, timeIndex) => ({
+          time,
+          index: timeIndex,
+        }));
+
+        return {
+          date,
+          timeList: timeListWithIndex,
+          icon: dateIcon[new Date(date).getDay()],
+          fold: date !== dateCur,
+          index, // 保存索引，避免使用 indexOf
+        };
       });
     };
 
     const toggleFold = (date: any) => {
-      dateList.value = dateList.value.map((item) => ({
-        ...item,
-        fold: item.date === date.date ? !item.fold : true,
-      }));
+      // 只更新需要更新的项，避免重新创建整个数组
+      const targetIndex = dateList.value.findIndex(item => item.date === date.date);
+      if (targetIndex !== -1) {
+        const newList = [...dateList.value];
+        newList[targetIndex] = {
+          ...newList[targetIndex],
+          fold: !newList[targetIndex].fold,
+        };
+        dateList.value = newList;
+      }
     };
 
     const selectTime = (date: string, time: string) => {
@@ -89,26 +97,29 @@ export default defineComponent({
     return () => (
       <div class="history-video">
         <div class="history-time-list">
-          {dateList.value.map((date: any) => (
+           {dateList.value.map((date: any) => (
             <div key={date.date} class="date-item">
               <Motion
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{
-                  duration: 0.3,
-                  delay: dateList.value.indexOf(date) * 0.1,
+                  duration: 0.2,
+                  delay: date.index * 0.05, // 使用保存的索引，减少延迟
                 }}
                 class="date-content"
               >
                 <div class="date-header">
                   <div class="date-icon">
-                    {date.icon ? (
+                    {date.icon && Array.isArray(date.icon) ? (
                       <Svg
-                        svgPath={!Array.isArray(date.icon) ? date.icon.path : date.icon.map((icon: any) => icon.path)}
+                        svgPath={date.icon.map((iconItem: any) => ({
+                          path: iconItem.path,
+                          fill: iconItem.fill
+                        }))}
                         width="18"
                         height="18"
                         class="icon"
-                        fill={!Array.isArray(date.icon) ? date.icon.fill || "#999999" : "#999999"}
+                        viewBox="0 0 1024 1024"
                       />
                     ) : null}
                   </div>
@@ -143,53 +154,48 @@ export default defineComponent({
                   class="time-container"
                 >
                   <div class="time-list">
-                    {date.timeList.map((time: any) => (
-                      <div
-                        key={time}
-                        class={{
-                          "time-item": true,
-                          active:
-                            selectedDateTime.value === date.date + "-" + time,
-                        }}
-                        onClick={(e: any) => {
-                          e.stopPropagation();
-                          selectTime(date.date, time);
-                        }}
-                      >
-                        <Motion
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{
-                            duration: 0.2,
-                            delay: date.timeList.indexOf(time) * 0.05,
+                    {date.timeList.map((timeItem: any) => {
+                      const time = timeItem.time;
+                      const isActive = selectedDateTime.value === date.date + "-" + time;
+                      return (
+                        <div
+                          key={time}
+                          class={{
+                            "time-item": true,
+                            active: isActive,
                           }}
-                          class="time-content"
+                          onClick={(e: any) => {
+                            e.stopPropagation();
+                            selectTime(date.date, time);
+                          }}
                         >
-                          <span
-                            class="time-title"
-                            style={{
-                              textShadow:
-                                selectedDateTime.value ===
-                                  date.date + "-" + time
-                                  ? "0 2px 8px #FFAFAF"
-                                  : "",
+                          <Motion
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{
+                              duration: 0.15,
+                              delay: timeItem.index * 0.02, // 使用保存的索引，减少延迟
                             }}
+                            class="time-content"
                           >
-                            {time}
-                          </span>
-                          <div
-                            class="status-dot"
-                            style={{
-                              backgroundColor:
-                                selectedDateTime.value ===
-                                  date.date + "-" + time
-                                  ? "#FFAFAF"
-                                  : "#999999",
-                            }}
-                          ></div>
-                        </Motion>
-                      </div>
-                    ))}
+                            <span
+                              class="time-title"
+                              style={{
+                                textShadow: isActive ? "0 2px 8px #FFAFAF" : "",
+                              }}
+                            >
+                              {time}
+                            </span>
+                            <div
+                              class="status-dot"
+                              style={{
+                                backgroundColor: isActive ? "#FFAFAF" : "#999999",
+                              }}
+                            ></div>
+                          </Motion>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Motion>
               </Motion>

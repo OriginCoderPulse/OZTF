@@ -1,11 +1,11 @@
 /// <reference path="./Project.d.ts" />
 
-import { defineComponent } from "vue";
+import { defineComponent, ref, onMounted, watch } from "vue";
 import { motion } from "motion-v";
-import Developer from "@/Views/EntryContent/Project/Permission/Developer/Developer.tsx";
+import Developer from "@/Views/EntryContent/Project/Utils/Developer/Developer.tsx";
 import "./Project.scss";
-import Operations from "./Permission/Operations/Operations";
-import UI from "./Permission/UI/UI";
+import Operations from "./Utils/Operations/Operations";
+import UI from "./Utils/UI/UI";
 
 export default defineComponent({
   name: "Project",
@@ -28,52 +28,97 @@ export default defineComponent({
     },
   },
   setup(props) {
-    return () => (
-      <div class="project">
-        {props.roleTitle === "Manager" && (
-          <motion.div
-            key="manager"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            class="project-content"
-          >
+    const projectRole = ref<"M" | "D">("D");
+    const globalPermission = ref<string>("");
+
+    const fetchProjectRole = () => {
+      if (!props.projectId) return;
+
+      $storage.get("userID").then((userID: string) => {
+        $network.request(
+          "projectGetRole",
+          {
+            uid: userID,
+            project_id: props.projectId,
+          },
+          (data: any) => {
+            projectRole.value = data.projectRole || "D";
+          },
+          (error: any) => {
+            console.error("获取项目角色失败:", error);
+            projectRole.value = "D";
+          },
+        );
+      });
+    };
+
+    const fetchGlobalPermission = () => {
+      $storage.get("permission").then((permission: string) => {
+        globalPermission.value = permission || "";
+      });
+    };
+
+    onMounted(() => {
+      fetchProjectRole();
+      fetchGlobalPermission();
+    });
+
+    watch(
+      () => props.projectId,
+      () => {
+        if (props.projectId) {
+          fetchProjectRole();
+        }
+      },
+    );
+
+    const motionProps = {
+      initial: { opacity: 0, x: 20 },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: -20 },
+      transition: { duration: 0.4, ease: "easeInOut" },
+    };
+
+    const renderContent = () => {
+      const roleConfig: Record<string, any> = {
+        Manager: {
+          component: (
             <Developer
               projectId={props.projectId}
               isOverdue={props.isOverdue}
+              projectRole={projectRole.value}
+              globalPermission={globalPermission.value}
             />
-          </motion.div>
-        )}
-        {props.roleTitle === "Ops" && (
-          <motion.div
-            key="ops"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            class="project-content"
-          >
-            <Operations projectId={props.projectId} />
-          </motion.div>
-        )}
-        {props.roleTitle === "UI" && (
-          <motion.div
-            key="ui"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            class="project-content"
-          >
+          ),
+        },
+        Ops: {
+          component: <Operations projectId={props.projectId} />,
+        },
+        UI: {
+          component: (
             <UI
               projectId={props.projectId}
               projectName={props.projectName}
               roleTitle={props.roleTitle}
             />
-          </motion.div>
-        )}
-      </div>
-    );
+          ),
+        },
+      };
+
+      const config = roleConfig[props.roleTitle];
+      if (!config) return null;
+
+      return (
+        <motion.div
+          key={props.roleTitle.toLowerCase()}
+          {...motionProps}
+          class="project-content"
+        >
+          {config.component}
+        </motion.div>
+      );
+    };
+
+    return () => <div class="project">{renderContent()}</div>;
   },
 });

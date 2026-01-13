@@ -22,6 +22,8 @@ declare global {
     progress: number;
     user_role?: string;
     is_tester?: boolean;
+    project_feature_role?: "M" | "D";
+    project_qa_role?: "M" | "D";
   }
 
   interface ProjectData {

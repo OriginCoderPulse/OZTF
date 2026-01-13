@@ -155,7 +155,19 @@ export default defineComponent({
               <div class="basic-item"></div>
               <div class="basic-item">
                 <div class="title">职位</div>
-                <span>{props.staffDetail.occupation || ""}</span>
+                {props.staffDetail.occupation && staffConfig.occupation[props.staffDetail.occupation] ? (
+                  <div
+                    class="occupation"
+                    style={{
+                      backgroundColor:
+                        staffConfig.occupation[props.staffDetail.occupation]?.color || "#d4e6f156",
+                    }}
+                  >
+                    {staffConfig.occupation[props.staffDetail.occupation]?.name || props.staffDetail.occupation}
+                  </div>
+                ) : (
+                  <span>{props.staffDetail.occupation || ""}</span>
+                )}
               </div>
               <div class="basic-item">
                 <div class="title" onClick={togglePDFByStaff}>

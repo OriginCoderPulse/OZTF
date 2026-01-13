@@ -17,22 +17,52 @@ export const projectAddConfig = {
       color: "#52c41a",
     },
   },
-  role: {
-    Developer: {
-      name: "开发工程师",
-      color: "#1890ff",
+  occupation: {
+    BD: {
+      name: "后端开发",
+      color: "#d6bcfa56",
     },
-    Designer: {
-      name: "设计师",
-      color: "#722ed1",
+    FD: {
+      name: "前端开发",
+      color: "#9ae6b456",
     },
-    Tester: {
+    QA: {
       name: "测试工程师",
-      color: "#13c2c2",
+      color: "#feebc356",
     },
-    Analyst: {
-      name: "分析师",
-      color: "#eb2f96",
+    UI: {
+      name: "UI设计师",
+      color: "#fdebd056",
+    },
+    DevOps: {
+      name: "运维工程师",
+      color: "#fed7d756",
+    },
+    FSD: {
+      name: "全栈开发",
+      color: "#b4d8e156",
+    },
+  },
+  role: {
+    BD: {
+      name: "后端开发",
+      color: "#d6bcfa56",
+    },
+    FD: {
+      name: "前端开发",
+      color: "#9ae6b456",
+    },
+    QA: {
+      name: "测试工程师",
+      color: "#feebc356",
+    },
+    UI: {
+      name: "UI设计师",
+      color: "#fdebd056",
+    },
+    DevOps: {
+      name: "运维工程师",
+      color: "#fed7d756",
     },
   },
 };

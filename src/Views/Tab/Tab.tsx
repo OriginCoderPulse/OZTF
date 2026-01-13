@@ -253,7 +253,7 @@ export default defineComponent({
                     {tab.name}
                   </span>
                   {tab.children &&
-                    permission.value === "Super" &&
+                    permission.value === "CEO" &&
                     tab.name == "Project" && (
                       <div
                         class={{

@@ -1,11 +1,12 @@
 /// <reference path="./ProjectAdd.d.ts" />
 
-import { defineComponent, onMounted, ref, computed, Fragment } from "vue";
+import { defineComponent, onMounted, ref, computed } from "vue";
 import "./ProjectAdd.scss";
 import Input from "@Form/Input/Input.tsx";
 import Date from "@Form/Date/Date.tsx";
 import Selector from "@Form/Selector/Selector.tsx";
-import Svg from "@/Components/Svg/Svg.tsx";
+import Table from "@/Components/Table/Table";
+import { projectAddConfig } from "./ProjectAdd.config";
 // Select组件不存在，使用Selector组件实现多选功能
 
 export default defineComponent({
@@ -22,18 +23,12 @@ export default defineComponent({
     const endDate = ref<string>("");
     const dateRange = ref<string[]>(["", ""]);
 
-    // 开发人员选项
+    // PM选项（用于项目负责人）
+    const pmOptions = ref<any[]>([]);
+    // 开发人员选项（用于项目参与人）
     const developerOptions = ref<any[]>([]);
     const selectedDevelopers = ref<string[]>([]);
     const participantRoles = ref<{ [key: string]: string }>({}); // 存储每个参与人的角色
-
-    // 计算属性：过滤掉项目负责人的开发人员选项
-    const filteredDeveloperOptions = computed(() => {
-      const projectManagerId = managerModel.value;
-      return developerOptions.value.filter(
-        (dev: any) => dev.id !== projectManagerId,
-      );
-    });
 
     // 计算属性：处理开发人员显示逻辑（超过两个显示+n）
     const selectedDevelopersDisplay = computed(() => {
@@ -66,7 +61,7 @@ export default defineComponent({
       // 为新添加的参与人设置默认角色
       filteredValue.forEach((id) => {
         if (!participantRoles.value[id]) {
-          participantRoles.value[id] = "Frontend"; // 默认前端开发角色
+          participantRoles.value[id] = "FD"; // 默认前端开发角色
         }
       });
 
@@ -98,8 +93,14 @@ export default defineComponent({
         return {
           id,
           name: developer?.name || `用户${id}`,
-          occupation: developer?.occupation || "开发工程师",
-          role: participantRoles.value[id] || "Frontend",
+          occupation: developer?.occupation,
+          role: participantRoles.value[id],
+          _raw: {
+            id,
+            name: developer?.name || `用户${id}`,
+            occupation: developer?.occupation,
+            role: participantRoles.value[id],
+          },
         };
       });
     });
@@ -124,6 +125,7 @@ export default defineComponent({
         "staffDevelopers",
         {},
         (data: any) => {
+          pmOptions.value = data.pmList || [];
           developerOptions.value = data.developers || [];
         },
         (_error: any) => {
@@ -207,12 +209,6 @@ export default defineComponent({
         return false;
       }
 
-      // 检查项目负责人是否在项目参与人中
-      if (selectedDevelopers.value.includes(managerModel.value)) {
-        $message.error({ message: "项目负责人不能同时作为项目参与人" });
-        return false;
-      }
-
       return true;
     };
 
@@ -293,7 +289,7 @@ export default defineComponent({
                 <Selector
                   modelValue={managerModel.value}
                   onUpdate:modelValue={handleManagerChange}
-                  options={developerOptions.value}
+                  options={pmOptions.value}
                   placeholder="请选择项目负责人"
                   searchable={true}
                   clearable={true}
@@ -359,7 +355,7 @@ export default defineComponent({
             <Selector
               modelValue={selectedDevelopers.value}
               onUpdate:modelValue={handleDevelopersChange}
-              options={filteredDeveloperOptions.value}
+              options={developerOptions.value}
               placeholder={selectedDevelopersDisplay.value}
               multiple={true}
               searchable={true}
@@ -370,87 +366,85 @@ export default defineComponent({
             />
           </div>
           <div class="participant-table">
-            {selectedDevelopers.value.length > 0 && (
-              <Fragment>
-                <div class="table-header">
-                  <div class="header-cell">姓名</div>
-                  <div class="header-cell">职位</div>
-                  <div class="header-cell">项目角色</div>
-                  <div class="header-cell">操作</div>
-                </div>
-                <div class="table-body">
-                  {participantTableData.value.map((participant) => (
-                    <div class="table-row" key={participant.id}>
-                      <div class="table-cell">{participant.name}</div>
-                      <div class="table-cell">{participant.occupation}</div>
-                      <div class="table-cell">
-                        <div class="role-buttons">
-                          <button
-                            class={`role-btn ${participant.role === "Frontend" ? "active" : ""}`}
-                            onClick={() =>
-                              handleRoleChange(participant.id, "Frontend")
-                            }
-                          >
-                            前端
-                          </button>
-                          <button
-                            class={`role-btn ${participant.role === "Backend" ? "active" : ""}`}
-                            onClick={() =>
-                              handleRoleChange(participant.id, "Backend")
-                            }
-                          >
-                            后端
-                          </button>
-                          <button
-                            class={`role-btn ${participant.role === "Tester" ? "active" : ""}`}
-                            onClick={() =>
-                              handleRoleChange(participant.id, "Tester")
-                            }
-                          >
-                            测试
-                          </button>
-                          <button
-                            class={`role-btn ${participant.role === "UI" ? "active" : ""}`}
-                            onClick={() =>
-                              handleRoleChange(participant.id, "UI")
-                            }
-                          >
-                            UI
-                          </button>
-                          <button
-                            class={`role-btn ${participant.role === "DevOps" ? "active" : ""}`}
-                            onClick={() =>
-                              handleRoleChange(participant.id, "DevOps")
-                            }
-                          >
-                            运维
-                          </button>
-                        </div>
-                      </div>
-                      <div class="table-cell">
-                        <Svg
-                          svgPath="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          onClick={() => removeParticipant(participant.id)}
-                        />
-                      </div>
+            <Table
+              titles={["姓名", "职位", "项目角色"]}
+              data={participantTableData.value}
+              emptyText="暂无项目参与人"
+              columnWidths={{
+                2: "280px", // 项目角色列固定宽度150px
+              }}
+              icon={{
+                svgPath: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+                width: 16,
+                height: 16,
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                class: "icon",
+                onClick: (row: any) => removeParticipant(row.id),
+              }}
+              v-slots={{
+                "cell-0": ({ row }: any) => row.name,
+                "cell-1": ({ row }: any) => {
+                  // 映射 occupation 到 role 配置的键
+                  const occupationMap: Record<string, keyof typeof projectAddConfig.role> = {
+                    'BD': 'BD',
+                    'Backend': 'BD',
+                    'FD': 'FD',
+                    'Frontend': 'FD',
+                    'QA': 'QA',
+                    'Tester': 'QA',
+                    'UI': 'UI',
+                    'DevOps': 'DevOps',
+                  };
+                  const rawOccupation = row._raw?.occupation || row.occupation || '';
+                  const roleKey = occupationMap[rawOccupation] || rawOccupation;
+                  const roleConfig = projectAddConfig.occupation[roleKey as keyof typeof projectAddConfig.occupation];
+                  
+                  return (
+                    <div class="occupation-tag" style={{ backgroundColor: roleConfig?.color || "#737373" }}>
+                      {roleConfig?.name || rawOccupation || "开发工程师"}
                     </div>
-                  ))}
-                </div>
-              </Fragment>
-            )}
-            {selectedDevelopers.value.length === 0 && (
-              <div class="empty-table">
-                <div class="empty-text">暂无项目参与人</div>
-                <div class="empty-hint">请先选择项目参与人</div>
-              </div>
-            )}
+                  );
+                },
+                "cell-2": ({ row }: any) => (
+                  <div class="role-buttons">
+                    <button
+                      class={`role-btn ${row.role === "FD" ? "active" : ""}`}
+                      onClick={() => handleRoleChange(row.id, "FD")}
+                    >
+                      前端
+                    </button>
+                    <button
+                      class={`role-btn ${row.role === "BD" ? "active" : ""}`}
+                      onClick={() => handleRoleChange(row.id, "BD")}
+                    >
+                      后端
+                    </button>
+                    <button
+                      class={`role-btn ${row.role === "QA" ? "active" : ""}`}
+                      onClick={() => handleRoleChange(row.id, "QA")}
+                    >
+                      测试
+                    </button>
+                    <button
+                      class={`role-btn ${row.role === "UI" ? "active" : ""}`}
+                      onClick={() => handleRoleChange(row.id, "UI")}
+                    >
+                      UI
+                    </button>
+                    <button
+                      class={`role-btn ${row.role === "DevOps" ? "active" : ""}`}
+                      onClick={() => handleRoleChange(row.id, "DevOps")}
+                    >
+                      运维
+                    </button>
+                  </div>
+                ),
+              }}
+            />
           </div>
         </div>
 

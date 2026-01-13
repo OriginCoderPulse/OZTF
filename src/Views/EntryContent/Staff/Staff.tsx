@@ -1,17 +1,15 @@
 /// <reference path="./Staff.d.ts" />
 
-import { defineComponent, ref, onMounted, onUnmounted, watch } from "vue";
+import { defineComponent, ref, onMounted, onUnmounted, watch, computed } from "vue";
 import StaffDetail from "./StaffDetail/StaffDetail";
 import { staffConfig } from "./Staff.config.ts";
 import "./Staff.scss";
 import AnimationNumberText from "@/Components/AnimationNumberText/AnimationNumberText";
-import Pagenition from "@/Components/Paginition/Paginition";
-import ECharts from "@/Components/Echarts/Echarts";
+import Table from "@/Components/Table/Table";
 import Input from "@/Components/FormBuilder/Input/Input";
 import Selector from "@/Components/FormBuilder/Selector/Selector";
 import Date from "@/Components/FormBuilder/Date/Date";
 import Radio from "@/Components/FormBuilder/Radio/Radio";
-import Svg from "@/Components/Svg/Svg.tsx";
 
 export default defineComponent({
   name: "Staff",
@@ -22,12 +20,6 @@ export default defineComponent({
     const activeStaffCount = ref(0);
     const probationStaffCount = ref(0);
     const requestComplete = ref(false);
-
-    // 图表数据状态
-    const departmentChartData = ref<any[]>([]);
-    const salaryChartData = ref<any[]>([]);
-    const ageChartData = ref<any[]>([]);
-    const genderChartData = ref<any[]>([]);
 
     const handleOpenStaffDetail = (staff: StaffData) => {
       $popup.popup(
@@ -53,7 +45,7 @@ export default defineComponent({
 
     // 部门选项
     const departmentOptions = [
-      { label: "技术部", value: "Technology" },
+      { label: "技术部", value: "Technical" },
       { label: "资源管理部", value: "RMD" },
       { label: "财务部", value: "Finance" },
       { label: "产品部", value: "Product" },
@@ -113,6 +105,25 @@ export default defineComponent({
 
     watch(currentPageNumber, (newPage, oldPage) => {
       fetchStaffInfo(newPage, oldPage);
+    });
+
+    // 处理页码更改事件
+    const handlePageChange = (page: number) => {
+      currentPageNumber.value = page;
+    };
+
+    // 准备表格数据，将staff数据转换为Table组件需要的格式
+    const tableData = computed(() => {
+      return staffList.value.map((staff) => ({
+        name: staff.name,
+        gender: staff.gender || "-",
+        department: staff.department,
+        occupation: staff.occupation,
+        status: staff.status,
+        service_date: staff.service_date,
+        // 保留原始数据用于插槽
+        _raw: staff,
+      }));
     });
 
     // 监听所有搜索条件的变化，当手动清空所有条件时自动搜索
@@ -175,85 +186,24 @@ export default defineComponent({
           searchParams.join_date = searchJoinDate.value.trim();
         }
 
-        // 使用batchRequest同时获取三个接口的数据
-        $network
-          .batchRequest([
-            {
-              urlKey: "staffInfo",
-              params: searchParams,
-              successCallback: (data: any) => {
-                updateStaffList(data);
-                totalStaffCount.value = data.total;
-                activeStaffCount.value = data.active_staff;
-                probationStaffCount.value = data.probation_staff;
-              },
-              failCallback: (error: any) => {
-                if (old) currentPageNumber.value = old;
-                $message.error({ message: error });
-              },
-            },
-            {
-              urlKey: "departmentStats",
-              params: { user_id: userID },
-              successCallback: (data: any) => {
-                // 处理各部门统计数据
-                departmentChartData.value = data.departments.map(
-                  (dept: any) => ({
-                    name: dept.department,
-                    value: dept.count,
-                    percentage: dept.percentage,
-                  }),
-                );
-              },
-              failCallback: () => { },
-            },
-            {
-              urlKey: "salaryLevelStats",
-              params: { user_id: userID },
-              successCallback: (data: any) => {
-                // 处理薪资水平统计数据，后端已确保返回完整的5个等级
-                const salaryLevels = data.salary_levels || [];
-                salaryChartData.value = salaryLevels.map((level: any) => ({
-                  name: level.salary_range,
-                  value: level.count,
-                  percentage: level.percentage,
-                }));
-              },
-              failCallback: () => { },
-            },
-          ])
-          .then((results) => {
-            // 为不存在接口的图表设置默认数据
-            if (ageChartData.value.length === 0) {
-              ageChartData.value = [
-                { name: "20-30岁", value: 45, percentage: 30 },
-                { name: "31-40岁", value: 62, percentage: 41 },
-                { name: "41-50岁", value: 28, percentage: 19 },
-                { name: "50岁以上", value: 15, percentage: 10 },
-              ];
-            }
-
-            if (genderChartData.value.length === 0) {
-              genderChartData.value = [
-                { name: "男", value: 85, percentage: 57 },
-                { name: "女", value: 65, percentage: 43 },
-              ];
-            }
-
-            // 所有请求完成后更新状态
+        // 获取员工列表数据
+        $network.request(
+          "staffInfo",
+          searchParams,
+          (data: any) => {
+            updateStaffList(data);
+            totalStaffCount.value = data.total;
+            activeStaffCount.value = data.active_staff;
+            probationStaffCount.value = data.probation_staff;
             requestComplete.value = true;
-            searching.value = false; // 搜索完成，重置状态
-
-            // 检查是否有请求失败
-            const hasErrors = results.some(
-              (result) => result.status === "rejected",
-            );
-            if (hasErrors) {
-            }
-          })
-          .catch(() => {
-            searching.value = false; // 搜索失败，重置状态
-          });
+            searching.value = false;
+          },
+          (error: any) => {
+            if (old) currentPageNumber.value = old;
+            $message.error({ message: error });
+            searching.value = false;
+          },
+        );
       });
     };
 
@@ -301,298 +251,280 @@ export default defineComponent({
     return () =>
       requestComplete.value ? (
         <div class="staff">
-          <div class="staff-chart">
-            {/* 员工部门分布统计（环形图） */}
-            <div class="chart-item">
-              <div class="chart-title">各部门人数分布</div>
-              <div class="chart-content">
-                <ECharts
-                  type="pie"
-                  data={departmentChartData.value}
-                  height="100%"
-                />
-              </div>
-            </div>
-
-            {/* 员工薪资水平统计（饼图） */}
-            <div class="chart-item">
-              <div class="chart-title">员工薪资水平分布</div>
-              <div class="chart-content">
-                <ECharts
-                  type="pie"
-                  data={salaryChartData.value}
-                  height="100%"
-                />
-              </div>
-            </div>
-
-            {/* 员工年龄分布统计（环形图） */}
-            <div class="chart-item">
-              <div class="chart-title">员工年龄分布</div>
-              <div class="chart-content">
-                <ECharts type="pie" data={ageChartData.value} height="100%" />
-              </div>
-            </div>
-
-            {/* 员工男女比例（饼图） */}
-            <div class="chart-item">
-              <div class="chart-title">员工性别比例</div>
-              <div class="chart-content">
-                <ECharts
-                  type="pie"
-                  data={genderChartData.value}
-                  height="100%"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="staff-list-log">
-            <div class="staff-list">
-              <table>
-                <tbody>
-                  <tr>
-                    <td>工号</td>
-                    <td>姓名</td>
-                    <td>部门</td>
-                    <td>职位</td>
-                    <td>状态</td>
-                    <td>入职日期</td>
-                    <td>...</td>
-                  </tr>
-                  {staffList.value.length > 0 ? (
-                    staffList.value.map((staff) => (
-                      <tr key={staff.id}>
-                        <td>{staff.id}</td>
-                        <td>{staff.name}</td>
-                        <td>
-                          {staff.department && (
-                            <div
-                              class="department"
-                              style={{
-                                backgroundColor:
-                                  staffConfig.department[staff.department]?.color || "#d4e6f156",
-                              }}
-                            >
-                              {staffConfig.department[staff.department]?.name || staff.department}
-                            </div>
-                          )}
-                        </td>
-                        <td>{staff.occupation}</td>
-                        <td>
-                          {staff.status && (
-                            <div class="staff-status">
-                              <div
-                                class="status-dot"
-                                style={{
-                                  backgroundColor:
-                                    staffConfig.status[staff.status]?.color || "#cbfed6ff",
-                                }}
-                              ></div>
-                              <span>
-                                {staffConfig.status[staff.status]?.name || staff.status}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          {$date.format(staff.service_date, "YYYY-MM-DD")}
-                        </td>
-                        <td>
-                          <Svg
-                            svgPath={[
-                              "M800 64h-576C134.4 64 64 134.4 64 224v640C64 953.6 134.4 1024 224 1024h576c89.6 0 160-70.4 160-160v-640C960 134.4 889.6 64 800 64zM896 864c0 51.2-44.8 96-96 96h-576c-51.2 0-96-44.8-96-96v-640C128 172.8 172.8 128 224 128h576c51.2 0 96 44.8 96 96v640z",
-                              "M736 320h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM736 512h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM544 704h-256c-19.2 0-32 12.8-32 32s12.8 32 32 32h256c19.2 0 32-12.8 32-32s-12.8-32-32-32z"
-                            ]}
-                            width="14"
-                            height="14"
-                            class="icon"
-                            fill="#dddddd"
-                            onClick={() => handleOpenStaffDetail(staff)}
-                          />
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr class="staff-list-empty">暂无员工数据</tr>
-                  )}
-                </tbody>
-              </table>
-              <div class="staff-actions">
-                <Pagenition
+          <div class="staff-detail">
+            <div className="staff-header"></div>
+            <div className="staff-content">
+              <div class="staff-list">
+                <Table
+                  titles={["名称", "性别", "部门", "职位", "状态", "入职日期"]}
+                  data={tableData.value}
                   total={totalStaffCount.value}
                   pageQuantity={15}
-                  v-model={currentPageNumber.value}
+                  modelValue={currentPageNumber.value}
+                  pageNumPosition="center"
+                  emptyText="暂无员工数据"
+                  icon={{
+                    svgPath: (row: any) => {
+                      // 判断是否是CEO（部门为CEO且职位为CEO）
+                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+
+                      if (isCEO) {
+                        // 禁止图标（圆形禁止符号）
+                        return null
+                      }
+
+                      // 普通操作图标
+                      return [
+                        "M800 64h-576C134.4 64 64 134.4 64 224v640C64 953.6 134.4 1024 224 1024h576c89.6 0 160-70.4 160-160v-640C960 134.4 889.6 64 800 64zM896 864c0 51.2-44.8 96-96 96h-576c-51.2 0-96-44.8-96-96v-640C128 172.8 172.8 128 224 128h576c51.2 0 96 44.8 96 96v640z",
+                        "M736 320h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM736 512h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM544 704h-256c-19.2 0-32 12.8-32 32s12.8 32 32 32h256c19.2 0 32-12.8 32-32s-12.8-32-32-32z"
+                      ];
+                    },
+                    width: 14,
+                    height: 14,
+                    fill: (row: any) => {
+                      // CEO使用灰色，表示禁用
+                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      return isCEO ? "#999999" : "#dddddd";
+                    },
+                    class: "icon",
+                    onClick: (row: any) => {
+                      // CEO不允许操作
+                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      if (!isCEO) {
+                        handleOpenStaffDetail(row._raw);
+                      }
+                    },
+                  }}
+                  onPageChange={handlePageChange}
+                  v-slots={{
+                    "cell-0": ({ row }: any) => row.name,
+                    "cell-1": ({ row }: any) => row.gender,
+                    "cell-2": ({ row }: any) => {
+                      const deptRaw = row._raw.department as "CEO" | "Technology" | "Technical" | "RMD" | "Finance" | "Product" | undefined;
+                      // 将 Technology 映射到 Technical（兼容处理）
+                      const dept = deptRaw === "Technology" ? "Technical" : deptRaw;
+                      const deptKey = dept as keyof typeof staffConfig.department | undefined;
+                      return deptKey && deptKey in staffConfig.department ? (
+                        <div
+                          class="department"
+                          style={{
+                            backgroundColor:
+                              staffConfig.department[deptKey]?.color || "#d4e6f156",
+                          }}
+                        >
+                          {staffConfig.department[deptKey]?.name || dept}
+                        </div>
+                      ) : null;
+                    },
+                    "cell-3": ({ row }: any) => {
+                      const occupation = row._raw.occupation as keyof typeof staffConfig.occupation | undefined;
+                      return occupation && staffConfig.occupation[occupation] ? (
+                        <div
+                          class="occupation"
+                          style={{
+                            backgroundColor: staffConfig.occupation[occupation]?.color || "#d4e6f156",
+                          }}
+                        >
+                          {staffConfig.occupation[occupation]?.name || occupation}
+                        </div>
+                      ) : (
+                        row.occupation || "-"
+                      );
+                    },
+                    "cell-4": ({ row }: any) => {
+                      const status = row._raw.status as "Active" | "Probation" | "Inactive" | undefined;
+                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      return status ? (
+                        <div class="staff-status">
+                          {!isCEO && <div
+                            class="status-dot"
+                            style={{
+                              backgroundColor:
+                                staffConfig.status[status]?.color || "#cbfed6ff",
+                            }}
+                          ></div>}
+                          <span>
+                            {staffConfig.status[status]?.name || status}
+                          </span>
+                        </div>
+                      ) : null;
+                    },
+                    "cell-5": ({ row }: any) => {
+                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      return isCEO ? "-" : $date.format(row._raw.service_date, "YYYY-MM-DD");
+                    },
+                  }}
                 />
               </div>
-            </div>
 
-            <div class="staff-log">
-              <div class="staff-statistics">
-                <div class="statistics-number">
-                  <div class="statistics-item">
-                    <AnimationNumberText
-                      value={activeStaffCount.value}
-                      style={{
-                        fontWeight: "bold",
-                        color: "#fff",
-                        fontSize: "35px",
-                      }}
-                    />
-                    <span>Active Staff</span>
-                  </div>
-                  <div class="statistics-item">
-                    <AnimationNumberText
-                      value={probationStaffCount.value}
-                      style={{
-                        fontWeight: "bold",
-                        color: "#fff",
-                        fontSize: "35px",
-                      }}
-                    />
-                    <span>Probation Staff</span>
-                  </div>
-                </div>
-                <div class="statistics-proportion">
-                  <div
-                    class="active-proportion"
-                    style={{
-                      width:
-                        (activeStaffCount.value /
-                          (activeStaffCount.value +
-                            probationStaffCount.value)) *
-                        100 +
-                        "%",
-                      borderTopRightRadius:
-                        activeStaffCount.value === totalStaffCount.value
-                          ? "8px"
-                          : 0,
-                      borderBottomRightRadius:
-                        activeStaffCount.value === totalStaffCount.value
-                          ? "8px"
-                          : 0,
-                    }}
-                  ></div>
-                  <div
-                    class="another-proportion"
-                    style={{
-                      width:
-                        (probationStaffCount.value /
-                          (activeStaffCount.value +
-                            probationStaffCount.value)) *
-                        100 +
-                        "%",
-                      borderTopLeftRadius:
-                        totalStaffCount.value - activeStaffCount.value ===
-                          totalStaffCount.value
-                          ? "8px"
-                          : 0,
-                      borderBottomLeftRadius:
-                        totalStaffCount.value - activeStaffCount.value ===
-                          totalStaffCount.value
-                          ? "8px"
-                          : 0,
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div class="staff-search">
-                <div class="search-form">
-                  {/* 姓名搜索 */}
-                  <div class="search-group">
-                    <label class="search-label">姓名</label>
-                    <Input
-                      v-model={searchName.value}
-                      placeHolder="输入姓名"
-                      border={true}
-                      clearable={true}
-                    />
-                  </div>
-
-                  {/* 部门选择 */}
-                  <div class="search-group">
-                    <label class="search-label">部门</label>
-                    <Selector
-                      v-model={searchDepartment.value}
-                      options={departmentOptions}
-                      placeholder="选择部门"
-                    />
-                  </div>
-
-                  {/* 状态选择 */}
-                  <div class="search-group">
-                    <label class="search-label">状态</label>
-                    <Selector
-                      v-model={searchStatus.value}
-                      options={statusOptions}
-                      placeholder="选择状态"
-                    />
-                  </div>
-
-                  {/* 性别选择 */}
-                  <div class="search-group">
-                    <label class="search-label">性别</label>
-                    <Radio
-                      v-model={searchGender.value}
-                      options={genderOptions}
-                    />
-                  </div>
-
-                  {/* 薪资范围 */}
-                  <div class="search-group">
-                    <label class="search-label">薪资范围</label>
-                    <div class="range-input-group">
-                      <Input
-                        v-model={searchSalaryMin.value}
-                        placeHolder="最低"
-                        border={true}
-                        clearable={true}
-                        type="number"
+              <div class="staff-log">
+                <div class="staff-statistics">
+                  <div class="statistics-number">
+                    <div class="statistics-item">
+                      <AnimationNumberText
+                        value={activeStaffCount.value}
+                        style={{
+                          fontWeight: "bold",
+                          color: "#fff",
+                          fontSize: "35px",
+                        }}
                       />
-                      <span class="range-to">至</span>
-                      <Input
-                        v-model={searchSalaryMax.value}
-                        placeHolder="最高"
-                        border={true}
-                        clearable={true}
-                        type="number"
+                      <span>Active Staff</span>
+                    </div>
+                    <div class="statistics-item">
+                      <AnimationNumberText
+                        value={probationStaffCount.value}
+                        style={{
+                          fontWeight: "bold",
+                          color: "#fff",
+                          fontSize: "35px",
+                        }}
                       />
+                      <span>Probation Staff</span>
                     </div>
                   </div>
-
-                  {/* 入职日期 */}
-                  <div class="search-group">
-                    <label class="search-label">入职日期</label>
-                    <Date
-                      v-model={searchJoinDate.value}
-                      placeholder="选择入职日期"
-                      format="YYYY-MM-DD"
-                      dropdownPlacement="top"
-                    />
+                  <div class="statistics-proportion">
+                    <div
+                      class="active-proportion"
+                      style={{
+                        width:
+                          (activeStaffCount.value /
+                            (activeStaffCount.value +
+                              probationStaffCount.value)) *
+                          100 +
+                          "%",
+                        borderTopRightRadius:
+                          activeStaffCount.value === totalStaffCount.value
+                            ? "8px"
+                            : 0,
+                        borderBottomRightRadius:
+                          activeStaffCount.value === totalStaffCount.value
+                            ? "8px"
+                            : 0,
+                      }}
+                    ></div>
+                    <div
+                      class="another-proportion"
+                      style={{
+                        width:
+                          (probationStaffCount.value /
+                            (activeStaffCount.value +
+                              probationStaffCount.value)) *
+                          100 +
+                          "%",
+                        borderTopLeftRadius:
+                          totalStaffCount.value - activeStaffCount.value ===
+                            totalStaffCount.value
+                            ? "8px"
+                            : 0,
+                        borderBottomLeftRadius:
+                          totalStaffCount.value - activeStaffCount.value ===
+                            totalStaffCount.value
+                            ? "8px"
+                            : 0,
+                      }}
+                    ></div>
                   </div>
+                </div>
+                <div class="staff-search">
+                  <div class="search-form">
+                    {/* 姓名搜索 */}
+                    <div class="search-group">
+                      <label class="search-label">姓名</label>
+                      <Input
+                        v-model={searchName.value}
+                        placeHolder="输入姓名"
+                        border={true}
+                        clearable={true}
+                      />
+                    </div>
 
-                  {/* 操作按钮 */}
-                  <div class="search-actions">
-                    <button
-                      class={`search-btn search-btn-primary ${searching.value ? "loading" : ""}`}
-                      onClick={handleSearch}
-                      disabled={searching.value || !hasSearchConditions()}
-                    >
-                      {searching.value && (
-                        <div class="loader">
-                          <span class="bar"></span>
-                          <span class="bar"></span>
-                          <span class="bar"></span>
-                        </div>
-                      )}
-                      {searching.value ? "搜索中" : "搜索"}
-                    </button>
-                    <button
-                      class={`search-btn search-btn-secondary ${searching.value ? "disabled" : ""}`}
-                      onClick={clearSearch}
-                      disabled={searching.value || !hasSearchConditions()}
-                    >
-                      清除
-                    </button>
+                    {/* 部门选择 */}
+                    <div class="search-group">
+                      <label class="search-label">部门</label>
+                      <Selector
+                        v-model={searchDepartment.value}
+                        options={departmentOptions}
+                        placeholder="选择部门"
+                      />
+                    </div>
+
+                    {/* 状态选择 */}
+                    <div class="search-group">
+                      <label class="search-label">状态</label>
+                      <Selector
+                        v-model={searchStatus.value}
+                        options={statusOptions}
+                        placeholder="选择状态"
+                      />
+                    </div>
+
+                    {/* 性别选择 */}
+                    <div class="search-group">
+                      <label class="search-label">性别</label>
+                      <Radio
+                        v-model={searchGender.value}
+                        options={genderOptions}
+                      />
+                    </div>
+
+                    {/* 薪资范围 */}
+                    <div class="search-group">
+                      <label class="search-label">薪资范围</label>
+                      <div class="range-input-group">
+                        <Input
+                          v-model={searchSalaryMin.value}
+                          placeHolder="最低"
+                          border={true}
+                          clearable={true}
+                          type="number"
+                        />
+                        <span class="range-to">至</span>
+                        <Input
+                          v-model={searchSalaryMax.value}
+                          placeHolder="最高"
+                          border={true}
+                          clearable={true}
+                          type="number"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 入职日期 */}
+                    <div class="search-group">
+                      <label class="search-label">入职日期</label>
+                      <Date
+                        v-model={searchJoinDate.value}
+                        placeholder="选择入职日期"
+                        format="YYYY-MM-DD"
+                        dropdownPlacement="top"
+                      />
+                    </div>
+
+                    {/* 操作按钮 */}
+                    <div class="search-actions">
+                      <button
+                        class={`search-btn search-btn-primary ${searching.value ? "loading" : ""}`}
+                        onClick={handleSearch}
+                        disabled={searching.value || !hasSearchConditions()}
+                      >
+                        {searching.value && (
+                          <div class="loader">
+                            <span class="bar"></span>
+                            <span class="bar"></span>
+                            <span class="bar"></span>
+                          </div>
+                        )}
+                        {searching.value ? "搜索中" : "搜索"}
+                      </button>
+                      <button
+                        class={`search-btn search-btn-secondary ${searching.value ? "disabled" : ""}`}
+                        onClick={clearSearch}
+                        disabled={searching.value || !hasSearchConditions()}
+                      >
+                        清除
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

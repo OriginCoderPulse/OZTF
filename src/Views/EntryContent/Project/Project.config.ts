@@ -47,18 +47,7 @@ export const projectConfig: {
     },
   },
   role: {
-    Frontend: {
-      name: "前端开发",
-      color: "#9ae6b456",
-    },
-    Backend: {
-      name: "后端开发",
-      color: "#d6bcfa56",
-    },
-    Tester: {
-      name: "测试工程师",
-      color: "#feebc356",
-    },
+    // 完整名称映射（用于前端选择）
     UI: {
       name: "UI设计师",
       color: "#fdebd056",
@@ -67,12 +56,25 @@ export const projectConfig: {
       name: "运维工程师",
       color: "#fed7d756",
     },
-  },
-  featureStatus: {
-    Todo: {
-      name: "待办",
+    // 简写代码映射（用于后端返回的数据显示）
+    FD: {
+      name: "前端开发",
+      color: "#9ae6b456",
+    },
+    BD: {
+      name: "后端开发",
+      color: "#d6bcfa56",
+    },
+    QA: {
+      name: "测试工程师",
       color: "#feebc356",
     },
+    FSD: {
+      name: "全栈开发",
+      color: "#b4d8e156",
+    },
+  },
+  featureStatus: {
     InProgress: {
       name: "进行中",
       color: "#d5f5e356",
@@ -95,13 +97,17 @@ export const projectConfig: {
       name: "待处理",
       color: "#fed7d756",
     },
-    Assigned: {
-      name: "已分配",
-      color: "#fdebd056",
-    },
     InProgress: {
       name: "处理中",
       color: "#d5f5e356",
+    },
+    PendingVerification: {
+      name: "待验证",
+      color: "#fdebd056",
+    },
+    PendingRelease: {
+      name: "待发布",
+      color: "#d6bcfa56",
     },
     Resolved: {
       name: "已解决",

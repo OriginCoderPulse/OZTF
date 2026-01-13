@@ -9,7 +9,7 @@ export default defineComponent({
   props: {},
   setup() {
     const permissionHome = {
-      Super: <SuperHome />,
+      CEO: <SuperHome />,
       RMD: <RMDHome />,
       Dev: <DeveloperHome />,
     };

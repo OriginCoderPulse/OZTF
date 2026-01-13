@@ -157,7 +157,7 @@ export default defineComponent({
 
       // 使用默认测试用户ID进行初始化（NFC暂时静默处理）
       // 注意：现在使用 MongoDB ObjectId 格式，不再是字符串 ID
-      const defaultUid = "6965e6e5d579b66388edbfd6"; // 默认使用第一个员工（ObjectId格式）
+      const defaultUid = "696665fd9a4a020c2b9cb39f"; // 默认使用第一个员工（ObjectId格式）
       try {
         await new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
@@ -169,12 +169,8 @@ export default defineComponent({
             { uid: defaultUid },
             (result: any) => {
               clearTimeout(timeout);
-              // 如果 roles 是数组，取第一个角色；否则直接使用
-              const permissionValue = Array.isArray(result.roles)
-                ? result.roles[0] || "Super"
-                : result.roles || "Super";
               Promise.all([
-                $storage.set("permission", permissionValue),
+                $storage.set("permission", result.department),
                 $storage.set("userID", defaultUid),
               ])
                 .then(() => {
