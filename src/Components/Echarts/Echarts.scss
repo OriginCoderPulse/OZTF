@@ -1,0 +1,90 @@
+.echarts-container {
+  width: 100%;
+  background: transparent;
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 0;
+  box-sizing: border-box;
+
+  // ECharts 容器样式
+  > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  // 响应式设计
+  @media (max-width: 768px) {
+    padding: 12px;
+    border-radius: 6px;
+
+    .echarts-container {
+      min-height: 250px;
+    }
+  }
+
+  // 深色主题适配
+  @media (prefers-color-scheme: dark) {
+    // 移除背景色，保持透明
+    // ECharts 会自动适配主题，这里主要是容器样式
+  }
+
+  // 打印样式
+  @media print {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
+
+// 图表标题样式
+.echarts-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 16px;
+
+  @media (prefers-color-scheme: dark) {
+    color: #e6e6e6;
+  }
+}
+
+// 图表容器布局
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .chart-item {
+    flex: 1;
+  }
+
+  // 响应式布局
+  @media (max-width: 768px) {
+    .chart-item {
+    }
+  }
+}
+
+
+
+// 空数据状态样式
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  color: #999;
+  font-size: 14px;
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+
+  .empty-message {
+    text-align: center;
+    line-height: 1.5;
+  }
+}

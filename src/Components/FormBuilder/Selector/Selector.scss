@@ -1,0 +1,263 @@
+.selector {
+  position: relative;
+  width: 100%;
+  min-width: 120px;
+  max-width: 200px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  .selector-input {
+    position: relative;
+    width: 100%;
+    height: 36px; // 与Input保持一致的高度
+    border: 1px solid #444;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #c5c2c2;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+
+    .display-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #c5c2c2;
+      font-size: 14px;
+      font-weight: 500;
+      padding-left: 10px;
+
+      &.placeholder {
+        color: #c5c2c2;
+      }
+
+      .plus-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(213, 245, 227, 0.15);
+        color: #d5f5e3;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 4px;
+        min-width: 20px;
+        height: 18px;
+        box-sizing: border-box;
+      }
+    }
+
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: #c5c2c2;
+      font-size: 14px;
+      caret-color: #d5f5e3;
+
+      &::placeholder {
+        color: #737373;
+      }
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    .selector-actions {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      .clear-btn {
+        width: 16px;
+        height: 16px;
+        border: none;
+        background: none;
+        color: #737373;
+        cursor: pointer;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          color: #fff;
+        }
+      }
+
+      .dropdown-arrow {
+        color: #737373;
+        font-size: 10px;
+        transition: all 0.2s ease;
+
+        &.open {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    &:hover:not(.disabled) {
+      border-color: #666;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    &.focused {
+      border-color: #d5f5e3;
+      box-shadow: 0 0 0 2px rgba(213, 245, 227, 0.2);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    &.has-value {
+      .display-text {
+        color: #fff;
+        font-weight: 500;
+      }
+    }
+
+    &.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  .selector-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: rgba(45, 45, 45, 0.95);
+    border: 1px solid #555;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+
+    &.dropdown-bottom {
+      top: 100%;
+      margin-top: 4px;
+    }
+
+    &.dropdown-top {
+      bottom: 100%;
+      margin-bottom: 4px;
+    }
+
+    .dropdown-content {
+      max-height: 200px;
+      overflow-y: auto;
+
+      .dropdown-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #e0e0e0;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          color: #ffffff;
+        }
+
+        &.selected {
+          background-color: rgba(213, 245, 227, 0.1);
+          color: #d5f5e3;
+
+          &:hover {
+            background-color: rgba(213, 245, 227, 0.2);
+          }
+        }
+
+        .item-label {
+          flex: 1;
+          font-size: 14px;
+          font-weight: 500;
+          color: inherit;
+        }
+
+        .selected-icon {
+          color: #d5f5e3;
+          font-size: 12px;
+          font-weight: bold;
+          margin-left: 8px;
+        }
+      }
+
+      .no-options {
+        padding: 20px 16px;
+        text-align: center;
+        color: #737373;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// 滚动条样式
+.selector-dropdown .dropdown-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.selector-dropdown .dropdown-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.selector-dropdown .dropdown-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .selector {
+    min-width: 180px;
+
+    .selector-input {
+      min-height: 36px;
+      padding: 0 36px 0 10px;
+      font-size: 13px;
+
+      .selector-actions {
+        right: 10px;
+
+        .clear-btn {
+          width: 14px;
+          height: 14px;
+          font-size: 11px;
+        }
+
+        .dropdown-arrow {
+          font-size: 9px;
+        }
+      }
+    }
+  }
+}

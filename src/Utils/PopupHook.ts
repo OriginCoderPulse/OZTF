@@ -1,0 +1,130 @@
+import { App, createApp, h, ref, Ref } from "vue";
+import Popup from "@/Components/Popup/Popup";
+import Alert from "@/Components/Alert/Alert";
+
+interface PopupInstance {
+  id: string;
+  app: any; // 使用 any 类型避免 Vue Router 类型冲突
+  vm: HTMLDivElement;
+  level: number;
+  finish?: Function;
+}
+
+class PopupManager {
+  private popupInstances: Ref<PopupInstance[]> = ref<PopupInstance[]>([]);
+  private currentLevel = 0;
+
+  constructor() {
+    this._listenEscSpace();
+  }
+
+  popup(
+    style: Partial<CSSStyleDeclaration>,
+    { component, props }: { component: any; props?: Record<string, any> },
+  ): string {
+    const id: string = `popup_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const level: number = ++this.currentLevel;
+
+    const vm: HTMLDivElement = document.createElement("div");
+    vm.id = id;
+    vm.style.zIndex = String(1000 + level);
+    document.body.appendChild(vm);
+
+    const app: App = createApp(() =>
+      h(
+        Popup,
+        {
+          visible: true,
+          style,
+          closePopup: () => this.close(id),
+        },
+        {
+          default: () => h(component, { popup_id: id, ...props }),
+        },
+      ),
+    );
+    app.mount(vm);
+
+    this.popupInstances.value.push({ id, app, vm, level });
+
+    return id;
+  }
+
+  alert(
+    content: string,
+    onConfirm: Function,
+    onCancel?: Function,
+    title?: string,
+  ): void {
+    const id: string = `alert_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const level: number = ++this.currentLevel;
+
+    const vm: HTMLDivElement = document.createElement("div");
+    vm.id = id;
+    vm.style.zIndex = String(1000 + level);
+    document.body.appendChild(vm);
+    const that = this;
+
+    const app: App = createApp(() =>
+      h(Alert, {
+        visible: true,
+        title: title || "提示",
+        content,
+        onCancel: () => {
+          onCancel?.();
+          that.close(id);
+        },
+        onConfirm() {
+          Promise.resolve().then(() => onConfirm());
+          that.close(id);
+        },
+      }),
+    );
+    app.mount(vm);
+
+    this.popupInstances.value.push({ id, app, vm, level, finish: onCancel });
+  }
+
+  close(id: string): void {
+    const index = this.popupInstances.value.findIndex((item) => item.id === id);
+    if (index === -1) return;
+
+    const instance = this.popupInstances.value[index];
+
+    instance.app.unmount();
+
+    document.body.removeChild(instance.vm);
+    this.popupInstances.value.splice(index, 1);
+    --this.currentLevel;
+  }
+
+  closeAll(): void {
+    this.popupInstances.value.forEach((item) => {
+      item.app.unmount();
+      document.body.removeChild(item.vm);
+    });
+    this.popupInstances.value = [];
+  }
+
+  private _listenEscSpace() {
+    window.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Escape" && this.popupInstances.value.length > 0) {
+        const last =
+          this.popupInstances.value[this.popupInstances.value.length - 1];
+        if (last) {
+          this.close(last.id);
+          if (last.finish) {
+            last.finish();
+          }
+        }
+      }
+    });
+  }
+}
+
+export default {
+  install(app: any) {
+    app.config.globalProperties.$popup = new PopupManager();
+    window.$popup = new PopupManager();
+  },
+};

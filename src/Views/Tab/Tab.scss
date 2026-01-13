@@ -1,0 +1,348 @@
+.tab-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-sizing: border-box;
+    background-color: rgba(37, 37, 37, 0.49);
+    padding: 15px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    .tab-head {
+        width: 100%;
+        height: 60px;
+        border-bottom: 1px solid rgba($color: #595959, $alpha: 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-sizing: border-box;
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            border-radius: 4px;
+            border: 1px solid #fff;
+
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 4px;
+                object-fit: cover;
+            }
+        }
+
+        span {
+            color: #929292bf;
+            cursor: default;
+            pointer-events: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            font-weight: 600;
+        }
+    }
+
+    .tab-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-top: 15px;
+
+        .tab-item {
+            background: #353535;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.10);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(.4, 0, .2, 1);
+            padding: 0 10px;
+            justify-content: center;
+            min-height: 48px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            .tab-content {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+
+                .tab-header {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 10px;
+                    width: 100%;
+                    min-height: 40px;
+                    height: 100%;
+
+                    .tab-icon {
+                        font-size: 18px;
+                        color: #bdbdbd;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+                        margin-right: 5px;
+                        width: 18px;
+                        height: 18px;
+                        
+                        svg {
+                            width: 100%;
+                            height: 100%;
+                            display: block;
+                        }
+                    }
+
+                    .tab-title {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+                        font-weight: 700;
+                        font-size: 12px;
+                        letter-spacing: 0.5px;
+                        color: #eaeaea;
+                        text-shadow: 0 2px 8px #00000022;
+                        flex: 1;
+                        display: flex;
+                        align-items: center;
+                        line-height: 1;
+                        height: 18px;
+                    }
+
+                    .fold-icon {
+                        color: #bdbdbd;
+                        transition: transform 0.2s cubic-bezier(.4, 0, .2, 1);
+                        cursor: pointer;
+                        padding: 2px;
+                        border-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        flex-shrink: 0;
+
+                        &.folded {
+                            transform: rotate(-90deg);
+                        }
+
+                        svg {
+                            display: block;
+                        }
+                    }
+                }
+
+                .children-wrapper {
+                    margin-top: 4px;
+                    width: 100%;
+                    max-height: 300px;
+                    padding: 8px;
+                    padding-top: 0;
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                // Project搜索框样式 - 在外层固定
+                .project-search-container {
+                    width: 100%;
+                    height: 40px;
+                    margin-bottom: 10px;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    border-bottom: 1px solid #595959;
+                    justify-content: space-between;
+                    flex-shrink: 0; // 防止搜索框被压缩
+
+                    input {
+                        width: 100%;
+                        height: 100%;
+                        background-color: transparent;
+                        outline: none;
+                        border: none;
+                        color: #ffffff;
+                        padding: 0 10px;
+
+                        &::placeholder {
+                            color: #999;
+                            font-size: 11px;
+                        }
+                    }
+
+                    button {
+                        transition: all 0.2s ease;
+                        cursor: pointer;
+                        margin-left: 5px;
+                    }
+
+                    .clear-search-btn {
+                        position: absolute;
+                        right: 8px;
+                        background: none;
+                        border: none;
+                        color: #999;
+                        cursor: pointer;
+                        font-size: 14px;
+                        padding: 2px;
+                        transition: all 0.2s ease;
+                    }
+                }
+
+                .children-container {
+                    overflow-y: auto;
+                    flex: 1;
+                    width: 100%;
+                    padding: 0;
+                    box-sizing: border-box;
+
+                    .children-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                        padding-left: 4px;
+
+                        .child-item {
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: all 0.2s cubic-bezier(.4, 0, .2, 1);
+                            font-size: 11px;
+                            color: #eaeaea;
+                            font-weight: 600;
+                            text-shadow: 0 2px 8px #00000022;
+                            display: flex;
+                            flex-direction: column;
+                            min-height: 28px;
+                            padding: 0;
+
+
+
+                            .child-item-header {
+                                min-height: 28px;
+                                display: flex;
+                                align-items: center;
+                                width: 100%;
+                                cursor: pointer;
+                            }
+
+                            .child-content {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 8px;
+                                width: 100%;
+
+                                .child-title {
+                                    flex: 1;
+                                    display: flex;
+                                    align-items: center;
+                                }
+
+                                .status-dot {
+                                    width: 3px;
+                                    height: 3px;
+                                    border-radius: 50%;
+                                    flex-shrink: 0;
+                                    box-shadow: 0 2px 8px 0 #00000033;
+                                    background-color: #93dab2 !important; // 默认绿色，确保可见
+                                    border: 1px solid rgba(255, 255, 255, 0.3);
+                                    position: relative;
+                                    z-index: 1;
+                                }
+
+
+                            }
+
+                            // utils内容展开区域
+                            .utils-content {
+                                width: 100%;
+                                overflow: hidden;
+
+                                .utils-list {
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 2px;
+                                    padding: 4px 6px 6px 10px; // 左侧缩进设置为10
+
+                                    .util-item {
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 6px;
+                                        padding: 4px 8px;
+                                        cursor: pointer;
+                                        min-height: 24px;
+                                        border-radius: 4px;
+
+                                        .util-icon {
+                                            flex-shrink: 0;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            margin-right: 5px;
+
+                                            svg {
+                                                width: 100%;
+                                                height: 100%;
+                                                display: block;
+                                            }
+                                        }s v g
+
+                                        .util-title {
+                                            font-size: 10px;
+                                            font-weight: 500;
+                                            color: #cccccc;
+                                            flex: 1;
+                                            display: flex;
+                                            align-items: center;
+                                        }
+
+                                        &.selected .util-title {
+                                            color: #ffffff;
+                                            font-weight: 600;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    .add-child {
+                        justify-content: flex-start;
+                        align-items: center;
+                        cursor: pointer;
+                        background: transparent;
+                        color: #ffe066;
+
+                        .child-title {
+                            font-size: 11px;
+                            font-weight: 700;
+                        }
+                    }
+
+                    .add-child-input {
+                        display: flex;
+                        align-items: center;
+
+                        .add-child-input-box {
+                            width: 100%;
+                            font-size: 11px;
+                            padding: 4px 8px;
+                            border-radius: 6px;
+                            border: 1px solid #595959;
+                            outline: none;
+                            background: transparent;
+                            color: #ffffff;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

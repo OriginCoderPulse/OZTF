@@ -1,0 +1,51 @@
+.meet {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(37, 37, 37, 0.49);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+
+  .meet-operation {
+    width: 100%;
+    height: 80px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    .meet-create {
+      background-color: rgba(213, 245, 227, 0.15);
+      border: 1px solid rgba(213, 245, 227, 0.3);
+    }
+
+    .meet-join {
+      background-color: rgba(154, 230, 180, 0.12);
+      border: 1px solid rgba(154, 230, 180, 0.25);
+    }
+
+    .meet-btn {
+      padding: 10px 15px;
+      margin-right: 15px;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+    }
+  }
+
+  .meet-record {
+    flex: 1;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  .meet-empty {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #737373;
+  }
+}
