@@ -1,11 +1,12 @@
 /// <reference path="./Project.d.ts" />
 
-import { defineComponent, ref, onMounted, watch } from "vue";
+import { defineComponent, onMounted } from "vue";
 import { motion } from "motion-v";
 import Developer from "@/Views/EntryContent/Project/Utils/Developer/Developer.tsx";
 import "./Project.scss";
 import Operations from "./Utils/Operations/Operations";
 import UI from "./Utils/UI/UI";
+import { ProjectController } from "./Project.controller.ts";
 
 export default defineComponent({
   name: "Project",
@@ -28,49 +29,11 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const projectRole = ref<"M" | "D">("D");
-    const globalPermission = ref<string>("");
-
-    const fetchProjectRole = () => {
-      if (!props.projectId) return;
-
-      $storage.get("userID").then((userID: string) => {
-        $network.request(
-          "projectGetRole",
-          {
-            uid: userID,
-            project_id: props.projectId,
-          },
-          (data: any) => {
-            projectRole.value = data.projectRole || "D";
-          },
-          (error: any) => {
-            console.error("获取项目角色失败:", error);
-            projectRole.value = "D";
-          },
-        );
-      });
-    };
-
-    const fetchGlobalPermission = () => {
-      $storage.get("permission").then((permission: string) => {
-        globalPermission.value = permission || "";
-      });
-    };
+    const controller = new ProjectController(props);
 
     onMounted(() => {
-      fetchProjectRole();
-      fetchGlobalPermission();
+      controller.init();
     });
-
-    watch(
-      () => props.projectId,
-      () => {
-        if (props.projectId) {
-          fetchProjectRole();
-        }
-      },
-    );
 
     const motionProps = {
       initial: { opacity: 0, x: 20 },
@@ -86,8 +49,8 @@ export default defineComponent({
             <Developer
               projectId={props.projectId}
               isOverdue={props.isOverdue}
-              projectRole={projectRole.value}
-              globalPermission={globalPermission.value}
+              projectRole={controller.projectRole.value}
+              globalPermission={controller.globalPermission.value}
             />
           ),
         },

@@ -5,6 +5,10 @@ import "./Selector.scss";
 export default defineComponent({
   name: "Selector",
   props: {
+    emptyText: {
+      type: String,
+      default: '暂无选项'
+    },
     modelValue: {
       type: [String, Number, Array],
       default: null
@@ -369,7 +373,7 @@ export default defineComponent({
             <div class="dropdown-content" style={{ maxHeight: props.maxHeight }}>
               {filteredOptions.value.length === 0 ? (
                 <div class="no-options">
-                  {searchQuery.value ? '未找到匹配项' : '暂无选项'}
+                  {searchQuery.value ? '未找到匹配项' : props.emptyText}
                 </div>
               ) : (
                 filteredOptions.value.map((option: any, index: number) => (

@@ -19,7 +19,7 @@ declare global {
       ) => string;
       alert: (
         content: string,
-        onConfirm: Function,
+        onConfirm?: Function,
         onCancel?: Function,
         title?: string,
       ) => void;
@@ -139,6 +139,17 @@ declare global {
       ) => void;
       cleanup: () => Promise<void>;
     };
+    $trtc: {
+      createRoom: (roomId: string) => Promise<{audio:boolean, video:boolean,status:boolean}>;
+      joinRoom: (roomId: string) => Promise<void>;
+      leaveRoom: (roomId: string) => Promise<void>;
+    };
+    $libGenerateTestUserSig: {
+      genTestUserSig: (sdkAppId: number, userId: string, sdkSecretKey: string) => {
+        sdkAppId: number;
+        userSig: string;
+      };
+    };
   }
 
   const $popup: Window["$popup"];
@@ -151,4 +162,6 @@ declare global {
   const $storage: Window["$storage"];
   const $hfc: Window["$hfc"];
   const $nfc: Window["$nfc"];
+  const $trtc: Window["$trtc"];
+  const $libGenerateTestUserSig: Window["$libGenerateTestUserSig"];
 }

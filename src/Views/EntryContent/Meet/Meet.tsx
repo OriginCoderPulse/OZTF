@@ -1,43 +1,16 @@
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, onMounted } from "vue";
 import "./Meet.scss";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Motion } from "motion-v";
-import { listen } from "@tauri-apps/api/event";
+import { MeetController } from "./Meet.controller.ts";
 
 export default defineComponent({
   name: "Meet",
   props: {},
   setup() {
-    const meetList = ref([]);
-    const canCreateMeet = ref(true);
-    const canJoinMeet = ref(true);
-    const meetRoomTitle = ref("jj")
-    const meetRoomId = ref("room-jj")
-
-    const handleTestClick = async () => {
-      $storage.get("userID").then((result) => {
-        new WebviewWindow("meet-room", {
-          url: `/meet-room/${meetRoomId.value}?uid=` + result,
-          width: 1400,
-          height: 960,
-          title: meetRoomTitle.value,
-          decorations: true,
-          resizable: false,
-          center: true,
-          fullscreen: false,
-          titleBarStyle: "overlay",
-        });
-
-        canCreateMeet.value = false;
-        canJoinMeet.value = false;
-      });
-    };
+    const controller = new MeetController();
 
     onMounted(() => {
-      listen("canJoinRoom", (data: { payload: boolean }) => {
-        canCreateMeet.value = data.payload;
-        canJoinMeet.value = data.payload;
-      }).then();
+      controller.init();
     });
 
     return () => (
@@ -53,34 +26,9 @@ export default defineComponent({
               transition: { duration: 0.2, ease: "easeInOut" },
             }}
             class="meet-create meet-btn"
-            onClick={async () => {
-              if (canCreateMeet.value) {
-                const popup_id = $popup.popup(
-                  { width: "30%", height: "30%" },
-                  {
-                    component: (
-                      <button
-                        onClick={() => {
-                          handleTestClick().then();
-                          $popup.close(popup_id);
-                        }}
-                      ></button>
-                    ),
-                    props: {},
-                  },
-                );
-              } else {
-                const meetingWindow =
-                  await WebviewWindow.getByLabel("meet-room");
-
-                if (meetingWindow) {
-                  await meetingWindow.show();
-                  await meetingWindow.setFocus();
-                }
-              }
-            }}
+            onClick={() => controller.handleCreateMeet()}
           >
-            {canCreateMeet.value ? "创建会议" : "返回会议"}
+            {controller.canCreateMeet.value ? "创建会议" : "返回会议"}
           </Motion>
           <Motion
             initial={{ opacity: 0, y: -20 }}
@@ -92,19 +40,12 @@ export default defineComponent({
               transition: { duration: 0.2, ease: "easeInOut" },
             }}
             class="meet-join meet-btn"
-            onClick={() => {
-              if (canJoinMeet.value) {
-                $popup.popup(
-                  { width: "30%", height: "30%" },
-                  { component: null, props: {} },
-                );
-              }
-            }}
+            onClick={() => controller.createOrFocusMeet()}
           >
             加入会议
           </Motion>
         </div>
-        {meetList.value.length > 0 ? (
+        {controller.meetList.value.length > 0 ? (
           <div class="meet-record "></div>
         ) : (
           <div class="meet-empty">暂无会议纪录</div>

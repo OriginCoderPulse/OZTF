@@ -1,17 +1,13 @@
-import { defineComponent, Fragment, ref } from "vue";
-import { useRoute } from "vue-router";
+import { defineComponent, Fragment, onMounted } from "vue";
 import "./MeetRoom.scss";
 import { Motion } from "motion-v";
-import { invoke } from "@tauri-apps/api/core";
 import Svg from "@/Components/Svg/Svg.tsx";
+import { MeetRoomController } from "./MeetRoom.controller.ts";
 
 export default defineComponent({
   name: "MeetRoom",
   setup() {
-    const { params } = useRoute();
-    const showParticipant = ref(false);
-    const microphoneState = ref(false);
-    const cameraState = ref(false);
+    const controller = new MeetRoomController();
 
     return () => (
       <div class="meet-room">
@@ -19,11 +15,11 @@ export default defineComponent({
           <div class="meet-video">
             <div
               class="show-participant"
-              onClick={() => (showParticipant.value = !showParticipant.value)}
+              onClick={() => controller.toggleParticipant()}
             >
               <Motion
                 animate={{
-                  rotate: showParticipant.value ? 180 : 0,
+                  rotate: controller.showParticipant.value ? 180 : 0,
                 }}
                 transition={{
                   duration: 0.3,
@@ -44,9 +40,9 @@ export default defineComponent({
           <Motion
             initial={{ width: 0, height: "100%", marginLeft: 0 }}
             animate={{
-              width: showParticipant.value ? "20%" : 0,
+              width: controller.showParticipant.value ? "20%" : 0,
               height: "100%",
-              marginLeft: showParticipant.value ? 15 : 0,
+              marginLeft: controller.showParticipant.value ? 15 : 0,
             }}
             exit={{ width: 0, height: "100%", marginLeft: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -57,9 +53,9 @@ export default defineComponent({
           <div class="operator-list">
             <div
               class="operator-item"
-              onClick={() => (microphoneState.value = !microphoneState.value)}
+              onClick={() => controller.toggleMicrophone()}
             >
-              {microphoneState.value ? (
+              {controller.microphoneState.value ? (
                 <Fragment>
                   <Svg
                     svgPath="M512 128a128 128 0 0 0-128 128v170.666667a128 128 0 0 0 256 0V256a128 128 0 0 0-128-128z m0-85.333333a213.333333 213.333333 0 0 1 213.333333 213.333333v170.666667a213.333333 213.333333 0 0 1-426.666666 0V256a213.333333 213.333333 0 0 1 213.333333-213.333333zM130.346667 469.333333H216.32a298.752 298.752 0 0 0 591.274667 0h86.016A384.170667 384.170667 0 0 1 554.666667 808.32V981.333333h-85.333334v-173.013333A384.170667 384.170667 0 0 1 130.346667 469.333333z"
@@ -83,9 +79,9 @@ export default defineComponent({
             </div>
             <div
               class="operator-item"
-              onClick={() => (cameraState.value = !cameraState.value)}
+              onClick={() => controller.toggleCamera()}
             >
-              {cameraState.value ? (
+              {controller.cameraState.value ? (
                 <Fragment>
                   <Svg
                     svgPath="M554.666667 256V170.666667H213.333333V85.333333h426.666667v170.666667h42.666667a42.666667 42.666667 0 0 1 42.666666 42.666667v93.866666l222.421334-155.733333a21.333333 21.333333 0 0 1 33.578666 17.493333v515.413334a21.333333 21.333333 0 0 1-33.578666 17.493333L725.333333 631.466667V810.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666V298.666667a42.666667 42.666667 0 0 1 42.666666-42.666667h469.333334z m-341.333334 170.666667v85.333333h85.333334v-85.333333H213.333333z"
@@ -130,11 +126,7 @@ export default defineComponent({
             </div>
             <div
               class="operator-item"
-              onClick={() =>
-                $popup.alert("确定要退出会议吗", async () => {
-                  invoke("close_meeting_window").then();
-                })
-              }
+              onClick={() => controller.exitMeeting()}
             >
               <Svg
                 svgPath={[

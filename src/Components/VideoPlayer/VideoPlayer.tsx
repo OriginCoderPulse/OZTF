@@ -26,34 +26,43 @@ export default defineComponent({
     setup(props, { slots }) {
         const palyerStatus = ref(false);
         const videoRef = ref<HTMLVideoElement | null>(null);
+        const hlsInstance = ref<Hls | null>(null);
 
         onMounted(() => {
-            if (props.videoType === 'video') {
-                if (videoRef.value) {
-                    videoRef.value.src = props.videoUrl;
-                    videoRef.value.play();
-                    videoRef.value.addEventListener('play', () => {
-                        palyerStatus.value = true;
-                    });
+            // 延迟加载视频，等待组件完全挂载后再加载
+            setTimeout(() => {
+                if (props.videoType === 'video') {
+                    if (videoRef.value) {
+                        videoRef.value.src = props.videoUrl;
+                        videoRef.value.play();
+                        videoRef.value.addEventListener('play', () => {
+                            palyerStatus.value = true;
+                        });
+                    }
+                } else if (props.videoType === 'stream') {
+                    const hls = new Hls();
+                    hlsInstance.value = hls;
+                    if (videoRef.value) {
+                        hls.loadSource(props.videoUrl);
+                        hls.attachMedia(videoRef.value);
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            if (videoRef.value) videoRef.value.play();
+                        });
+                        videoRef.value.addEventListener('play', () => {
+                            palyerStatus.value = true;
+                        });
+                    }
+                } else {
+                    throw new Error('Video Type Is Unknow !');
                 }
-            } else if (props.videoType === 'stream') {
-                const hls = new Hls();
-                if (videoRef.value) {
-                    hls.loadSource(props.videoUrl);
-                    hls.attachMedia(videoRef.value);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                        if (videoRef.value) videoRef.value.play();
-                    });
-                    videoRef.value.addEventListener('play', () => {
-                        palyerStatus.value = true;
-                    });
-                }
-            } else {
-                throw new Error('Video Type Is Unknow !');
-            }
+            }, 100);
         });
 
         onUnmounted(() => {
+            if (hlsInstance.value) {
+                hlsInstance.value.destroy();
+                hlsInstance.value = null;
+            }
             if (videoRef.value) {
                 videoRef.value.pause();
                 videoRef.value.currentTime = 0;

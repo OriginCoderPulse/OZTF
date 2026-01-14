@@ -5,6 +5,8 @@
   border-radius: 8px;
   display: flex;
   flex-direction: column;
+  padding: 15px;
+  box-sizing: border-box;
 
   .meet-operation {
     width: 100%;
@@ -13,6 +15,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
     .meet-create {
       background-color: rgba(213, 245, 227, 0.15);

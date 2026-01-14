@@ -1,11 +1,12 @@
 /// <refrenc path="./StaffDetail.d.ts"/>
 
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import { Motion } from "motion-v";
 import "./StaffDetail.scss";
 import PreviewPDF from "@/Components/PreviewPDF/PreviewPDF";
 import { staffConfig } from "../Staff.config";
 import Svg from "@/Components/Svg/Svg.tsx";
+import { StaffDetailController } from "./StaffDetail.controller.ts";
 
 export default defineComponent({
   name: "StaffDetail",
@@ -16,85 +17,13 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const isShowContract = ref(false);
-    const isResignLoading = ref(false);
-    const isConfirmationLoading = ref(false);
-
-    const togglePDFByStaff = () => {
-      if (isShowContract.value) {
-        isShowContract.value = false;
-        $timer.delay(
-          "reviewPDF",
-          () => {
-            isShowContract.value = true;
-          },
-          500,
-        );
-      } else {
-        isShowContract.value = !isShowContract.value;
-      }
-    };
-
-    const closePDF = () => {
-      isShowContract.value = false;
-    };
-
-    const changeStaffStatusApi = (
-      id: string,
-      status: "Active" | "Inactive",
-    ) => {
-      $network.request(
-        "changeStaffStatus",
-        { staffID: id, status },
-        (_data: any) => {
-          $event.emit("changeStaffStatus");
-        },
-        (error: any) => {
-          isConfirmationLoading.value = false;
-          isResignLoading.value = false;
-          $message.error({ message: error });
-        },
-      );
-    };
-
-    const changeStaffStatus = (id: string, status: "Active" | "Inactive") => {
-      switch (status) {
-        case "Active":
-          isConfirmationLoading.value = true;
-
-          $popup.alert(
-            "确定要这么操作么",
-            () => {
-              changeStaffStatusApi(id, status);
-            },
-            () => {
-              isConfirmationLoading.value = false;
-            },
-          );
-
-          break;
-        case "Inactive":
-          isResignLoading.value = true;
-
-          $popup.alert(
-            "确定要这么操作么",
-            () => {
-              changeStaffStatusApi(id, status);
-            },
-            () => {
-              isResignLoading.value = false;
-            },
-          );
-
-          break;
-      }
-    };
+    const controller = new StaffDetailController(props);
 
     return () => (
       <div class="staff-detail">
         <div class="staff-info">
           <div class="basic-info">
-            <div class="avatar" onClick={togglePDFByStaff}>
+            <div class="avatar" onClick={() => controller.togglePDFByStaff()}>
               <Motion
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -170,7 +99,7 @@ export default defineComponent({
                 )}
               </div>
               <div class="basic-item">
-                <div class="title" onClick={togglePDFByStaff}>
+                <div class="title" onClick={() => controller.togglePDFByStaff()}>
                   入职时间
                 </div>
                 <span>
@@ -196,10 +125,10 @@ export default defineComponent({
                 <div
                   class="action-btn-resign"
                   onClick={() =>
-                    changeStaffStatus(props.staffDetail.id, "Inactive")
+                    controller.changeStaffStatus(props.staffDetail.id, "Inactive")
                   }
                 >
-                  {isResignLoading.value && (
+                  {controller.isResignLoading.value && (
                     <div class="loader">
                       <span class="bar"></span>
                       <span class="bar"></span>
@@ -221,10 +150,10 @@ export default defineComponent({
                 <div
                   class="action-btn-confirmation"
                   onClick={() =>
-                    changeStaffStatus(props.staffDetail.id, "Active")
+                    controller.changeStaffStatus(props.staffDetail.id, "Active")
                   }
                 >
-                  {isConfirmationLoading.value && (
+                  {controller.isConfirmationLoading.value && (
                     <div class="loader">
                       <span class="bar"></span>
                       <span class="bar"></span>
@@ -241,15 +170,15 @@ export default defineComponent({
         <Motion
           initial={{ width: 0, opacity: 0, marginLeft: 0, padding: 0 }}
           animate={{
-            width: !isShowContract.value ? 0 : "40%",
-            opacity: !isShowContract.value ? 0 : 1,
-            marginLeft: !isShowContract.value ? 0 : 15,
-            padding: !isShowContract.value ? 0 : 10,
+            width: !controller.isShowContract.value ? 0 : "40%",
+            opacity: !controller.isShowContract.value ? 0 : 1,
+            marginLeft: !controller.isShowContract.value ? 0 : 15,
+            padding: !controller.isShowContract.value ? 0 : 10,
           }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
           class="contract"
         >
-          {isShowContract.value && (
+          {controller.isShowContract.value && (
             <PreviewPDF pdfSource="http://otzf.top/otzf/api/resource/git.pdf">
               <Motion
                 initial={{ opacity: 0, y: -10 }}
@@ -257,7 +186,7 @@ export default defineComponent({
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 1, ease: "easeInOut" }}
                 class="close-pdf"
-                onClick={closePDF}
+                onClick={() => controller.closePDF()}
               >
                 <Svg
                   svgPath="M906.410667 493.994667a32.298667 32.298667 0 0 0 32.256-32.256v-109.653334C938.666667 187.434667 835.84 85.333333 672.128 85.333333h-320C187.434667 85.333333 85.333333 187.392 85.333333 352.256v320C85.333333 836.608 187.392 938.666667 352.128 938.666667h320.128c164.352 0 266.410667-102.058667 266.282667-266.538667a32.682667 32.682667 0 0 0-65.28 0c0 129.450667-71.253333 201.130667-201.130667 201.130667h-320c-129.834667 0-201.514667-71.68-201.514667-201.130667v-320c0-129.834667 71.68-201.514667 201.642667-201.514667h320c129.877333 0 201.130667 71.253333 201.130667 201.514667V460.672a32.64 32.64 0 0 0 32.64 32.554667v0.768h0.426666zM418.773333 560.853333l-29.184 29.184a32.981333 32.981333 0 0 0-1.621333 46.165334l0.938667 0.682666c12.458667 12.458667 32.512 12.8 45.354666 0.768l29.056-29.013333a32.682667 32.682667 0 0 0-44.544-47.786667z m227.328 70.741334a32.725333 32.725333 0 0 1-45.653333 0.512l-1.621333-1.578667L394.88 426.666667a34.858667 34.858667 0 0 1-0.554667-47.274667 32.213333 32.213333 0 0 1 45.610667-0.554667l0.341333 0.298667 79.573334 79.616 72.405333-72.448a33.408 33.408 0 0 1 46.421333 0.298667c2.304 2.304 4.266667 4.906667 5.76 7.808a32.725333 32.725333 0 0 1-5.205333 39.466666l-72.106667 72.106667 78.421334 78.421333a32.853333 32.853333 0 0 1 0.853333 46.933334l-0.298667 0.298666z"

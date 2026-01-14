@@ -1,8 +1,8 @@
 /// <reference path="./Staff.d.ts" />
 
-import { defineComponent, ref, onMounted, onUnmounted, watch, computed } from "vue";
-import StaffDetail from "./StaffDetail/StaffDetail";
+import { defineComponent, onMounted, onUnmounted } from "vue";
 import { staffConfig } from "./Staff.config.ts";
+import { StaffController } from "./Staff.controller.ts";
 import "./Staff.scss";
 import AnimationNumberText from "@/Components/AnimationNumberText/AnimationNumberText";
 import Table from "@/Components/Table/Table";
@@ -14,242 +14,20 @@ import Radio from "@/Components/FormBuilder/Radio/Radio";
 export default defineComponent({
   name: "Staff",
   setup() {
-    const staffList = ref<StaffData[]>([]);
-    const currentPageNumber = ref(1);
-    const totalStaffCount = ref(0);
-    const activeStaffCount = ref(0);
-    const probationStaffCount = ref(0);
-    const requestComplete = ref(false);
+    // 创建 controller 实例
+    const controller = new StaffController();
 
-    const handleOpenStaffDetail = (staff: StaffData) => {
-      $popup.popup(
-        {},
-        { component: StaffDetail, props: { staffDetail: staff } },
-      );
-    };
-
-    // 搜索相关状态
-    const searchName = ref("");
-    const searchDepartment = ref("");
-    const searchStatus = ref("");
-    const searchSalaryMin = ref("");
-    const searchSalaryMax = ref("");
-    const searchGender = ref("");
-    const searchJoinDate = ref("");
-
-    // 搜索状态
-    const searching = ref(false);
-
-    // 清除按钮操作标志
-    const clearingByButton = ref(false);
-
-    // 部门选项
-    const departmentOptions = [
-      { label: "技术部", value: "Technical" },
-      { label: "资源管理部", value: "RMD" },
-      { label: "财务部", value: "Finance" },
-      { label: "产品部", value: "Product" },
-    ];
-
-    // 状态选项
-    const statusOptions = [
-      { label: "在职", value: "Active" },
-      { label: "试用", value: "Probation" },
-      { label: "离职", value: "Inactive" },
-    ];
-
-    // 性别选项
-    const genderOptions = [
-      { label: "男", value: "男" },
-      { label: "女", value: "女" },
-    ];
-
-    // 检查是否有搜索条件
-    const hasSearchConditions = () => {
-      return !!(
-        searchName.value.trim() ||
-        searchDepartment.value ||
-        searchStatus.value ||
-        searchGender.value ||
-        searchSalaryMin.value.trim() ||
-        searchSalaryMax.value.trim() ||
-        searchJoinDate.value.trim()
-      );
-    };
-
-    // 搜索函数
-    const handleSearch = () => {
-      if (searching.value) return; // 如果正在搜索，阻止重复请求
-      searching.value = true;
-      fetchStaffInfo(1, 0); // 搜索时重置到第一页
-    };
-
-    // 清除搜索
-    const clearSearch = () => {
-      if (searching.value) return; // 如果正在搜索，阻止清除操作
-      if (!hasSearchConditions()) return; // 如果没有搜索条件，不执行清除
-      clearingByButton.value = true; // 标记为通过清除按钮操作
-      searchName.value = "";
-      searchDepartment.value = "";
-      searchStatus.value = "";
-      searchSalaryMin.value = "";
-      searchSalaryMax.value = "";
-      searchGender.value = "";
-      searchJoinDate.value = "";
-      handleSearch();
-      // 重置标志
-      setTimeout(() => {
-        clearingByButton.value = false;
-      }, 100);
-    };
-
-    watch(currentPageNumber, (newPage, oldPage) => {
-      fetchStaffInfo(newPage, oldPage);
-    });
-
-    // 处理页码更改事件
-    const handlePageChange = (page: number) => {
-      currentPageNumber.value = page;
-    };
-
-    // 准备表格数据，将staff数据转换为Table组件需要的格式
-    const tableData = computed(() => {
-      return staffList.value.map((staff) => ({
-        name: staff.name,
-        gender: staff.gender || "-",
-        department: staff.department,
-        occupation: staff.occupation,
-        status: staff.status,
-        service_date: staff.service_date,
-        // 保留原始数据用于插槽
-        _raw: staff,
-      }));
-    });
-
-    // 监听所有搜索条件的变化，当手动清空所有条件时自动搜索
-    watch(
-      [
-        searchName,
-        searchDepartment,
-        searchStatus,
-        searchSalaryMin,
-        searchSalaryMax,
-        searchGender,
-        searchJoinDate,
-      ],
-      () => {
-        // 检查是否所有条件都为空
-        const allEmpty =
-          !searchName.value.trim() &&
-          !searchDepartment.value &&
-          !searchStatus.value &&
-          !searchSalaryMin.value.trim() &&
-          !searchSalaryMax.value.trim() &&
-          !searchGender.value &&
-          !searchJoinDate.value.trim();
-
-        // 如果所有条件都为空且不是通过清除按钮操作，自动触发搜索
-        if (allEmpty && !clearingByButton.value && !searching.value) {
-          handleSearch();
-        }
-      },
-    );
-
-    const fetchStaffInfo = (page = 1, old?: number) => {
-      $storage.get("userID").then((userID: string) => {
-        // 构建搜索参数
-        const searchParams: any = {
-          current_page: page,
-          user_id: userID,
-        };
-
-        // 添加搜索条件
-        if (searchName.value.trim()) {
-          searchParams.name = searchName.value.trim();
-        }
-        if (searchDepartment.value) {
-          searchParams.department = searchDepartment.value;
-        }
-        if (searchStatus.value) {
-          searchParams.status = searchStatus.value;
-        }
-        if (searchSalaryMin.value.trim()) {
-          searchParams.salary_min = parseFloat(searchSalaryMin.value.trim());
-        }
-        if (searchSalaryMax.value.trim()) {
-          searchParams.salary_max = parseFloat(searchSalaryMax.value.trim());
-        }
-        if (searchGender.value) {
-          searchParams.gender = searchGender.value;
-        }
-        if (searchJoinDate.value.trim()) {
-          searchParams.join_date = searchJoinDate.value.trim();
-        }
-
-        // 获取员工列表数据
-        $network.request(
-          "staffInfo",
-          searchParams,
-          (data: any) => {
-            updateStaffList(data);
-            totalStaffCount.value = data.total;
-            activeStaffCount.value = data.active_staff;
-            probationStaffCount.value = data.probation_staff;
-            requestComplete.value = true;
-            searching.value = false;
-          },
-          (error: any) => {
-            if (old) currentPageNumber.value = old;
-            $message.error({ message: error });
-            searching.value = false;
-          },
-        );
-      });
-    };
-
-    const updateStaffList = (...args: any[]) => {
-      if (typeof args[0] !== "string") {
-        staffList.value = args[0].data_list;
-      } else {
-        args[1].data_list.forEach((newStaff: any) => {
-          const oldStaff = staffList.value.find((s) => s.id === newStaff.id);
-          if (oldStaff) {
-            Object.assign(oldStaff, newStaff);
-          } else {
-            staffList.value.push(newStaff);
-          }
-        });
-      }
-    };
-
+    // 生命周期钩子
     onMounted(() => {
-      fetchStaffInfo();
-
-      $event.on("changeStaffStatus", () => {
-        $storage.get("userID").then((userID: string) => {
-          $network.request(
-            "staffInfo",
-            { current_page: currentPageNumber.value, user_id: userID },
-            (data: any) => {
-              updateStaffList("", data);
-              totalStaffCount.value = data.total;
-              activeStaffCount.value = data.active_staff;
-              probationStaffCount.value = data.probation_staff;
-            },
-            (error: any) => {
-              $message.error({ message: error });
-            },
-          );
-        });
-      });
+      controller.init();
     });
 
     onUnmounted(() => {
-      $event.off("changeStaffStatus");
+      controller.cleanup();
     });
 
     return () =>
-      requestComplete.value ? (
+      controller.requestComplete.value ? (
         <div class="staff">
           <div class="staff-detail">
             <div className="staff-header"></div>
@@ -257,10 +35,10 @@ export default defineComponent({
               <div class="staff-list">
                 <Table
                   titles={["名称", "性别", "部门", "职位", "状态", "入职日期"]}
-                  data={tableData.value}
-                  total={totalStaffCount.value}
+                  data={controller.tableData.value}
+                  total={controller.totalStaffCount.value}
                   pageQuantity={15}
-                  modelValue={currentPageNumber.value}
+                  modelValue={controller.currentPageNumber.value}
                   pageNumPosition="center"
                   emptyText="暂无员工数据"
                   icon={{
@@ -291,11 +69,11 @@ export default defineComponent({
                       // CEO不允许操作
                       const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
                       if (!isCEO) {
-                        handleOpenStaffDetail(row._raw);
+                        controller.handleOpenStaffDetail(row._raw);
                       }
                     },
                   }}
-                  onPageChange={handlePageChange}
+                  onPageChange={(page: number) => controller.handlePageChange(page)}
                   v-slots={{
                     "cell-0": ({ row }: any) => row.name,
                     "cell-1": ({ row }: any) => row.gender,
@@ -362,7 +140,7 @@ export default defineComponent({
                   <div class="statistics-number">
                     <div class="statistics-item">
                       <AnimationNumberText
-                        value={activeStaffCount.value}
+                        value={controller.activeStaffCount.value}
                         style={{
                           fontWeight: "bold",
                           color: "#fff",
@@ -373,7 +151,7 @@ export default defineComponent({
                     </div>
                     <div class="statistics-item">
                       <AnimationNumberText
-                        value={probationStaffCount.value}
+                        value={controller.probationStaffCount.value}
                         style={{
                           fontWeight: "bold",
                           color: "#fff",
@@ -388,17 +166,17 @@ export default defineComponent({
                       class="active-proportion"
                       style={{
                         width:
-                          (activeStaffCount.value /
-                            (activeStaffCount.value +
-                              probationStaffCount.value)) *
+                          (controller.activeStaffCount.value /
+                            (controller.activeStaffCount.value +
+                              controller.probationStaffCount.value)) *
                           100 +
                           "%",
                         borderTopRightRadius:
-                          activeStaffCount.value === totalStaffCount.value
+                          controller.activeStaffCount.value === controller.totalStaffCount.value
                             ? "8px"
                             : 0,
                         borderBottomRightRadius:
-                          activeStaffCount.value === totalStaffCount.value
+                          controller.activeStaffCount.value === controller.totalStaffCount.value
                             ? "8px"
                             : 0,
                       }}
@@ -407,19 +185,19 @@ export default defineComponent({
                       class="another-proportion"
                       style={{
                         width:
-                          (probationStaffCount.value /
-                            (activeStaffCount.value +
-                              probationStaffCount.value)) *
+                          (controller.probationStaffCount.value /
+                            (controller.activeStaffCount.value +
+                              controller.probationStaffCount.value)) *
                           100 +
                           "%",
                         borderTopLeftRadius:
-                          totalStaffCount.value - activeStaffCount.value ===
-                            totalStaffCount.value
+                          controller.totalStaffCount.value - controller.activeStaffCount.value ===
+                            controller.totalStaffCount.value
                             ? "8px"
                             : 0,
                         borderBottomLeftRadius:
-                          totalStaffCount.value - activeStaffCount.value ===
-                            totalStaffCount.value
+                          controller.totalStaffCount.value - controller.activeStaffCount.value ===
+                            controller.totalStaffCount.value
                             ? "8px"
                             : 0,
                       }}
@@ -432,7 +210,7 @@ export default defineComponent({
                     <div class="search-group">
                       <label class="search-label">姓名</label>
                       <Input
-                        v-model={searchName.value}
+                        v-model={controller.searchName.value}
                         placeHolder="输入姓名"
                         border={true}
                         clearable={true}
@@ -443,8 +221,8 @@ export default defineComponent({
                     <div class="search-group">
                       <label class="search-label">部门</label>
                       <Selector
-                        v-model={searchDepartment.value}
-                        options={departmentOptions}
+                        v-model={controller.searchDepartment.value}
+                        options={controller.departmentOptions}
                         placeholder="选择部门"
                       />
                     </div>
@@ -453,8 +231,8 @@ export default defineComponent({
                     <div class="search-group">
                       <label class="search-label">状态</label>
                       <Selector
-                        v-model={searchStatus.value}
-                        options={statusOptions}
+                        v-model={controller.searchStatus.value}
+                        options={controller.statusOptions}
                         placeholder="选择状态"
                       />
                     </div>
@@ -463,8 +241,8 @@ export default defineComponent({
                     <div class="search-group">
                       <label class="search-label">性别</label>
                       <Radio
-                        v-model={searchGender.value}
-                        options={genderOptions}
+                        v-model={controller.searchGender.value}
+                        options={controller.genderOptions}
                       />
                     </div>
 
@@ -473,7 +251,7 @@ export default defineComponent({
                       <label class="search-label">薪资范围</label>
                       <div class="range-input-group">
                         <Input
-                          v-model={searchSalaryMin.value}
+                          v-model={controller.searchSalaryMin.value}
                           placeHolder="最低"
                           border={true}
                           clearable={true}
@@ -481,7 +259,7 @@ export default defineComponent({
                         />
                         <span class="range-to">至</span>
                         <Input
-                          v-model={searchSalaryMax.value}
+                          v-model={controller.searchSalaryMax.value}
                           placeHolder="最高"
                           border={true}
                           clearable={true}
@@ -494,7 +272,7 @@ export default defineComponent({
                     <div class="search-group">
                       <label class="search-label">入职日期</label>
                       <Date
-                        v-model={searchJoinDate.value}
+                        v-model={controller.searchJoinDate.value}
                         placeholder="选择入职日期"
                         format="YYYY-MM-DD"
                         dropdownPlacement="top"
@@ -504,23 +282,23 @@ export default defineComponent({
                     {/* 操作按钮 */}
                     <div class="search-actions">
                       <button
-                        class={`search-btn search-btn-primary ${searching.value ? "loading" : ""}`}
-                        onClick={handleSearch}
-                        disabled={searching.value || !hasSearchConditions()}
+                        class={`search-btn search-btn-primary ${controller.searching.value ? "loading" : ""}`}
+                        onClick={() => controller.handleSearch()}
+                        disabled={controller.searching.value || !controller.hasSearchConditions()}
                       >
-                        {searching.value && (
+                        {controller.searching.value && (
                           <div class="loader">
                             <span class="bar"></span>
                             <span class="bar"></span>
                             <span class="bar"></span>
                           </div>
                         )}
-                        {searching.value ? "搜索中" : "搜索"}
+                        {controller.searching.value ? "搜索中" : "搜索"}
                       </button>
                       <button
-                        class={`search-btn search-btn-secondary ${searching.value ? "disabled" : ""}`}
-                        onClick={clearSearch}
-                        disabled={searching.value || !hasSearchConditions()}
+                        class={`search-btn search-btn-secondary ${controller.searching.value ? "disabled" : ""}`}
+                        onClick={() => controller.clearSearch()}
+                        disabled={controller.searching.value || !controller.hasSearchConditions()}
                       >
                         清除
                       </button>

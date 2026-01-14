@@ -1,103 +1,24 @@
 /// <reference path="./HistoryVideo.d.ts" />
-import { defineComponent, ref } from "vue";
+import { defineComponent, onMounted } from "vue";
 import "./HistoryVideo.scss";
 import VideoPlayer from "@/Components/VideoPlayer/VideoPlayer";
-import { historyVideoConfig } from "./History.config";
 import { Motion } from "motion-v";
 import Svg from "@/Components/Svg/Svg.tsx";
+import { HistoryVideoController } from "./HistoryVideo.controller.ts";
 
 export default defineComponent({
   name: "HistoryVideo",
   setup() {
-    const getLast7Days = () => {
-      const days = [];
-      for (let i = 0; i < 7; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        days.unshift(date.toLocaleDateString());
-      }
-      return days;
-    };
+    const controller = new HistoryVideoController();
 
-    const dateTimeArray = () => {
-      const datedays = getLast7Days();
-      const dateIcon = historyVideoConfig.icon;
-      const dateCur = new Date().toLocaleDateString();
-
-      return datedays.map((date, index) => {
-        const timeList = date === dateCur
-          ? Array.from(
-              { length: new Date().getHours() },
-              (_, i) => `${i.toString().padStart(2, "0")}:00`,
-            )
-          : Array.from(
-              { length: 24 },
-              (_, i) => `${i.toString().padStart(2, "0")}:00`,
-            );
-        
-        // 为每个时间项添加索引，避免后续使用 indexOf
-        const timeListWithIndex = timeList.map((time, timeIndex) => ({
-          time,
-          index: timeIndex,
-        }));
-
-        return {
-          date,
-          timeList: timeListWithIndex,
-          icon: dateIcon[new Date(date).getDay()],
-          fold: date !== dateCur,
-          index, // 保存索引，避免使用 indexOf
-        };
-      });
-    };
-
-    const toggleFold = (date: any) => {
-      // 只更新需要更新的项，避免重新创建整个数组
-      const targetIndex = dateList.value.findIndex(item => item.date === date.date);
-      if (targetIndex !== -1) {
-        const newList = [...dateList.value];
-        newList[targetIndex] = {
-          ...newList[targetIndex],
-          fold: !newList[targetIndex].fold,
-        };
-        dateList.value = newList;
-      }
-    };
-
-    const selectTime = (date: string, time: string) => {
-      selectedDateTime.value = date + "-" + time;
-    };
-
-    const dateList = ref(dateTimeArray());
-    const selectedDateTime = ref(
-      new Date().toLocaleDateString() +
-      `-${(new Date().getHours() - 1).toString().padStart(2, "0")}:00`,
-    );
-    const exportProgress = ref(0);
-    const exporting = ref(false);
-
-    const exportVideo = () => {
-      if (exporting.value) return;
-      exporting.value = true;
-      exportProgress.value = 0;
-      $timer.regular(
-        "exportVideo",
-        () => {
-          if (exportProgress.value < 100) {
-            exportProgress.value += 2;
-          } else {
-            exporting.value = false;
-            exportProgress.value = 0;
-          }
-        },
-        1000,
-      );
-    };
+    onMounted(() => {
+      controller.init();
+    });
 
     return () => (
       <div class="history-video">
-        <div class="history-time-list">
-           {dateList.value.map((date: any) => (
+        {/* <div class="history-time-list">
+           {controller.dateList.value.map((date: any) => (
             <div key={date.date} class="date-item">
               <Motion
                 initial={{ opacity: 0, x: -10 }}
@@ -127,7 +48,7 @@ export default defineComponent({
                   <div
                     onClick={(e: any) => {
                       e.stopPropagation();
-                      toggleFold(date);
+                      controller.toggleFold(date);
                     }}
                     class={["fold-icon", { folded: date.fold }]}
                   >
@@ -156,7 +77,7 @@ export default defineComponent({
                   <div class="time-list">
                     {date.timeList.map((timeItem: any) => {
                       const time = timeItem.time;
-                      const isActive = selectedDateTime.value === date.date + "-" + time;
+                      const isActive = controller.selectedDateTime.value === date.date + "-" + time;
                       return (
                         <div
                           key={time}
@@ -166,7 +87,7 @@ export default defineComponent({
                           }}
                           onClick={(e: any) => {
                             e.stopPropagation();
-                            selectTime(date.date, time);
+                            controller.selectTime(date.date, time);
                           }}
                         >
                           <Motion
@@ -201,18 +122,19 @@ export default defineComponent({
               </Motion>
             </div>
           ))}
-        </div>
+        </div> */}
         <div class="video">
-          <VideoPlayer
-            videoUrl="http://vjs.zencdn.net/v/oceans.mp4"
-            controls={true}
-            loop={true}
-            videoType="video"
-          >
+          {controller.initialized.value && (
+            <VideoPlayer
+              videoUrl="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+              controls={true}
+              loop={true}
+              videoType="video"
+            >
             <div
               class="export-video-progress"
-              style={{ "--progress": exportProgress.value / 100 }}
-              onClick={exportVideo}
+              style={{ "--progress": controller.exportProgress.value / 100 }}
+              onClick={controller.exportVideo}
             >
               <div class="export-video">
                 <Svg
@@ -229,6 +151,7 @@ export default defineComponent({
               </div>
             </div>
           </VideoPlayer>
+          )}
         </div>
       </div>
     );

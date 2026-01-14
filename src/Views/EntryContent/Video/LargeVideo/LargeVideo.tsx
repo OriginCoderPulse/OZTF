@@ -1,5 +1,5 @@
 /// <reference path="./LargeVideo.d.ts" />
-import { defineComponent } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import VideoPlayer from "@/Components/VideoPlayer/VideoPlayer";
 import "./LargeVideo.scss";
 
@@ -12,9 +12,20 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const mounted = ref(false);
+
+    onMounted(() => {
+      // 延迟加载，等待弹窗完全打开后再加载视频
+      setTimeout(() => {
+        mounted.value = true;
+      }, 200);
+    });
+
     return () => (
       <div class="large-video">
-        <VideoPlayer videoUrl={props.videoUrl} videoType="stream" />
+        {mounted.value && (
+          <VideoPlayer videoUrl={props.videoUrl} videoType="stream" />
+        )}
       </div>
     );
   },

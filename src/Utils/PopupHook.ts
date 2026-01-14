@@ -52,7 +52,7 @@ class PopupManager {
 
   alert(
     content: string,
-    onConfirm: Function,
+    onConfirm?: Function,
     onCancel?: Function,
     title?: string,
   ): void {
@@ -75,7 +75,7 @@ class PopupManager {
           that.close(id);
         },
         onConfirm() {
-          Promise.resolve().then(() => onConfirm());
+          Promise.resolve().then(() => onConfirm?.());
           that.close(id);
         },
       }),
