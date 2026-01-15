@@ -73,6 +73,18 @@ class GlobalConfig {
       retry: true,
       cache: false,
     },
+    meetCreateRoom: {
+      method: "POST",
+      path: ["meet", "create-room"],
+      retry: false,
+      cache: false,
+    },
+    meetGetRoom: {
+      method: "POST",
+      path: ["meet", "get-room"],
+      retry: false,
+      cache: false,
+    },
   };
 }
 

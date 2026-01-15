@@ -1,11 +1,11 @@
-import TRTCSDK from "trtc-sdk-v5";
+import TRTCSDK, { TRTCEventTypes } from "trtc-sdk-v5";
 
 class TRTC {
   private _sdkAppId: number = 1600122280;
   private _userId: string = "12345";
   private _userSig: string = "";
   private _sdkSecretKey: string = "948f12efcbce9604a29648ed4b0d35441f247457501e77b54b410813e1d7aae9";
-  private _rooms: Map<string, TRTCSDK> = new Map();
+  private _rooms: Map<number, TRTCSDK> = new Map();
   private _initialized: boolean = false;
 
   constructor() {
@@ -44,35 +44,95 @@ class TRTC {
     );
   }
 
-  createRoom(roomId: string): Promise<{audio:boolean, video:boolean,status:boolean}> {
+  createRoom(roomId: number): Promise<{audio:boolean, video:boolean,status:boolean}> {
     return this.ensureInitialized().then(() => {
       return new Promise<{audio:boolean, video:boolean,status:boolean}>((resolve, reject) => {
         if (!this._initialized || !this._userSig) {
           reject();
         }
-        if (!this.checkMediaDevicesSupport()) {
-          resolve({audio:false, video:false, status:false});
-        }else {
-          try {
-            const room = TRTCSDK.create();
-            this._rooms.set(roomId, room);
-            resolve({audio:true, video:true, status:true});
-          } catch (error: any) {
-            resolve({audio:true, video:true, status:false});
-          }
+        // 验证 roomId 范围
+        if (roomId < 1 || roomId > 4294967294) {
+          reject(new Error(`Room ID must be between 1 and 4294967294, got ${roomId}`));
+          return;
         }
+        try {
+          const room = TRTCSDK.create();
+          this._rooms.set(roomId, room);
+          console.log("createRoom", this._rooms, room);
+          if (!this.checkMediaDevicesSupport()) {
+            resolve({audio:false, video:false, status:true});
+          }else {
+            resolve({audio:true, video:true, status:true});
+          }
+        } catch (error: any) {
+          resolve({audio:true, video:true, status:false});
+        }
+        
       });
     })
   }
 
-  joinRoom(roomId: string): Promise<void> {
-    // 懒加载初始化
+  joinRoom(roomId: number): Promise<void> {
     return this.ensureInitialized().then(() => {
       return this._joinRoomInternal(roomId);
     })
   }
 
-  private _joinRoomInternal(roomId: string): Promise<void> {
+  closeRoom(roomId: number) {
+    this._rooms.delete(roomId);
+  }
+
+  exitRoom(roomId: number): Promise<void> {
+    const room = this._rooms.get(roomId);
+    console.log("exitRoom",room,this._rooms);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.exitRoom().then(() => {
+      room.destroy();
+      this._rooms.delete(roomId);
+    }) as Promise<void>;
+  }
+
+  openLocalAudio(roomId: number): Promise<void> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.startLocalAudio() as Promise<void>;
+  }
+
+  closeLocalAudio(roomId: number): Promise<void> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.stopLocalAudio() as Promise<void>;
+  }
+
+  openLocalVideo(roomId: number, view: string): Promise<void> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.startLocalVideo({ view }) as Promise<void>;
+  }
+
+  closeLocalVideo(roomId: number): Promise<void> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.stopLocalVideo() as Promise<void>;
+  }
+
+  listenRoomProperties(roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) {
+    this._rooms.get(roomId)?.on(event, ((...args: any[]) => {
+      callback(args[0], this._rooms.get(roomId) as TRTCSDK);
+    }) as any)
+  }
+
+  private _joinRoomInternal(roomId: number): Promise<void> {
     const room = this._rooms.get(roomId);
     if (!room) {
       $message.error({
@@ -84,16 +144,8 @@ class TRTC {
       sdkAppId: this._sdkAppId,
       userId: this._userId,
       userSig: this._userSig,
-      roomId: Number(roomId),
+      roomId,
     }) as Promise<void>;
-  }
-
-  leaveRoom(roomId: string): Promise<void> {
-    const room = this._rooms.get(roomId);
-    if (!room) {
-      return Promise.reject(new Error(`Room ${roomId} does not exist`));
-    }
-    return room.exitRoom() as Promise<void>;
   }
 }
 

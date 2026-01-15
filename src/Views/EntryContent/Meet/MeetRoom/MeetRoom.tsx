@@ -3,11 +3,21 @@ import "./MeetRoom.scss";
 import { Motion } from "motion-v";
 import Svg from "@/Components/Svg/Svg.tsx";
 import { MeetRoomController } from "./MeetRoom.controller.ts";
+import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "MeetRoom",
   setup() {
     const controller = new MeetRoomController();
+    const route = useRoute();
+
+
+    onMounted(() => {
+      const roomId = route.params.roomId as string;
+      if (roomId) {
+        controller.initRoom(Number(roomId));
+      }
+    });
 
     return () => (
       <div class="meet-room">
@@ -52,10 +62,10 @@ export default defineComponent({
         <div class="meet-operator">
           <div class="operator-list">
             <div
-              class="operator-item"
-              onClick={() => controller.toggleMicrophone()}
+              class={["operator-item", { "disabled": !controller.canOpenMicrophone.value }]}
+              onClick={() => controller.canOpenMicrophone.value && controller.toggleMicrophone()}
             >
-              {controller.microphoneState.value ? (
+              {controller.canOpenMicrophone.value ? controller.microphoneState.value ? (
                 <Fragment>
                   <Svg
                     svgPath="M512 128a128 128 0 0 0-128 128v170.666667a128 128 0 0 0 256 0V256a128 128 0 0 0-128-128z m0-85.333333a213.333333 213.333333 0 0 1 213.333333 213.333333v170.666667a213.333333 213.333333 0 0 1-426.666666 0V256a213.333333 213.333333 0 0 1 213.333333-213.333333zM130.346667 469.333333H216.32a298.752 298.752 0 0 0 591.274667 0h86.016A384.170667 384.170667 0 0 1 554.666667 808.32V981.333333h-85.333334v-173.013333A384.170667 384.170667 0 0 1 130.346667 469.333333z"
@@ -64,6 +74,7 @@ export default defineComponent({
                     class="icon"
                     fill="#dddddd"
                   />
+                  <span class="tooltip">关闭麦克风</span>
                 </Fragment>
               ) : (
                 <Fragment>
@@ -74,14 +85,24 @@ export default defineComponent({
                     class="icon"
                     fill="#dddddd"
                   />
+                  <span class="tooltip">开启麦克风</span>
                 </Fragment>
-              )}
+              ) : <Fragment>
+                <Svg
+                  svgPath="M700.8 761.130667A381.482667 381.482667 0 0 1 554.666667 808.32V981.333333h-85.333334v-173.013333A384.170667 384.170667 0 0 1 130.346667 469.333333H216.32a298.752 298.752 0 0 0 421.12 228.437334l-66.176-66.133334A213.333333 213.333333 0 0 1 298.666667 426.666667V358.997333L59.434667 119.808l60.373333-60.373333 844.757333 844.8-60.373333 60.330666-203.392-203.434666z m-315.392-315.392l107.52 107.52a128.085333 128.085333 0 0 1-107.52-107.52z m441.258667 201.088l-61.568-61.525334c21.717333-34.56 36.522667-73.813333 42.538666-115.968h86.016a381.866667 381.866667 0 0 1-66.986666 177.493334z m-124.16-124.117334l-66.048-66.048c2.304-9.642667 3.541333-19.626667 3.541333-29.994666V256a128 128 0 0 0-248.234667-44.032L327.936 148.096A213.333333 213.333333 0 0 1 725.333333 256v170.666667a212.48 212.48 0 0 1-22.784 96.042666z"
+                  width="20"
+                  height="20"
+                  class="icon-error"
+                  fill="#999999"
+                />
+                <span class="tooltip">麦克风权限未授予</span>
+              </Fragment>}
             </div>
             <div
-              class="operator-item"
-              onClick={() => controller.toggleCamera()}
+              class={["operator-item", { "disabled": !controller.canOpenCamera.value }]}
+              onClick={() => controller.canOpenCamera.value && controller.toggleCamera()}
             >
-              {controller.cameraState.value ? (
+              {controller.canOpenCamera.value ? controller.cameraState.value ? (
                 <Fragment>
                   <Svg
                     svgPath="M554.666667 256V170.666667H213.333333V85.333333h426.666667v170.666667h42.666667a42.666667 42.666667 0 0 1 42.666666 42.666667v93.866666l222.421334-155.733333a21.333333 21.333333 0 0 1 33.578666 17.493333v515.413334a21.333333 21.333333 0 0 1-33.578666 17.493333L725.333333 631.466667V810.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666V298.666667a42.666667 42.666667 0 0 1 42.666666-42.666667h469.333334z m-341.333334 170.666667v85.333333h85.333334v-85.333333H213.333333z"
@@ -90,6 +111,7 @@ export default defineComponent({
                     class="icon"
                     fill="#dddddd"
                   />
+                  <span class="tooltip">关闭摄像头</span>
                 </Fragment>
               ) : (
                 <Fragment>
@@ -100,8 +122,18 @@ export default defineComponent({
                     class="icon"
                     fill="#dddddd"
                   />
+                  <span class="tooltip">开启摄像头</span>
                 </Fragment>
-              )}
+              ) : <Fragment>
+                <Svg
+                  svgPath="M554.666667 256V170.666667H213.333333V85.333333h426.666667v170.666667h42.666667a42.666667 42.666667 0 0 1 42.666666 42.666667v93.866666l222.421334-155.733333a21.333333 21.333333 0 0 1 33.578666 17.493333v515.413334a21.333333 21.333333 0 0 1-33.578666 17.493333L725.333333 631.466667V810.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666V298.666667a42.666667 42.666667 0 0 1 42.666666-42.666667h469.333334z m85.333333 85.333333H128v426.666667h512V341.333333z m85.333333 185.984l170.666667 119.466667V377.173333l-170.666667 119.466667v30.634667zM213.333333 426.666667h85.333334v85.333333H213.333333v-85.333333z"
+                  width="20"
+                  height="20"
+                  class="icon-error"
+                  fill="#999999"
+                />
+                <span class="tooltip">摄像头权限未授予</span>
+              </Fragment>}
             </div>
             <div class="operator-item">
               <Svg
@@ -111,6 +143,7 @@ export default defineComponent({
                 class="icon"
                 fill="#dddddd"
               />
+              <span class="tooltip">屏幕共享</span>
             </div>
             <div class="operator-item">
               <Svg
@@ -123,10 +156,11 @@ export default defineComponent({
                 class="icon"
                 fill="#dddddd"
               />
+              <span class="tooltip">添加参与者</span>
             </div>
             <div
               class="operator-item"
-              onClick={() => controller.exitMeeting()}
+              onClick={() => controller.exitMeeting(Number(route.params.roomId))}
             >
               <Svg
                 svgPath={[
@@ -138,6 +172,7 @@ export default defineComponent({
                 class="icon"
                 fill="#dddddd"
               />
+              <span class="tooltip">退出会议</span>
             </div>
           </div>
         </div>

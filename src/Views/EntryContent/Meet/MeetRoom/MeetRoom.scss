@@ -72,9 +72,53 @@
         box-sizing: border-box;
         border-radius: 8px;
         cursor: pointer;
+        position: relative;
 
-        &:hover {
+        &:hover:not(.disabled) {
           background-color: #393939;
+
+          .tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-12px);
+          }
+        }
+
+        &.disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+
+          &:hover {
+            background-color: transparent;
+          }
+        }
+
+        .tooltip {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: 50%;
+          transform: translateX(-50%) translateY(0);
+          background-color: rgba(0, 0, 0, 0.85);
+          color: #ffffff;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.3s ease;
+          z-index: 1000;
+
+          &::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.85);
+          }
         }
       }
     }

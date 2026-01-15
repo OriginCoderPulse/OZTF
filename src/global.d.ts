@@ -1,4 +1,5 @@
 import { VNode } from "vue";
+import { TRTCEventTypes, TRTCSDK } from "trtc-sdk-v5";
 
 declare global {
   namespace JSX {
@@ -140,9 +141,15 @@ declare global {
       cleanup: () => Promise<void>;
     };
     $trtc: {
-      createRoom: (roomId: string) => Promise<{audio:boolean, video:boolean,status:boolean}>;
-      joinRoom: (roomId: string) => Promise<void>;
-      leaveRoom: (roomId: string) => Promise<void>;
+      createRoom: (roomId: number) => Promise<{audio:boolean, video:boolean,status:boolean}>;
+      joinRoom: (roomId: number) => Promise<void>;
+      exitRoom: (roomId: number) => Promise<void>;
+      closeRoom: (roomId: number) => void;
+      openLocalAudio: (roomId: number) => Promise<void>;
+      closeLocalAudio: (roomId: number) => Promise<void>;
+      openLocalVideo: (roomId: number, view: string) => Promise<void>;
+      closeLocalVideo: (roomId: number) => Promise<void>;
+      listenRoomProperties: (roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) => void;
     };
     $libGenerateTestUserSig: {
       genTestUserSig: (sdkAppId: number, userId: string, sdkSecretKey: string) => {

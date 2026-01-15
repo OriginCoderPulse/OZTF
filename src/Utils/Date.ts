@@ -4,6 +4,7 @@ class DateManager {
     format: string = "YYYY-MM-DD hh:mm:ss",
   ): string {
     let targetDate: Date;
+    let useUTC = false;
 
     if (date instanceof Date) {
       targetDate = date;
@@ -13,19 +14,24 @@ class DateManager {
         timestamp.toString().length === 10 ? timestamp * 1000 : timestamp,
       );
     } else {
+      // 检测是否为 UTC 时间字符串（包含 'Z' 或时区偏移）
+      const dateStr = String(date);
+      if (dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+        useUTC = true;
+      }
       targetDate = new Date(date);
       if (isNaN(targetDate.getTime())) {
         throw new Error("Invalid date format");
       }
     }
 
-    const year = targetDate.getFullYear();
+    const year = useUTC ? targetDate.getUTCFullYear() : targetDate.getFullYear();
     const shortYear = year.toString().slice(-2);
-    const month = targetDate.getMonth() + 1;
-    const day = targetDate.getDate();
-    const hours = targetDate.getHours();
-    const minutes = targetDate.getMinutes();
-    const seconds = targetDate.getSeconds();
+    const month = useUTC ? targetDate.getUTCMonth() + 1 : targetDate.getMonth() + 1;
+    const day = useUTC ? targetDate.getUTCDate() : targetDate.getDate();
+    const hours = useUTC ? targetDate.getUTCHours() : targetDate.getHours();
+    const minutes = useUTC ? targetDate.getUTCMinutes() : targetDate.getMinutes();
+    const seconds = useUTC ? targetDate.getUTCSeconds() : targetDate.getSeconds();
 
     return format
       .replace(/YYYY/g, year.toString())
