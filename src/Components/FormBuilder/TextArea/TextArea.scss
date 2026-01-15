@@ -1,0 +1,101 @@
+// 基础文本域样式
+.textarea-component {
+  outline: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #dddddd;
+  transition: all 0.2s ease;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  font-family: inherit;
+
+  &::placeholder {
+    color: #888;
+  }
+
+  &:focus {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  // 有边框的样式
+  &.with-border {
+    border: 1px solid #555;
+  }
+
+  // 无边框的样式
+  &.no-border {
+    border: none;
+    background-color: transparent;
+  }
+}
+
+// 为了兼容性，保留原有的textarea样式
+textarea {
+  @extend .textarea-component;
+  &.with-border {
+    border: 1px solid #555;
+  }
+  &.no-border {
+    border: none;
+    background-color: transparent;
+  }
+}
+
+// TextArea包装器样式
+.textarea-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+
+  .textarea-component {
+    width: 100%;
+    box-sizing: border-box;
+    // 始终预留右边距空间，避免清除按钮显示时宽度变化
+    padding-right: 32px;
+    min-height: 80px;
+  }
+
+  .textarea-clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: none;
+    color: #737373;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    z-index: 1;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    // 聚焦时显示更明显的样式
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(84, 112, 198, 0.3);
+    }
+  }
+}

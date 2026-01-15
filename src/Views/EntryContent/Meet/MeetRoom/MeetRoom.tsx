@@ -15,7 +15,9 @@ export default defineComponent({
     onMounted(() => {
       const roomId = route.params.roomId as string;
       if (roomId) {
-        controller.initRoom(Number(roomId));
+        // 将meetId（字符串格式：xxx-xxxx-xxxx）转换为roomId（数字）
+        const numericRoomId = Number(roomId.replace(/-/g, ''));
+        controller.initRoom(numericRoomId);
       }
     });
 
@@ -160,7 +162,12 @@ export default defineComponent({
             </div>
             <div
               class="operator-item"
-              onClick={() => controller.exitMeeting(Number(route.params.roomId))}
+              onClick={() => {
+                const roomId = route.params.roomId as string;
+                // 将meetId（字符串格式：xxx-xxxx-xxxx）转换为roomId（数字）
+                const numericRoomId = Number(roomId.replace(/-/g, ''));
+                controller.exitMeeting(numericRoomId);
+              }}
             >
               <Svg
                 svgPath={[

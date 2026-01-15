@@ -44,17 +44,13 @@ class TRTC {
     );
   }
 
-  createRoom(roomId: number): Promise<{audio:boolean, video:boolean,status:boolean}> {
+  createTRTC(roomId: number): Promise<{audio:boolean, video:boolean,status:boolean}> {
     return this.ensureInitialized().then(() => {
       return new Promise<{audio:boolean, video:boolean,status:boolean}>((resolve, reject) => {
         if (!this._initialized || !this._userSig) {
           reject();
         }
-        // 验证 roomId 范围
-        if (roomId < 1 || roomId > 4294967294) {
-          reject(new Error(`Room ID must be between 1 and 4294967294, got ${roomId}`));
-          return;
-        }
+        
         try {
           const room = TRTCSDK.create();
           this._rooms.set(roomId, room);
@@ -80,6 +76,13 @@ class TRTC {
 
   closeRoom(roomId: number) {
     this._rooms.delete(roomId);
+  }
+
+  /**
+   * 检查房间是否存在
+   */
+  hasRoom(roomId: number): boolean {
+    return this._rooms.has(roomId);
   }
 
   exitRoom(roomId: number): Promise<void> {

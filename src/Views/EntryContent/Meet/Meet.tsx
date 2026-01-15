@@ -1,6 +1,6 @@
 /// <reference path="./Meet.d.ts" />
 
-import { defineComponent, onMounted } from "vue";
+import { defineComponent, onMounted, onUnmounted } from "vue";
 import "./Meet.scss";
 import { motion, Motion } from "motion-v";
 import { MeetController } from "./Meet.controller.ts";
@@ -13,7 +13,12 @@ export default defineComponent({
     const controller = new MeetController();
 
     onMounted(() => {
+      controller.init();
       controller.initMeetList();
+    });
+
+    onUnmounted(() => {
+      controller.destroy();
     });
 
     return () => (
@@ -28,7 +33,7 @@ export default defineComponent({
               y: -2,
               transition: { duration: 0.2, ease: "easeInOut" },
             }}
-            class="meet-create meet-btn"
+            class="meet-create-btn meet-btn"
             onClick={() => controller.handleCreateMeet()}
           >
             创建会议
@@ -42,7 +47,7 @@ export default defineComponent({
               y: -2,
               transition: { duration: 0.2, ease: "easeInOut" },
             }}
-            class="meet-join meet-btn"
+            class="meet-join-btn meet-btn"
             onClick={() => controller.handleJoinMeet()}
           >
             加入会议
@@ -67,7 +72,7 @@ export default defineComponent({
                   </div>
                   <div className="content-item">
                     <div className="item-title">会议时间</div>
-                    <div className="item-value">{$date.format(meet.startTime, "YYYY-MM-DD hh:mm:ss")}</div>
+                    <div className="item-value">{$date.format(meet.startTime, "YYYY-MM-DD HH:mm:ss")}</div>
                   </div>
                   <div className="content-item">
                     <div className="item-title">会议时长</div>
@@ -78,24 +83,39 @@ export default defineComponent({
                     <div className="item-value">{meet.description}</div>
                   </div>
                 </div>
-                {controller.canConcludeAndCancelMeet(meet.meetID) || controller.canEnterMeet(meet.meetID) && (
+                {(controller.canConcludeMeet(meet.meetId) || controller.canEnterMeet(meet.meetId) || controller.canCancelMeet(meet.meetId)) && (
                   <div className="record-item-footer-button">
-                  {controller.canEnterMeet(meet.meetId) && (
-                    <div className="enter-button">
-                      入会
-                    </div>
-                  )}
-                  {controller.canConcludeAndCancelMeet(meet.meetId) && (
-                    <div className="conclude-button">
-                      结会
-                    </div>
-                  )}
-                  {controller.canConcludeAndCancelMeet(meet.meetId) && (
-                    <div className="cancel-button">
-                      取消
-                    </div>
-                  )}
-                </div>
+                    {controller.canEnterMeet(meet.meetId) && (
+                      <div 
+                        className="enter-button" 
+                        onClick={async () => {
+                          if (controller.isCurrentMeeting(meet.meetId)) {
+                            await controller.handleReturnToMeet();
+                          } else {
+                            await controller.handleEnterMeet(meet.meetId, meet.topic);
+                          }
+                        }}
+                      >
+                        {controller.isCurrentMeeting(meet.meetId) ? "返回" : "入会"}
+                      </div>
+                    )}
+                    {controller.canConcludeMeet(meet.meetId) && (
+                      <div 
+                        className="conclude-button"
+                        onClick={() => controller.handleConcludeMeet(meet.meetId)}
+                      >
+                        结会
+                      </div>
+                    )}
+                    {controller.canCancelMeet(meet.meetId) && (
+                      <div 
+                        className="cancel-button"
+                        onClick={() => controller.handleCancelMeet(meet.meetId)}
+                      >
+                        取消
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             ))}

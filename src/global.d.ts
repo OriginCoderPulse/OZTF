@@ -102,12 +102,14 @@ declare global {
       }) => void;
     };
     $date: {
-      format: (date: Date | string | number, format: string) => string;
+      format: (date: Date | string | number, format?: string, useLocalTime?: boolean) => string;
       isSameDay: (
         date1: Date | string | number,
         date2: Date | string | number,
       ) => boolean;
       isToday: (date: Date | string | number) => boolean;
+      toUTCString: (date: Date) => string;
+      fromUTCString: (utcString: string) => Date;
     };
     $storage: {
       get: (key: string) => Promise<string>;
@@ -141,10 +143,11 @@ declare global {
       cleanup: () => Promise<void>;
     };
     $trtc: {
-      createRoom: (roomId: number) => Promise<{audio:boolean, video:boolean,status:boolean}>;
+      createTRTC: (roomId: number) => Promise<{audio:boolean, video:boolean,status:boolean}>;
       joinRoom: (roomId: number) => Promise<void>;
       exitRoom: (roomId: number) => Promise<void>;
       closeRoom: (roomId: number) => void;
+      hasRoom: (roomId: number) => boolean;
       openLocalAudio: (roomId: number) => Promise<void>;
       closeLocalAudio: (roomId: number) => Promise<void>;
       openLocalVideo: (roomId: number, view: string) => Promise<void>;

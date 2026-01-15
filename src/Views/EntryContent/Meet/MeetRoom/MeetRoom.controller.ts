@@ -24,16 +24,17 @@ export class MeetRoomController {
           });
         }
         $trtc.joinRoom(roomId).catch(() => {
-          invoke("close_meeting_window")
+          // invoke("close_meeting_window")
         });
       } else {
-        invoke("close_meeting_window")
+        // invoke("close_meeting_window")
       }
     } catch (error: any) {
+      console.log(error);
       $message.error({
         message: "初始化房间失败: " + (error?.message || "未知错误"),
       });
-      invoke("close_meeting_window")
+      // invoke("close_meeting_window")
     }
   }
 

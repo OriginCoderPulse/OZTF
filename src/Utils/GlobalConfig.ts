@@ -85,6 +85,12 @@ class GlobalConfig {
       retry: false,
       cache: false,
     },
+    meetStatusChange: {
+      method: "POST",
+      path: ["meet", "status-change"],
+      retry: false,
+      cache: false,
+    },
   };
 }
 

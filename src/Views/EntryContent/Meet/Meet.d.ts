@@ -1,5 +1,5 @@
 interface MeetList {
-  meetId: number;
+  meetId: string; // 字符串格式：xxx-xxxx-xxxx
   topic: string;
   description: string;
   startTime: string;

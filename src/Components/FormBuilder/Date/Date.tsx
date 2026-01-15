@@ -50,6 +50,10 @@ export default defineComponent({
             type: String,
             default: 'bottom',
             validator: (value: string) => ['top', 'bottom'].includes(value)
+        },
+        showTime: {
+            type: Boolean,
+            default: false
         }
     },
     emits: ['update:modelValue', 'change', 'focus', 'blur'],
@@ -60,6 +64,15 @@ export default defineComponent({
 
         // 单日期模式
         const selectedDate = ref<Date | null>(null)
+        
+        // 时间选择（小时和分钟）
+        const selectedHour = ref<number>(new Date().getHours())
+        const selectedMinute = ref<number>(new Date().getMinutes())
+        // 正在编辑的时间值（用于输入时显示原始值）
+        const editingHour = ref<string>('')
+        const editingMinute = ref<string>('')
+        const isEditingHour = ref<boolean>(false)
+        const isEditingMinute = ref<boolean>(false)
 
         // 周期日期模式
         const selectedRange = ref<{ start: Date | null, end: Date | null }>({
@@ -100,6 +113,11 @@ export default defineComponent({
                 if (selectedDate.value) {
                     currentMonth.value = selectedDate.value.getMonth()
                     currentYear.value = selectedDate.value.getFullYear()
+                    // 如果格式包含时间，提取小时和分钟
+                    if (props.format.includes('HH') || props.format.includes('hh')) {
+                        selectedHour.value = selectedDate.value.getHours()
+                        selectedMinute.value = selectedDate.value.getMinutes()
+                    }
                 }
             } else if (isRangeMode.value) {
                 if (Array.isArray(newValue) && newValue.length === 2) {
@@ -345,15 +363,26 @@ export default defineComponent({
             currentYear.value += delta
         }
 
+        // 合并日期和时间
+        const mergeDateTime = (date: Date): Date => {
+            const merged = new Date(date)
+            merged.setHours(selectedHour.value)
+            merged.setMinutes(selectedMinute.value)
+            merged.setSeconds(0)
+            merged.setMilliseconds(0)
+            return merged
+        }
+
         const selectDate = (day: any) => {
             if (day.isDisabled || day.month !== 'current') {
                 return;
             }
 
             if (isSingleMode.value) {
-                selectedDate.value = day.date
-                emit('update:modelValue', formatDisplayValue(day.date))
-                emit('change', day.date)
+                const dateWithTime = mergeDateTime(day.date)
+                selectedDate.value = dateWithTime
+                emit('update:modelValue', formatDisplayValue(dateWithTime))
+                emit('change', dateWithTime)
             } else if (isRangeMode.value) {
                 if (isSelectingStart.value) {
                     selectedRange.value.start = day.date
@@ -448,6 +477,8 @@ export default defineComponent({
             showDateSelect.value = false
             emit('blur')
         }
+
+
 
         onMounted(() => {
             document.addEventListener('click', handleDocumentClick);
@@ -638,16 +669,165 @@ export default defineComponent({
                                     onClick={(e: Event) => {
                                         e.stopPropagation();
                                         const today = new Date()
-                                        selectedDate.value = today
+                                        selectedDate.value = mergeDateTime(today)
                                         currentMonth.value = today.getMonth()
                                         currentYear.value = today.getFullYear()
-                                        emit('update:modelValue', formatDisplayValue(today))
-                                        emit('change', today)
+                                        selectedHour.value = today.getHours()
+                                        selectedMinute.value = today.getMinutes()
+                                        emit('update:modelValue', formatDisplayValue(selectedDate.value))
+                                        emit('change', selectedDate.value)
                                         showDateSelect.value = false
                                     }}
                                 >
                                     今天
                                 </button>
+                                {props.showTime && (
+                                    <div class="time-picker">
+                                        <div class="time-scroll-container">
+                                            <input
+                                                type="text"
+                                                class="time-input"
+                                                value={isEditingHour.value ? editingHour.value : String(selectedHour.value).padStart(2, '0')}
+                                                maxLength={2}
+                                                onFocus={(e: Event) => {
+                                                    e.stopPropagation();
+                                                    isEditingHour.value = true;
+                                                    editingHour.value = String(selectedHour.value).padStart(2, '0');
+                                                }}
+                                                onInput={(e: Event) => {
+                                                    const target = e.target as HTMLInputElement;
+                                                    const value = target.value.replace(/[^0-9]/g, '');
+                                                    editingHour.value = value;
+                                                    
+                                                    if (value === '') {
+                                                        return;
+                                                    }
+                                                    
+                                                    const num = parseInt(value);
+                                                    if (!isNaN(num)) {
+                                                        if (num >= 0 && num <= 23) {
+                                                            selectedHour.value = num;
+                                                            if (selectedDate.value) {
+                                                                const updated = mergeDateTime(selectedDate.value);
+                                                                selectedDate.value = updated;
+                                                                emit('update:modelValue', formatDisplayValue(updated));
+                                                                emit('change', updated);
+                                                            }
+                                                        } else if (num > 23) {
+                                                            selectedHour.value = 23;
+                                                            editingHour.value = '23';
+                                                            if (selectedDate.value) {
+                                                                const updated = mergeDateTime(selectedDate.value);
+                                                                selectedDate.value = updated;
+                                                                emit('update:modelValue', formatDisplayValue(updated));
+                                                                emit('change', updated);
+                                                            }
+                                                        }
+                                                    }
+                                                }}
+                                                onBlur={(e: Event) => {
+                                                    const target = e.target as HTMLInputElement;
+                                                    isEditingHour.value = false;
+                                                    const value = target.value.replace(/[^0-9]/g, '');
+                                                    if (value === '') {
+                                                        selectedHour.value = 0;
+                                                        editingHour.value = '';
+                                                    } else {
+                                                        const num = parseInt(value);
+                                                        if (!isNaN(num)) {
+                                                            if (num >= 0 && num <= 23) {
+                                                                selectedHour.value = num;
+                                                            } else if (num > 23) {
+                                                                selectedHour.value = 23;
+                                                            }
+                                                        }
+                                                    }
+                                                    editingHour.value = '';
+                                                    if (selectedDate.value) {
+                                                        const updated = mergeDateTime(selectedDate.value);
+                                                        selectedDate.value = updated;
+                                                        emit('update:modelValue', formatDisplayValue(updated));
+                                                        emit('change', updated);
+                                                    }
+                                                }}
+                                                onClick={(e: Event) => {
+                                                    e.stopPropagation();
+                                                }}
+                                            />
+                                            <div class="time-separator">:</div>
+                                            <input
+                                                type="text"
+                                                class="time-input"
+                                                value={isEditingMinute.value ? editingMinute.value : String(selectedMinute.value).padStart(2, '0')}
+                                                maxLength={2}
+                                                onFocus={(e: Event) => {
+                                                    e.stopPropagation();
+                                                    isEditingMinute.value = true;
+                                                    editingMinute.value = String(selectedMinute.value).padStart(2, '0');
+                                                }}
+                                                onInput={(e: Event) => {
+                                                    const target = e.target as HTMLInputElement;
+                                                    const value = target.value.replace(/[^0-9]/g, '');
+                                                    editingMinute.value = value;
+                                                    
+                                                    if (value === '') {
+                                                        return;
+                                                    }
+                                                    
+                                                    const num = parseInt(value);
+                                                    if (!isNaN(num)) {
+                                                        if (num >= 0 && num <= 59) {
+                                                            selectedMinute.value = num;
+                                                            if (selectedDate.value) {
+                                                                const updated = mergeDateTime(selectedDate.value);
+                                                                selectedDate.value = updated;
+                                                                emit('update:modelValue', formatDisplayValue(updated));
+                                                                emit('change', updated);
+                                                            }
+                                                        } else if (num > 59) {
+                                                            selectedMinute.value = 59;
+                                                            editingMinute.value = '59';
+                                                            if (selectedDate.value) {
+                                                                const updated = mergeDateTime(selectedDate.value);
+                                                                selectedDate.value = updated;
+                                                                emit('update:modelValue', formatDisplayValue(updated));
+                                                                emit('change', updated);
+                                                            }
+                                                        }
+                                                    }
+                                                }}
+                                                onBlur={(e: Event) => {
+                                                    const target = e.target as HTMLInputElement;
+                                                    isEditingMinute.value = false;
+                                                    const value = target.value.replace(/[^0-9]/g, '');
+                                                    if (value === '') {
+                                                        selectedMinute.value = 0;
+                                                        editingMinute.value = '';
+                                                    } else {
+                                                        const num = parseInt(value);
+                                                        if (!isNaN(num)) {
+                                                            if (num >= 0 && num <= 59) {
+                                                                selectedMinute.value = num;
+                                                            } else if (num > 59) {
+                                                                selectedMinute.value = 59;
+                                                            }
+                                                        }
+                                                    }
+                                                    editingMinute.value = '';
+                                                    if (selectedDate.value) {
+                                                        const updated = mergeDateTime(selectedDate.value);
+                                                        selectedDate.value = updated;
+                                                        emit('update:modelValue', formatDisplayValue(updated));
+                                                        emit('change', updated);
+                                                    }
+                                                }}
+                                                onClick={(e: Event) => {
+                                                    e.stopPropagation();
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </Motion>
