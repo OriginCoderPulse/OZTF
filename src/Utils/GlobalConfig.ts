@@ -1,5 +1,5 @@
 class GlobalConfig {
-  appName = "壹零贰肆";
+  appName = "dadada";
   urls = {
     initial: {
       method: "POST",
@@ -88,6 +88,24 @@ class GlobalConfig {
     meetStatusChange: {
       method: "POST",
       path: ["meet", "status-change"],
+      retry: false,
+      cache: false,
+    },
+    meetAddInnerParticipant: {
+      method: "POST",
+      path: ["meet", "add-inner-participant"],
+      retry: false,
+      cache: false,
+    },
+    meetRemoveInnerParticipant: {
+      method: "POST",
+      path: ["meet", "remove-inner-participant"],
+      retry: false,
+      cache: false,
+    },
+    meetGetParticipants: {
+      method: "POST",
+      path: ["meet", "get-meeting-participants"],
       retry: false,
       cache: false,
     },

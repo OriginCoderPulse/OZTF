@@ -17,11 +17,8 @@ export class MeetController {
    * 将meetId（字符串格式：xxx-xxxx-xxxx）转换为roomId（数字）
    */
   private meetIdToRoomId(meetId: string | number): number {
-    if (typeof meetId === 'number') {
-      return meetId;
-    }
-    // 移除所有连字符并转换为数字
-    return Number(meetId.replace(/-/g, ''));
+    // 使用工具函数确保 roomId 在有效范围内
+    return $roomformat.roomIdToNumber(meetId);
   }
 
   private handleMeetCreated = () => {
@@ -31,14 +28,19 @@ export class MeetController {
   public init() {
     // 监听会议创建事件
     window.addEventListener("meet-created", this.handleMeetCreated);
-      // 监听会议窗口关闭事件（在主窗口中监听）
-      // 使用 Tauri 事件监听
-      import("@tauri-apps/api/event").then(({ listen }) => {
-        listen("canJoinRoom", () => {
-          this.currentMeetingId.value = null;
-          this.currentRoomId.value = null;
-        });
+    // 监听会议窗口关闭事件（在主窗口中监听）
+    // 使用 Tauri 事件监听
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("canJoinRoom", async () => {
+        this.currentMeetingId.value = null;
+        this.currentRoomId.value = null;
+        // 清除存储的状态
+        await $storage.remove("currentMeetingId");
       });
+    });
+
+    // 恢复当前会议状态（如果会议窗口还在）
+    this.restoreCurrentMeeting();
   }
 
   public destroy() {
@@ -51,14 +53,67 @@ export class MeetController {
       this.userID.value = userID;
       $storage.get("permission").then((permission: string) => {
         this.userPermission.value = permission;
-        $network.request("meetGetRoom", {userId: userID}, (result: any) => {
+        $network.request("meetGetRoom", { userId: userID }, (result: any) => {
           this.meetList.value = result.data_list;
           this.meetListLoading.value = false;
+          // 在加载完会议列表后，再次尝试恢复当前会议状态
+          this.restoreCurrentMeeting();
         }, () => {
           this.meetListLoading.value = false;
         });
       });
     });
+  }
+
+  /**
+   * 恢复当前会议状态（检查是否有会议窗口存在）
+   */
+  private async restoreCurrentMeeting() {
+    try {
+      // 首先尝试从存储中恢复
+      const savedMeetingId = await $storage.get("currentMeetingId");
+      if (savedMeetingId) {
+        // 检查窗口是否存在
+        const window = await WebviewWindow.getByLabel("meet-room");
+        if (window) {
+          const isVisible = await window.isVisible();
+          if (isVisible) {
+            // 窗口存在且可见，恢复状态
+            this.currentMeetingId.value = savedMeetingId;
+            this.currentRoomId.value = this.meetIdToRoomId(savedMeetingId);
+            return;
+          }
+        }
+        // 窗口不存在，清除存储的状态
+        await $storage.remove("currentMeetingId");
+      }
+
+      // 如果存储中没有，检查 TRTC 是否有活跃的房间
+      this.checkTRTCActiveRooms();
+    } catch (error) {
+      // 出错时也检查 TRTC 房间
+      this.checkTRTCActiveRooms();
+    }
+  }
+
+  /**
+   * 检查 TRTC 是否有活跃的房间（作为备用检查）
+   */
+  private checkTRTCActiveRooms() {
+    // 遍历会议列表，检查是否有对应的 TRTC 房间存在
+    for (const meet of this.meetList.value) {
+      if (meet.status === "InProgress") {
+        const roomId = this.meetIdToRoomId(meet.meetId);
+        if ($trtc.hasRoom(roomId)) {
+          // 找到活跃的房间，恢复状态
+          this.currentMeetingId.value = meet.meetId;
+          this.currentRoomId.value = roomId;
+          // 保存到存储
+          $storage.set("currentMeetingId", meet.meetId);
+          break;
+        }
+      }
+    }
   }
 
   /**
@@ -133,7 +188,7 @@ export class MeetController {
           console.log("退出原会议失败:", error?.message || error);
         }
       }
-      
+
       // 关闭当前会议窗口（使用 Tauri 命令，避免权限问题）
       try {
         const { invoke } = await import("@tauri-apps/api/core");
@@ -152,11 +207,13 @@ export class MeetController {
           console.log("关闭窗口失败:", closeError?.message || closeError);
         }
       }
-      
+
       // 清空当前会议信息
       this.currentMeetingId.value = null;
       this.currentRoomId.value = null;
-      
+      // 清除存储的状态
+      await $storage.remove("currentMeetingId");
+
       // 进入新会议
       await this.openMeetingWindow(newMeetId, topic);
     } catch (error: any) {
@@ -186,10 +243,12 @@ export class MeetController {
         titleBarStyle: "overlay",
         closable: false,
       });
-      
+
       // 设置当前会议ID和roomId
       this.currentMeetingId.value = meetId;
       this.currentRoomId.value = roomId;
+      // 保存到存储，以便页面重新加载时恢复
+      await $storage.set("currentMeetingId", meetId);
     } catch (error: any) {
       $message.error({
         message: "打开会议窗口失败: " + (error?.message || "未知错误"),
@@ -276,6 +335,8 @@ export class MeetController {
                   await invoke("close_meeting_window");
                   this.currentMeetingId.value = null;
                   this.currentRoomId.value = null;
+                  // 清除存储的状态
+                  await $storage.remove("currentMeetingId");
                 } catch (error: any) {
                   console.log("退出会议房间失败:", error);
                 }
@@ -334,6 +395,8 @@ export class MeetController {
                   await invoke("close_meeting_window");
                   this.currentMeetingId.value = null;
                   this.currentRoomId.value = null;
+                  // 清除存储的状态
+                  await $storage.remove("currentMeetingId");
                 } catch (error: any) {
                   console.log("退出会议房间失败:", error);
                 }

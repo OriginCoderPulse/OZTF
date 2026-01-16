@@ -19,6 +19,7 @@ export class MeetCreateController {
     { value: 60, label: "60分钟" },
     { value: 90, label: "90分钟" },
     { value: 120, label: "120分钟" },
+    { value: 7 * 24 * 60, label: "测试专用（7天）" },
   ]);
 
   // 提交状态
@@ -91,9 +92,9 @@ export class MeetCreateController {
     }
 
     // 验证时长是否在允许的选项中
-    const allowedDurations = [30, 60, 90, 120];
+    const allowedDurations = [30, 60, 90, 120, 7 * 24 * 60];
     if (!this.duration.value || !allowedDurations.includes(this.duration.value)) {
-      $message.error({ message: "请选择有效的会议时长（30、60、90或120分钟）" });
+      $message.error({ message: "请选择有效的会议时长" });
       return false;
     }
 

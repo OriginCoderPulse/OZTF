@@ -1,4 +1,4 @@
-import { defineComponent, Fragment, onMounted } from "vue";
+import { defineComponent, Fragment, onMounted, onUnmounted } from "vue";
 import "./MeetRoom.scss";
 import { Motion } from "motion-v";
 import Svg from "@/Components/Svg/Svg.tsx";
@@ -10,21 +10,35 @@ export default defineComponent({
   setup() {
     const controller = new MeetRoomController();
     const route = useRoute();
-
+    let meetId: string = "";
 
     onMounted(() => {
       const roomId = route.params.roomId as string;
       if (roomId) {
-        // 将meetId（字符串格式：xxx-xxxx-xxxx）转换为roomId（数字）
-        const numericRoomId = Number(roomId.replace(/-/g, ''));
-        controller.initRoom(numericRoomId);
+        meetId = roomId;
+        try {
+          const numericRoomId = $roomformat.roomIdToNumber(roomId);
+          controller.initRoom(roomId, numericRoomId);
+        } catch (error: any) {
+          console.error('RoomId 转换失败:', error);
+          $message.error({
+            message: '会议ID格式错误: ' + (error?.message || '未知错误'),
+          });
+        }
+      }
+    });
+
+    onUnmounted(() => {
+      // 组件卸载时，尝试删除内部参与人
+      if (meetId) {
+        controller.cleanup(meetId).catch(console.error);
       }
     });
 
     return () => (
       <div class="meet-room">
         <div class="meet-main">
-          <div class="meet-video">
+          <div id="meet-video" class="meet-video">
             <div
               class="show-participant"
               onClick={() => controller.toggleParticipant()}
@@ -56,16 +70,43 @@ export default defineComponent({
               height: "100%",
               marginLeft: controller.showParticipant.value ? 15 : 0,
             }}
-            exit={{ width: 0, height: "100%", marginLeft: 0 }}
+            exit={{ width: 0, height: "100%", marginLeft: 0, padding: 10 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             class="meet-participant"
-          ></Motion>
+          >
+
+            {controller.participantList.value
+              .filter(participant => participant.participantId !== controller.userId.value)
+              .map(participant => {
+                const videoState = controller.getParticipantVideoState(participant.participantId);
+                return (
+                  <div id={`${participant.participantId}_remote_video`} class="meet-participant-video">
+                    {!videoState && (
+                      <div class="video-placeholder">
+                        <Svg
+                          svgPath="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z m-32-196h64v-64h-64v64z m0-128h64V320h-64v320z"
+                          width="48"
+                          height="48"
+                          fill="#999999"
+                        />
+                        <span class="placeholder-text">摄像头已关闭</span>
+                      </div>
+                    )}
+                    <div class="participant-name">{participant.name}</div>
+                  </div>
+                );
+              })}
+          </Motion>
         </div>
         <div class="meet-operator">
           <div class="operator-list">
             <div
               class={["operator-item", { "disabled": !controller.canOpenMicrophone.value }]}
-              onClick={() => controller.canOpenMicrophone.value && controller.toggleMicrophone()}
+              onClick={() => {
+                if (controller.canOpenMicrophone.value) {
+                  controller.toggleMicrophone();
+                }
+              }}
             >
               {controller.canOpenMicrophone.value ? controller.microphoneState.value ? (
                 <Fragment>
@@ -102,12 +143,16 @@ export default defineComponent({
             </div>
             <div
               class={["operator-item", { "disabled": !controller.canOpenCamera.value }]}
-              onClick={() => controller.canOpenCamera.value && controller.toggleCamera()}
+              onClick={() => {
+                if (controller.canOpenCamera.value) {
+                  controller.toggleCamera("meet-video");
+                }
+              }}
             >
               {controller.canOpenCamera.value ? controller.cameraState.value ? (
                 <Fragment>
                   <Svg
-                    svgPath="M554.666667 256V170.666667H213.333333V85.333333h426.666667v170.666667h42.666667a42.666667 42.666667 0 0 1 42.666666 42.666667v93.866666l222.421334-155.733333a21.333333 21.333333 0 0 1 33.578666 17.493333v515.413334a21.333333 21.333333 0 0 1-33.578666 17.493333L725.333333 631.466667V810.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666V298.666667a42.666667 42.666667 0 0 1 42.666666-42.666667h469.333334z m-341.333334 170.666667v85.333333h85.333334v-85.333333H213.333333z"
+                    svgPath="M873.770667 314.922667c19.797333-12.202667 37.632-2.048 37.632 18.304v335.232c0 24.362667-15.872 32.512-37.632 18.261333l-112.938667-67.029333c-19.797333-12.202667-37.632-26.453333-37.632-46.72V424.618667c0-18.261333 17.834667-30.464 37.632-42.666667l112.938667-67.029333zM207.232 288h391.936c43.562667 0 79.232 32 79.232 71.125333v305.749334c0 39.125333-35.669333 71.125333-79.232 71.125333H207.232C163.669333 736 128 704 128 664.874667V359.125333C128 320 163.669333 288 207.232 288z"
                     width="20"
                     height="20"
                     class="icon"
@@ -118,7 +163,7 @@ export default defineComponent({
               ) : (
                 <Fragment>
                   <Svg
-                    svgPath="M554.666667 256V170.666667H213.333333V85.333333h426.666667v170.666667h42.666667a42.666667 42.666667 0 0 1 42.666666 42.666667v93.866666l222.421334-155.733333a21.333333 21.333333 0 0 1 33.578666 17.493333v515.413334a21.333333 21.333333 0 0 1-33.578666 17.493333L725.333333 631.466667V810.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666V298.666667a42.666667 42.666667 0 0 1 42.666666-42.666667h469.333334z m85.333333 85.333333H128v426.666667h512V341.333333z m85.333333 185.984l170.666667 119.466667V377.173333l-170.666667 119.466667v30.634667zM213.333333 426.666667h85.333334v85.333333H213.333333v-85.333333z"
+                    svgPath="M873.770667 314.922667c19.797333-12.202667 37.632-2.048 37.632 18.304v335.232c0 24.362667-15.872 32.512-37.632 18.261333l-112.938667-67.029333c-19.797333-12.202667-37.632-26.453333-37.632-46.72V424.618667c0-18.261333 17.834667-30.464 37.632-42.666667l112.938667-67.029333zM385.152 288h214.016c43.562667 0 79.232 32 79.232 71.125333v222.122667L385.152 288z m256.042667 437.077333a85.333333 85.333333 0 0 1-42.026667 10.922667H207.232C163.669333 736 128 704 128 664.874667V359.125333c0-38.186667 34.005333-69.632 76.16-71.082666l437.034667 437.034666zM145.28 183.893333l45.226667-45.226666 678.826666 678.826666-45.226666 45.226667z"
                     width="20"
                     height="20"
                     class="icon"
@@ -128,7 +173,7 @@ export default defineComponent({
                 </Fragment>
               ) : <Fragment>
                 <Svg
-                  svgPath="M554.666667 256V170.666667H213.333333V85.333333h426.666667v170.666667h42.666667a42.666667 42.666667 0 0 1 42.666666 42.666667v93.866666l222.421334-155.733333a21.333333 21.333333 0 0 1 33.578666 17.493333v515.413334a21.333333 21.333333 0 0 1-33.578666 17.493333L725.333333 631.466667V810.666667a42.666667 42.666667 0 0 1-42.666666 42.666666H85.333333a42.666667 42.666667 0 0 1-42.666666-42.666666V298.666667a42.666667 42.666667 0 0 1 42.666666-42.666667h469.333334z m85.333333 85.333333H128v426.666667h512V341.333333z m85.333333 185.984l170.666667 119.466667V377.173333l-170.666667 119.466667v30.634667zM213.333333 426.666667h85.333334v85.333333H213.333333v-85.333333z"
+                  svgPath="M873.770667 314.922667c19.797333-12.202667 37.632-2.048 37.632 18.304v335.232c0 24.362667-15.872 32.512-37.632 18.261333l-112.938667-67.029333c-19.797333-12.202667-37.632-26.453333-37.632-46.72V424.618667c0-18.261333 17.834667-30.464 37.632-42.666667l112.938667-67.029333zM385.152 288h214.016c43.562667 0 79.232 32 79.232 71.125333v222.122667L385.152 288z m256.042667 437.077333a85.333333 85.333333 0 0 1-42.026667 10.922667H207.232C163.669333 736 128 704 128 664.874667V359.125333c0-38.186667 34.005333-69.632 76.16-71.082666l437.034667 437.034666zM145.28 183.893333l45.226667-45.226666 678.826666 678.826666-45.226666 45.226667z"
                   width="20"
                   height="20"
                   class="icon-error"
@@ -164,9 +209,15 @@ export default defineComponent({
               class="operator-item"
               onClick={() => {
                 const roomId = route.params.roomId as string;
-                // 将meetId（字符串格式：xxx-xxxx-xxxx）转换为roomId（数字）
-                const numericRoomId = Number(roomId.replace(/-/g, ''));
-                controller.exitMeeting(numericRoomId);
+                try {
+                  const numericRoomId = $roomformat.roomIdToNumber(roomId);
+                  controller.exitMeeting(numericRoomId);
+                } catch (error: any) {
+                  console.error('RoomId 转换失败:', error);
+                  $message.error({
+                    message: '会议ID格式错误: ' + (error?.message || '未知错误'),
+                  });
+                }
               }}
             >
               <Svg

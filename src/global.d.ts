@@ -3,7 +3,7 @@ import { TRTCEventTypes, TRTCSDK } from "trtc-sdk-v5";
 
 declare global {
   namespace JSX {
-    interface Element extends VNode {}
+    interface Element extends VNode { }
     interface ElementClass {
       $props: {};
     }
@@ -143,7 +143,7 @@ declare global {
       cleanup: () => Promise<void>;
     };
     $trtc: {
-      createTRTC: (roomId: number) => Promise<{audio:boolean, video:boolean,status:boolean}>;
+      createTRTC: (roomId: number) => Promise<{ audio: boolean, video: boolean, status: boolean }>;
       joinRoom: (roomId: number) => Promise<void>;
       exitRoom: (roomId: number) => Promise<void>;
       closeRoom: (roomId: number) => void;
@@ -152,6 +152,8 @@ declare global {
       closeLocalAudio: (roomId: number) => Promise<void>;
       openLocalVideo: (roomId: number, view: string) => Promise<void>;
       closeLocalVideo: (roomId: number) => Promise<void>;
+      muteRemoteAudio: (roomId: number, userId: string, mute: boolean) => Promise<void>;
+      muteRemoteVideo: (roomId: number, userId: string, streamType: string | number, view: string) => Promise<void>;
       listenRoomProperties: (roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) => void;
     };
     $libGenerateTestUserSig: {
@@ -159,6 +161,10 @@ declare global {
         sdkAppId: number;
         userSig: string;
       };
+    };
+    $roomformat: {
+      roomIdToNumber: (roomId: string | number) => number;
+      numberToRoomId: (numericRoomId: number) => string;
     };
   }
 
@@ -174,4 +180,5 @@ declare global {
   const $nfc: Window["$nfc"];
   const $trtc: Window["$trtc"];
   const $libGenerateTestUserSig: Window["$libGenerateTestUserSig"];
+  const $roomformat: Window["$roomformat"];
 }

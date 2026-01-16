@@ -10,6 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -27,7 +28,7 @@
         "maxHeight": 1080,
         "minWidth": 1620,
         "minHeight": 1080,
-        "theme":"Dark",
+        "theme": "Dark",
         "transparent": true,
         "hiddenTitle": true,
         "titleBarStyle": "Overlay",
@@ -54,6 +55,13 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "entitlements": null
+    }
   }
 }

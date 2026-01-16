@@ -14,6 +14,7 @@ import HighFrequencyControl from "./Utils/HighFrequencyControl";
 import Nfc from "./Utils/NFC/Nfc.ts";
 import TRTC from "./Utils/Meet/TRTC.ts";
 import LibGenerateTestUserSig from "./Utils/Meet/LibGenerateTestUserSig.ts";
+import RoomFormat from "./Utils/Meet/RoomFormat.ts";
 
 const app = createApp(App);
 
@@ -31,4 +32,5 @@ app
   .use(Nfc)
   .use(LibGenerateTestUserSig)
   .use(TRTC)
+  .use(RoomFormat)
   .mount("#app");
