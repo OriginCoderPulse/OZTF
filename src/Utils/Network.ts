@@ -471,17 +471,17 @@ class Network {
     }
     message += "。请检查网络连接状况，然后点击确定重试。";
 
-    $popup.alert(
-      message,
-      () => {
+    $popup.alert(message, {
+      buttonCount: 2,
+      onBtnRight: () => {
         this._retryAllFailedRequests();
       },
-      () => {
+      onBtnLeft: () => {
         // 用户取消时，清除失败请求列表
         this._failedRequests.clear();
         this._isRetryDialogShown = false;
       },
-    );
+    });
   }
 
   private _retryAllFailedRequests() {

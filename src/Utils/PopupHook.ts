@@ -52,9 +52,16 @@ class PopupManager {
 
   alert(
     content: string,
-    onConfirm?: Function,
-    onCancel?: Function,
-    title?: string,
+    options?: {
+      title?: string;
+      buttonCount?: 1 | 2;
+      btnLeftText?: string;
+      btnRightText?: string;
+      btnOnlyText?: string;
+      onBtnOnly?: Function;
+      onBtnLeft?: Function;
+      onBtnRight?: Function;
+    },
   ): void {
     const id: string = `alert_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const level: number = ++this.currentLevel;
@@ -68,21 +75,29 @@ class PopupManager {
     const app: App = createApp(() =>
       h(Alert, {
         visible: true,
-        title: title || "提示",
+        title: options?.title || "提示",
         content,
-        onCancel: () => {
-          onCancel?.();
+        buttonCount: options?.buttonCount || 2,
+        btnLeftText: options?.btnLeftText || "取消",
+        btnRightText: options?.btnRightText || "确定",
+        btnOnlyText: options?.btnOnlyText || "确定",
+        onBtnLeft: () => {
+          options?.onBtnLeft?.();
           that.close(id);
         },
-        onConfirm() {
-          Promise.resolve().then(() => onConfirm?.());
+        onBtnRight() {
+          Promise.resolve().then(() => options?.onBtnRight?.());
+          that.close(id);
+        },
+        onBtnOnly: () => {
+          options?.onBtnOnly?.();
           that.close(id);
         },
       }),
     );
     app.mount(vm);
 
-    this.popupInstances.value.push({ id, app, vm, level, finish: onCancel });
+    this.popupInstances.value.push({ id, app, vm, level, finish: options?.onBtnLeft });
   }
 
   close(id: string): void {

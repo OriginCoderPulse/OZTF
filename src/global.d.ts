@@ -20,9 +20,16 @@ declare global {
       ) => string;
       alert: (
         content: string,
-        onConfirm?: Function,
-        onCancel?: Function,
-        title?: string,
+        options?: {
+          title?: string;
+          buttonCount?: 1 | 2;
+          btnLeftText?: string;
+          btnRightText?: string;
+          btnOnlyText?: string;
+          onBtnOnly?: Function;
+          onBtnLeft?: Function;
+          onBtnRight?: Function;
+        },
       ) => void;
       close: (id: string) => void;
       closeAll: () => void;
@@ -154,6 +161,9 @@ declare global {
       closeLocalVideo: (roomId: number) => Promise<void>;
       muteRemoteAudio: (roomId: number, userId: string, mute: boolean) => Promise<void>;
       muteRemoteVideo: (roomId: number, userId: string, streamType: string | number, view: string) => Promise<void>;
+      startRemoteScreen: (roomId: number) => Promise<void>;
+      stopRemoteScreen: (roomId: number) => Promise<void>;
+      sendCustomMessage: (roomId: number, cmdId: number, data: ArrayBuffer) => Promise<unknown>;
       listenRoomProperties: (roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) => void;
     };
     $libGenerateTestUserSig: {

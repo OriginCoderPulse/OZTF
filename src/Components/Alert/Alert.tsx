@@ -1,4 +1,4 @@
-import { defineComponent } from "vue";
+import { defineComponent, Fragment } from "vue";
 import { Motion } from "motion-v";
 import "./Alert.scss";
 
@@ -12,8 +12,26 @@ export default defineComponent({
     level: Number,
     title: String,
     content: String,
-    onCancel: Function,
-    onConfirm: Function,
+    buttonCount: {
+      type: Number,
+      default: 2,
+      validator: (value: number) => value >= 1 && value <= 2,
+    },
+    onBtnLeft: Function,
+    onBtnRight: Function,
+    onBtnOnly: Function,
+    btnLeftText: {
+      type: String,
+      default: "取消",
+    },
+    btnRightText: {
+      type: String,
+      default: "确定",
+    },
+    btnOnlyText: {
+      type: String,
+      default: "确定",
+    },
   },
   setup(props) {
     return () => (
@@ -57,34 +75,59 @@ export default defineComponent({
             <div class="alert-title">{props.title}</div>
             <div class="alert-content">{props.content}</div>
             <div class="alert-action">
-              <Motion
-                initial={{ y: 0 }}
-                whileHover={{ y: -5 }}
-                exit={{ y: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                class="motion-btn"
-              >
-                <div
-                  class="cancel"
-                  onClick={() => props.onCancel && props.onCancel()}
+              {props.buttonCount === 2 ? (
+                <>
+                  {props.onBtnLeft && (
+                    <Motion
+                      initial={{ y: 0 }}
+                      whileHover={{ y: -5 }}
+                      exit={{ y: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      class="motion-btn"
+                    >
+                      <div
+                        class="cancel"
+                        onClick={() => props.onBtnLeft && props.onBtnLeft()}
+                      >
+                        {props.btnLeftText}
+                      </div>
+                    </Motion>
+                  )}
+                  {props.onBtnRight && (
+                    <Motion
+                      initial={{ y: 0 }}
+                      whileHover={{ y: -5 }}
+                      exit={{ y: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      class="motion-btn"
+                      style={!props.onBtnLeft ? { width: '60%' } : {}}
+                    >
+                      <div
+                        class="confirm"
+                        onClick={() => props.onBtnRight && props.onBtnRight()}
+                      >
+                        {props.btnRightText}
+                      </div>
+                    </Motion>
+                  )}
+                </>
+              ) : (
+                <Motion
+                  initial={{ y: 0 }}
+                  whileHover={{ y: -5 }}
+                  exit={{ y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  class="motion-btn"
+                  style={{ width: '60%' }}
                 >
-                  取消
-                </div>
-              </Motion>
-              <Motion
-                initial={{ y: 0 }}
-                whileHover={{ y: -5 }}
-                exit={{ y: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                class="motion-btn"
-              >
-                <div
-                  class="confirm"
-                  onClick={() => props.onConfirm && props.onConfirm()}
-                >
-                  确定
-                </div>
-              </Motion>
+                  <div
+                    class="confirm"
+                    onClick={() => props.onBtnOnly && props.onBtnOnly()}
+                  >
+                    {props.btnOnlyText}
+                  </div>
+                </Motion>
+              )}
             </div>
           </Motion>
         </Motion>

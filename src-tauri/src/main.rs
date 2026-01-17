@@ -598,6 +598,8 @@ async fn close_meeting_window(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("meet-room") {
         let _ = window.close();
         let _ = app.emit_to("main", "canJoinRoom", true);
+        // 发送会议退出事件，通知主窗口刷新数据
+        let _ = app.emit_to("main", "meet-exited", true);
         Ok(())
     } else {
         Err("Meeting window not found".to_string())
@@ -692,10 +694,12 @@ fn main() {
                             }
                         });
                     } else if window.label() == "meet-room" {
-                        // 会议窗口关闭时，发送 canJoinRoom 事件
+                        // 会议窗口关闭时，发送 canJoinRoom 和 meet-exited 事件
                         let app_handle = window.app_handle().clone();
                         tokio::spawn(async move {
                             let _ = app_handle.emit_to("main", "canJoinRoom", true);
+                            // 发送会议退出事件，通知主窗口刷新数据
+                            let _ = app_handle.emit_to("main", "meet-exited", true);
                         });
                     }
                 }

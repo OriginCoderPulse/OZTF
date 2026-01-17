@@ -61,29 +61,29 @@ export class StaffDetailController {
       case "Active":
         this.isConfirmationLoading.value = true;
 
-        $popup.alert(
-          "确定要这么操作么",
-          () => {
+        $popup.alert("确定要这么操作么", {
+          buttonCount: 2,
+          onBtnRight: () => {
             this.changeStaffStatusApi(id, status);
           },
-          () => {
+          onBtnLeft: () => {
             this.isConfirmationLoading.value = false;
           },
-        );
+        });
 
         break;
       case "Inactive":
         this.isResignLoading.value = true;
 
-        $popup.alert(
-          "确定要这么操作么",
-          () => {
+        $popup.alert("确定要这么操作么", {
+          buttonCount: 2,
+          onBtnRight: () => {
             this.changeStaffStatusApi(id, status);
           },
-          () => {
+          onBtnLeft: () => {
             this.isResignLoading.value = false;
           },
-        );
+        });
 
         break;
     }

@@ -25,17 +25,27 @@ export class MeetController {
     this.initMeetList();
   };
 
+  private handleMeetExited = () => {
+    this.initMeetList();
+  };
+
+  private _unlistenMeetExited: (() => void) | null = null;
+
   public init() {
     // 监听会议创建事件
     window.addEventListener("meet-created", this.handleMeetCreated);
     // 监听会议窗口关闭事件（在主窗口中监听）
     // 使用 Tauri 事件监听
-    import("@tauri-apps/api/event").then(({ listen }) => {
+    import("@tauri-apps/api/event").then(async ({ listen }) => {
       listen("canJoinRoom", async () => {
         this.currentMeetingId.value = null;
         this.currentRoomId.value = null;
         // 清除存储的状态
         await $storage.remove("currentMeetingId");
+      });
+      // 监听会议退出事件（跨窗口通信）
+      this._unlistenMeetExited = await listen("meet-exited", () => {
+        this.handleMeetExited();
       });
     });
 
@@ -46,6 +56,10 @@ export class MeetController {
   public destroy() {
     // 移除事件监听
     window.removeEventListener("meet-created", this.handleMeetCreated);
+    if (this._unlistenMeetExited) {
+      this._unlistenMeetExited();
+      this._unlistenMeetExited = null;
+    }
   }
 
   public initMeetList() {
@@ -263,16 +277,16 @@ export class MeetController {
     // 如果当前已经有会议在进行
     if (this.currentMeetingId.value !== null && this.currentMeetingId.value !== meetId) {
       // 弹出确认框
-      $popup.alert(
-        "您当前正在参加其他会议，是否退出当前会议并进入新会议？",
-        async () => {
+      $popup.alert("您当前正在参加其他会议，是否退出当前会议并进入新会议？", {
+        buttonCount: 2,
+        onBtnRight: async () => {
           // 确定：退出当前会议并进入新会议
           await this.exitAndEnterNewMeeting(meetId, topic);
         },
-        () => {
+        onBtnLeft: () => {
           // 取消：无任何操作
-        }
-      );
+        },
+      });
       return;
     }
 
@@ -309,55 +323,51 @@ export class MeetController {
       return;
     }
 
-    $popup.alert(
-      `确定要取消会议"${meet.topic}"吗？`,
-      async () => {
-        try {
-          const userID = await $storage.get("userID");
-          $network.request(
-            "meetStatusChange",
-            {
-              meetId: meetId,
-              status: "Cancelled",
-              userId: userID,
-            },
-            async () => {
-              $message.success({
-                message: "会议已取消",
-              });
-              // 如果取消的是当前正在进行的会议，需要退出房间
-              if (this.currentMeetingId.value === meetId) {
-                try {
-                  if (this.currentRoomId.value && $trtc.hasRoom(this.currentRoomId.value)) {
-                    await $trtc.exitRoom(this.currentRoomId.value);
-                  }
-                  const { invoke } = await import("@tauri-apps/api/core");
-                  await invoke("close_meeting_window");
-                  this.currentMeetingId.value = null;
-                  this.currentRoomId.value = null;
-                  // 清除存储的状态
-                  await $storage.remove("currentMeetingId");
-                } catch (error: any) {
-                  console.log("退出会议房间失败:", error);
-                }
+    // 直接执行取消操作，不再弹出确认框
+    try {
+      const userID = await $storage.get("userID");
+      $network.request(
+        "meetStatusChange",
+        {
+          meetId: meetId,
+          status: "Cancelled",
+          userId: userID,
+        },
+        async () => {
+          $message.success({
+            message: "会议已取消",
+          });
+          // 如果取消的是当前正在进行的会议，需要退出房间
+          if (this.currentMeetingId.value === meetId) {
+            try {
+              if (this.currentRoomId.value && $trtc.hasRoom(this.currentRoomId.value)) {
+                await $trtc.exitRoom(this.currentRoomId.value);
               }
-              // 刷新会议列表
-              await this.initMeetList();
-            },
-            (error: any) => {
-              $message.error({
-                message: error || "取消会议失败",
-              });
+              const { invoke } = await import("@tauri-apps/api/core");
+              await invoke("close_meeting_window");
+              this.currentMeetingId.value = null;
+              this.currentRoomId.value = null;
+              // 清除存储的状态
+              await $storage.remove("currentMeetingId");
+            } catch (error: any) {
+              console.log("退出会议房间失败:", error);
             }
-          );
-        } catch (error: any) {
-          console.log(error);
+          }
+          // 刷新会议列表
+          await this.initMeetList();
+        },
+        (error: any) => {
           $message.error({
-            message: "取消会议失败: " + (error?.message || "未知错误"),
+            message: error || "取消会议失败",
           });
         }
-      }
-    );
+      );
+    } catch (error: any) {
+      console.log(error);
+      $message.error({
+        message: "取消会议失败: " + (error?.message || "未知错误"),
+      });
+    }
   }
 
   /**
@@ -369,57 +379,51 @@ export class MeetController {
       return;
     }
 
-    $popup.alert(
-      `确定要结束会议"${meet.topic}"吗？`,
-      async () => {
-        try {
-          const userID = await $storage.get("userID");
-          $network.request(
-            "meetStatusChange",
-            {
-              meetId: meetId,
-              status: "Concluded",
-              userId: userID,
-            },
-            async () => {
-              $message.success({
-                message: "会议已结束",
-              });
-              // 如果结束的是当前正在进行的会议，需要退出房间
-              if (this.currentMeetingId.value === meetId) {
-                try {
-                  if (this.currentRoomId.value && $trtc.hasRoom(this.currentRoomId.value)) {
-                    await $trtc.exitRoom(this.currentRoomId.value);
-                  }
-                  const { invoke } = await import("@tauri-apps/api/core");
-                  await invoke("close_meeting_window");
-                  this.currentMeetingId.value = null;
-                  this.currentRoomId.value = null;
-                  // 清除存储的状态
-                  await $storage.remove("currentMeetingId");
-                } catch (error: any) {
-                  console.log("退出会议房间失败:", error);
-                }
+    // 直接执行结束操作，不再弹出确认框
+    try {
+      const userID = await $storage.get("userID");
+      $network.request(
+        "meetStatusChange",
+        {
+          meetId: meetId,
+          status: "Concluded",
+          userId: userID,
+        },
+        async () => {
+          $message.success({
+            message: "会议已结束",
+          });
+          // 如果结束的是当前正在进行的会议，需要退出房间
+          if (this.currentMeetingId.value === meetId) {
+            try {
+              if (this.currentRoomId.value && $trtc.hasRoom(this.currentRoomId.value)) {
+                await $trtc.exitRoom(this.currentRoomId.value);
               }
-              // 刷新会议列表
-              await this.initMeetList();
-            },
-            (error: any) => {
-              $message.error({
-                message: error || "结束会议失败",
-              });
+              const { invoke } = await import("@tauri-apps/api/core");
+              await invoke("close_meeting_window");
+              this.currentMeetingId.value = null;
+              this.currentRoomId.value = null;
+              // 清除存储的状态
+              await $storage.remove("currentMeetingId");
+            } catch (error: any) {
+              console.log("退出会议房间失败:", error);
             }
-          );
-        } catch (error: any) {
-          console.log(error);
+          }
+          // 刷新会议列表
+          await this.initMeetList();
+        },
+        (error: any) => {
           $message.error({
-            message: "结束会议失败: " + (error?.message || "未知错误"),
+            message: error || "结束会议失败",
           });
         }
-      },
-      undefined,
-      "结束会议"
-    );
+      );
+    } catch (error: any) {
+      console.log(error);
+      $message.error({
+        message: "结束会议失败: " + (error?.message || "未知错误"),
+      });
+    }
   }
 
   public canEnterMeet(meetId: string): boolean {

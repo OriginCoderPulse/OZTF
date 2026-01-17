@@ -1,10 +1,10 @@
 import TRTCSDK, { TRTCEventTypes } from "trtc-sdk-v5";
 
 class TRTC {
-  private _sdkAppId: number = 1600122280;
+  private _sdkAppId: number = Number(import.meta.env.VITE_TRTC_APP_ID);
   private _userId: string = "";
   private _userSig: string = "";
-  private _sdkSecretKey: string = "948f12efcbce9604a29648ed4b0d35441f247457501e77b54b410813e1d7aae9";
+  private _sdkSecretKey: string = import.meta.env.VITE_TRTC_SECRET_KEY;
   private _rooms: Map<number, TRTCSDK> = new Map();
   private _initialized: boolean = false;
 
@@ -56,8 +56,16 @@ class TRTC {
     try {
       // 请求音频和视频权限
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30 }
+        }
       });
 
       // 获取权限状态
@@ -85,6 +93,7 @@ class TRTC {
   createTRTC(roomId: number): Promise<{ audio: boolean, video: boolean, status: boolean }> {
     return this.ensureInitialized().then(async () => {
       return new Promise<{ audio: boolean, video: boolean, status: boolean }>(async (resolve, reject) => {
+        console.log("createTRTC", this._initialized, this._userSig);
         if (!this._initialized || !this._userSig) {
           reject();
           return;
@@ -168,6 +177,8 @@ class TRTC {
       return Promise.reject(new Error(`View element '${view}' not found in document`));
     }
 
+    console.log(view)
+
     return room.startLocalVideo({ view }) as Promise<void>;
   }
 
@@ -195,6 +206,31 @@ class TRTC {
     return room.startRemoteVideo({ userId, streamType: streamType as any, view }) as Promise<void>;
   }
 
+  startRemoteScreen(roomId: number): Promise<void> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.startScreenShare({
+      option: {
+        profile: {
+          width: 1920,
+          height: 1080,
+          frameRate: 60,
+          bitrate: 10000
+        }, fillMode: 'cover'
+      }
+    }) as Promise<void>;
+  }
+
+  stopRemoteScreen(roomId: number): Promise<void> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.stopScreenShare() as Promise<void>;
+  }
+
   listenRoomProperties(roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) {
     this._rooms.get(roomId)?.on(event, ((...args: any[]) => {
       callback(args[0], this._rooms.get(roomId) as TRTCSDK);
@@ -215,6 +251,14 @@ class TRTC {
       userSig: this._userSig,
       roomId,
     }) as Promise<void>;
+  }
+
+  sendCustomMessage(roomId: number, cmdId: number, data: ArrayBuffer): Promise<unknown> {
+    const room = this._rooms.get(roomId);
+    if (!room) {
+      return Promise.reject(new Error(`Room ${roomId} does not exist`));
+    }
+    return room.sendCustomMessage({cmdId, data}) as unknown as Promise<void>;
   }
 }
 
