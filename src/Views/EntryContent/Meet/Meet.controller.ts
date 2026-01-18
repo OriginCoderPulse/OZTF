@@ -451,4 +451,32 @@ export class MeetController {
     }
     return this.userPermission.value === "CEO" || meet.organizer.id === this.userID.value;
   };
+
+  /**
+   * 复制会议信息到剪贴板（静默复制，不显示提示）
+   */
+  public copyMeetingInfo(meet: MeetList) {
+    // 获取 web 端基础 URL
+    const webBaseURL = import.meta.env.VITE_WEB_BASE_URL;
+    const externalLink = `${webBaseURL}${meet.meetId}`;
+
+    // 格式化开始时间
+    const startTime = meet.startTime
+      ? $date.format(meet.startTime, "YYYY-MM-DD HH:mm:ss")
+      : "未设置";
+
+    // 构建要复制的文本
+    const text = `${$config.appName}邀请您参加会议\n会议名称：${meet.topic}\n会议号：${meet.meetId}\n会议开始时间：${startTime}\n会议时长：${meet.duration}分钟\n会议外部链接：${externalLink}`;
+
+    // 复制到剪贴板（静默复制，不显示提示）
+    navigator.clipboard.writeText(text).then(() => {
+      $message.success({
+        message: "会议信息已复制到剪贴板",
+      });
+    }).catch((error: any) => {
+      $message.error({
+        message: "复制失败: " + (error?.message || "未知错误"),
+      });
+    });
+  }
 }

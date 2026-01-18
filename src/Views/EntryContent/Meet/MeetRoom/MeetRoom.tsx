@@ -196,10 +196,30 @@ export default defineComponent({
                 <span class="tooltip">摄像头权限未授予</span>
               </Fragment>}
             </div>
+            <div
+              class={["operator-item", { "disabled": !controller.canCopyMeetProperties.value }]}
+              onClick={() => {
+                if (controller.canCopyMeetProperties.value) {
+                  controller.copyMeetingInfo();
+                }
+              }}
+            >
+              <Svg
+                svgPath={[
+                  'M878.272 981.312H375.36a104.64 104.64 0 0 1-104.64-104.64V375.36c0-57.792 46.848-104.64 104.64-104.64h502.912c57.792 0 104.64 46.848 104.64 104.64v502.912c-1.6 56.192-48.448 103.04-104.64 103.04z m-502.912-616.96a10.688 10.688 0 0 0-10.944 11.008v502.912c0 6.208 4.672 10.88 10.88 10.88h502.976c6.208 0 10.88-4.672 10.88-10.88V375.36a10.688 10.688 0 0 0-10.88-10.944H375.36z',
+                  'M192.64 753.28h-45.312a104.64 104.64 0 0 1-104.64-104.64V147.328c0-57.792 46.848-104.64 104.64-104.64h502.912c57.792 0 104.64 46.848 104.64 104.64v49.92a46.016 46.016 0 0 1-46.848 46.912 46.08 46.08 0 0 1-46.848-46.848v-49.984a10.688 10.688 0 0 0-10.944-10.944H147.328a10.688 10.688 0 0 0-10.944 10.88v502.976c0 6.208 4.672 10.88 10.88 10.88h45.312a46.08 46.08 0 0 1 46.848 46.912c0 26.496-21.824 45.248-46.848 45.248z'
+                ]}
+                width="20"
+                height="20"
+                class={controller.canCopyMeetProperties.value ? "icon" : "icon-error"}
+                fill={controller.canCopyMeetProperties.value ? "#dddddd" : "#999999"}
+              />
+              <span class="tooltip">复制会议信息</span>
+            </div>
             <div class="operator-item" onClick={() => {
               if (controller.canOpenScreenShare.value) {
                 controller.screenShareState.value ? controller.stopRemoteScreen() : controller.startRemoteScreen()
-              }else {
+              } else {
                 $message.warning({
                   message: '其他人正在共享屏幕, 请稍后再试',
                   duration: 2000,
@@ -234,7 +254,6 @@ export default defineComponent({
                 />
                 <span class="tooltip">其他人正在共享屏幕</span>
               </Fragment>}
-
             </div>
             <div class="operator-item">
               <Svg

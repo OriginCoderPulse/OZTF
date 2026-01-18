@@ -23,9 +23,18 @@ export class MeetRoomController {
   public canOpenScreenShare = ref(true);
   public networkState = ref("unknown");
   public isOrganizer = ref(false); // 是否是会议组织者
+  public canCopyMeetProperties = ref(false); // 是否可以复制会议信息
   private _roomId = ref<number>(0);
   private _meetId = ref<string>("");
   private _organizerId = ref<string | null>(null); // 会议组织者ID
+  // 会议信息
+  private _meetingInfo = ref<{
+    meetId: string;
+    topic: string;
+    startTime: string;
+    duration: number;
+
+  } | null>(null);
   // 跟踪每个参与人的视频流状态（使用 participantId 作为 key）
   private _participantVideoStates = ref<Map<string, boolean>>(new Map());
   // TRTC userId 到 participantId 的映射（TRTC userId -> participantId）
@@ -53,8 +62,8 @@ export class MeetRoomController {
           // 添加内部参与人
           await this.addInnerParticipant(meetId);
 
-          // 获取所有参会人（内部和外部）
-          await this.fetchParticipants(meetId);
+          // 获取会议属性和参会人（内部和外部）
+          await this.fetchRoomProperties(meetId);
 
           // 建立 TRTC userId 到 participantId 的映射
           // App 端：TRTC userId = 数据库用户 ID，应该匹配内部参与人的 participantId
@@ -137,7 +146,7 @@ export class MeetRoomController {
             setTimeout(() => {
               const meetId = this._meetId.value;
               if (meetId) {
-                this.fetchParticipants(meetId).then(() => {
+                this.fetchRoomProperties(meetId).then(() => {
                   // 拉取参会人列表后，建立 TRTC userId 到 participantId 的映射
                   this.buildTrtcUserIdMapping(event.userId);
                 })
@@ -155,7 +164,7 @@ export class MeetRoomController {
             setTimeout(() => {
               const meetId = this._meetId.value;
               if (meetId) {
-                this.fetchParticipants(meetId).catch(() => {
+                this.fetchRoomProperties(meetId).catch(() => {
                 });
               }
             }, 500);
@@ -201,20 +210,31 @@ export class MeetRoomController {
   }
 
   /**
-   * 获取所有参会人（内部和外部）
+   * 获取会议属性和参会人（内部和外部）
    */
-  public async fetchParticipants(meetId: string) {
+  public async fetchRoomProperties(meetId: string) {
     return new Promise<void>((resolve, reject) => {
       try {
         if (!meetId) {
           resolve();
           return;
         }
+        // 重置复制状态
+        this.canCopyMeetProperties.value = false;
+
         $network.request(
-          "meetGetParticipants",
+          "meetGetRoomProperties",
           { meetId },
           (data: any) => {
             try {
+              // 保存会议信息
+              this._meetingInfo.value = {
+                meetId: data.meetId || '',
+                topic: data.topic || '',
+                startTime: data.startTime || '',
+                duration: data.duration || 0,
+              };
+
               // 保存组织者ID
               if (data.organizerId) {
                 this._organizerId.value = data.organizerId;
@@ -238,6 +258,9 @@ export class MeetRoomController {
 
               // 重新建立 TRTC userId 到 participantId 的映射
               this.buildTrtcUserIdMapping();
+
+              // 接口完成，允许复制
+              this.canCopyMeetProperties.value = true;
 
               resolve();
             } catch (error: any) {
@@ -492,6 +515,34 @@ export class MeetRoomController {
    */
   public getParticipantVideoState(participantId: string): boolean {
     return this._participantVideoStates.value.get(participantId) ?? false;
+  }
+
+  /**
+   * 复制会议信息到剪贴板
+   */
+  public copyMeetingInfo() {
+    // 获取 web 端基础 URL（从环境变量或配置中获取，如果没有则使用默认值）
+    const webBaseURL = import.meta.env.VITE_WEB_BASE_URL
+    const externalLink = `${webBaseURL}${this._meetId.value}`;
+
+    // 格式化开始时间
+    const startTime = this._meetingInfo.value?.startTime
+      ? $date.format(this._meetingInfo.value?.startTime, "YYYY-MM-DD HH:mm:ss")
+      : "未设置";
+
+    // 构建要复制的文本
+    const text = `${$config.appName}邀请您参加会议\n会议名称：${this._meetingInfo.value?.topic}\n会议号：${this._meetingInfo.value?.meetId}\n会议开始时间：${startTime}\n会议时长：${this._meetingInfo.value?.duration}分钟\n会议外部链接：${externalLink}`;
+
+    // 复制到剪贴板
+    navigator.clipboard.writeText(text).then(() => {
+      $message.success({
+        message: "会议信息已复制到剪贴板",
+      });
+    }).catch((error: any) => {
+      $message.error({
+        message: "复制失败: " + (error?.message || "未知错误"),
+      });
+    });
   }
 
   /**

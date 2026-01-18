@@ -5,6 +5,7 @@ import "./Meet.scss";
 import { motion, Motion } from "motion-v";
 import { MeetController } from "./Meet.controller.ts";
 import { meetConfig } from "./Meet.config.ts";
+import Svg from "@/Components/Svg/Svg.tsx";
 
 export default defineComponent({
   name: "Meet",
@@ -68,7 +69,27 @@ export default defineComponent({
                 <div className="record-item-content">
                   <div className="content-item">
                     <div className="item-title">会议ID</div>
-                    <div className="item-value">{meet.meetId}</div>
+                    <div className="item-value" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span>{meet.meetId}</span>
+                      <div
+                        style={{ cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                        onClick={(e: Event) => {
+                          e.stopPropagation();
+                          controller.copyMeetingInfo(meet);
+                        }}
+                      >
+                        <Svg
+                          svgPath={[
+                            'M878.272 981.312H375.36a104.64 104.64 0 0 1-104.64-104.64V375.36c0-57.792 46.848-104.64 104.64-104.64h502.912c57.792 0 104.64 46.848 104.64 104.64v502.912c-1.6 56.192-48.448 103.04-104.64 103.04z m-502.912-616.96a10.688 10.688 0 0 0-10.944 11.008v502.912c0 6.208 4.672 10.88 10.88 10.88h502.976c6.208 0 10.88-4.672 10.88-10.88V375.36a10.688 10.688 0 0 0-10.88-10.944H375.36z',
+                            'M192.64 753.28h-45.312a104.64 104.64 0 0 1-104.64-104.64V147.328c0-57.792 46.848-104.64 104.64-104.64h502.912c57.792 0 104.64 46.848 104.64 104.64v49.92a46.016 46.016 0 0 1-46.848 46.912 46.08 46.08 0 0 1-46.848-46.848v-49.984a10.688 10.688 0 0 0-10.944-10.944H147.328a10.688 10.688 0 0 0-10.944 10.88v502.976c0 6.208 4.672 10.88 10.88 10.88h45.312a46.08 46.08 0 0 1 46.848 46.912c0 26.496-21.824 45.248-46.848 45.248z'
+                          ]}
+                          width="12"
+                          height="12"
+                          class="copy-icon"
+                          fill="#dddddd"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div className="content-item">
                     <div className="item-title">会议时间</div>
