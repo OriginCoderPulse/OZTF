@@ -1,5 +1,5 @@
 class GlobalConfig {
-  appName = "dadada";
+  appName = "壹零贰肆";
   urls = {
     initial: {
       method: "POST",
