@@ -6,7 +6,6 @@ import { Motion } from "motion-v";
 import Svg from "@/Components/Svg/Svg.tsx";
 import { MeetRoomController } from "./MeetRoom.controller.ts";
 import { useRoute } from "vue-router";
-import { meetRoomConfig } from "./MeetRoom.config.ts";
 
 export default defineComponent({
   name: "MeetRoom",
@@ -112,25 +111,6 @@ export default defineComponent({
         </div>
         <div class="meet-operator">
           <div class="operator-list">
-            <div class="operator-item">
-              <Svg
-                svgPath={MEET_ROOM_NETWORK_STATE}
-                width="20"
-                height="20"
-                class="icon"
-                fill={
-                  meetRoomConfig.networkState[controller.networkState.value as keyof NetworkState]
-                    .color
-                }
-              />
-              <span class="tooltip">
-                网络状态：
-                {
-                  meetRoomConfig.networkState[controller.networkState.value as keyof NetworkState]
-                    .status
-                }
-              </span>
-            </div>
             <div
               class={["operator-item", { disabled: !controller.canOpenMicrophone.value }]}
               onClick={() => {

@@ -25,6 +25,7 @@ export class MeetRoomController {
   public networkState = ref("unknown");
   public isOrganizer = ref(false); // 是否是会议组织者
   public canCopyMeetProperties = ref(false); // 是否可以复制会议信息
+  private canShowParticipant = ref(true);
   private _roomId = ref<number>(0);
   private _meetId = ref<string>("");
   private _organizerId = ref<string | null>(null); // 会议组织者ID
@@ -69,11 +70,8 @@ export class MeetRoomController {
               });
             });
 
-            // App 端：TRTC userId = 数据库用户 ID，应该匹配内部参与人的 trtcId
-            // 对于其他参与人，在 REMOTE_USER_ENTER 事件中建立映射
-
-            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.NETWORK_QUALITY, (event) => {
-              console.log("网络质量:", event);
+            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.NETWORK_QUALITY, (event, room) => {
+              console.log("网络质量:", event, room);
             });
 
             // 监听远端音频可用事件 - 当远端用户发布音频时触发
@@ -292,8 +290,8 @@ export class MeetRoomController {
                 ...(data.outParticipants || []),
               ];
               // 确保使用新的数组引用，触发响应式更新
-              this.participantList.value = [...allParticipants];
-              this.showParticipant.value = allParticipants.length > 0;
+              this.participantList.value = [...allParticipants.filter(item => item.trtcId !== this.userId.value)];
+              if (this.canShowParticipant.value) this.showParticipant.value = allParticipants.filter(item => item.trtcId !== this.userId.value).length > 0;
 
               // 接口完成，允许复制
               this.canCopyMeetProperties.value = true;
@@ -392,6 +390,11 @@ export class MeetRoomController {
    * 切换参与者显示
    */
   public toggleParticipant() {
+    if (this.showParticipant.value) {
+      this.canShowParticipant.value = false;
+    } else {
+      this.canShowParticipant.value = true;
+    }
     this.showParticipant.value = !this.showParticipant.value;
   }
 
