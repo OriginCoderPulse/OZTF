@@ -456,7 +456,8 @@ export class MeetController {
    */
   public copyMeetingInfo(meet: MeetList) {
     // 获取 web 端基础 URL
-    const webBaseURL = import.meta.env.VITE_WEB_BASE_URL;
+    const webBaseURL = import.meta.env.VITE_OZTF_WEB_BASE_URL;
+    console.log(webBaseURL, "webBaseURL");
     const externalLink = `${webBaseURL}${meet.meetId}`;
 
     // 格式化开始时间

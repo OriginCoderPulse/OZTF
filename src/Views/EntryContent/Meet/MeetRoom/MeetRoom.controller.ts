@@ -548,7 +548,8 @@ export class MeetRoomController {
    */
   public copyMeetingInfo() {
     // 获取 web 端基础 URL（从环境变量或配置中获取，如果没有则使用默认值）
-    const webBaseURL = import.meta.env.VITE_WEB_BASE_URL;
+    const webBaseURL = import.meta.env.VITE_OZTF_WEB_BASE_URL;
+    console.log(webBaseURL, "webBaseURL");
     const externalLink = `${webBaseURL}${this._meetId.value}`;
 
     // 格式化开始时间
