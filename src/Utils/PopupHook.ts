@@ -7,7 +7,6 @@ interface PopupInstance {
   app: any; // 使用 any 类型避免 Vue Router 类型冲突
   vm: HTMLDivElement;
   level: number;
-  finish?: Function;
 }
 
 class PopupManager {
@@ -97,7 +96,7 @@ class PopupManager {
     );
     app.mount(vm);
 
-    this.popupInstances.value.push({ id, app, vm, level, finish: options?.onBtnLeft });
+    this.popupInstances.value.push({ id, app, vm, level });
   }
 
   close(id: string): void {
@@ -128,9 +127,6 @@ class PopupManager {
           this.popupInstances.value[this.popupInstances.value.length - 1];
         if (last) {
           this.close(last.id);
-          if (last.finish) {
-            last.finish();
-          }
         }
       }
     });

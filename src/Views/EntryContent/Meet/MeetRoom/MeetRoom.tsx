@@ -67,39 +67,39 @@ export default defineComponent({
             </div>
           </div>
           <Motion
-            initial={{ width: 0, height: "100%", marginLeft: 0 }}
+            initial={{ width: 0, marginLeft: 0 }}
             animate={{
               width: controller.showParticipant.value ? "20%" : 0,
-              height: "100%",
               marginLeft: controller.showParticipant.value ? 15 : 0,
               padding: controller.showParticipant.value ? 10 : 0
             }}
-            exit={{ width: 0, height: "100%", marginLeft: 0 }}
+            exit={{ width: 0, marginLeft: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             class="meet-participant"
           >
-
-            {controller.participantList.value
-              .filter(participant => participant.participantId !== controller.userId.value)
-              .map(participant => {
-                const videoState = controller.getParticipantVideoState(participant.participantId);
-                return (
-                  <div id={`${participant.participantId}_remote_video`} class="meet-participant-video">
-                    {!videoState && (
-                      <div class="video-placeholder">
-                        <Svg
-                          svgPath="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z m-32-196h64v-64h-64v64z m0-128h64V320h-64v320z"
-                          width="48"
-                          height="48"
-                          fill="#999999"
-                        />
-                        <span class="placeholder-text">摄像头已关闭</span>
-                      </div>
-                    )}
-                    <div class="participant-name">{participant.name}</div>
-                  </div>
-                );
-              })}
+            <div class="meet-participant-list">
+              {controller.participantList.value
+                .filter(participant => participant.participantId !== controller.userId.value)
+                .map(participant => {
+                  const videoState = controller.getParticipantVideoState(participant.participantId);
+                  return (
+                    <div id={`${participant.participantId}_remote_video`} class="meet-participant-video">
+                      {!videoState && (
+                        <div class="video-placeholder">
+                          <Svg
+                            svgPath="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64z m0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z m-32-196h64v-64h-64v64z m0-128h64V320h-64v320z"
+                            width="48"
+                            height="48"
+                            fill="#999999"
+                          />
+                          <span class="placeholder-text">摄像头已关闭</span>
+                        </div>
+                      )}
+                      <div class="participant-name">{participant.name}</div>
+                    </div>
+                  );
+                })}
+            </div>
           </Motion>
         </div>
         <div class="meet-operator">

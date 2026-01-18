@@ -83,7 +83,7 @@ export class MeetRoomController {
             // 查找对应的 participantId（如果映射不存在，使用 userId 作为 fallback）
             const participantId = this._trtcUserIdToParticipantId.value.get(userId) || userId;
 
-            if(streamType === TRTCSDK.TYPE.STREAM_TYPE_MAIN) {
+            if (streamType === TRTCSDK.TYPE.STREAM_TYPE_MAIN) {
               // 设置该用户的视频流状态为可用（使用 participantId）
               this._participantVideoStates.value.set(participantId, true);
               // 使用 participantId 作为 view id，确保与 DOM 中的 id 匹配
@@ -92,11 +92,11 @@ export class MeetRoomController {
 
               // 尝试启动远端视频，如果 DOM 元素不存在则重试（使用 TRTC userId）
               this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);
-            }else {
+            } else {
               $trtc.closeLocalVideo(roomId)
               const viewId = `meet-video`;
               const normalizedStreamType = this.normalizeStreamType(streamType);
-              this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);  
+              this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);
               this.canOpenScreenShare.value = false;
             }
           });
@@ -107,12 +107,12 @@ export class MeetRoomController {
             if (userId === this.userId.value) {
               return;
             }
-            
-            if(streamType === TRTCSDK.TYPE.STREAM_TYPE_SUB) {
+
+            if (streamType === TRTCSDK.TYPE.STREAM_TYPE_SUB) {
               const viewId = `meet-video`;
               $trtc.openLocalVideo(roomId, viewId);
               this.canOpenScreenShare.value = true;
-            }else {
+            } else {
               // 查找对应的 participantId（如果映射不存在，使用 userId 作为 fallback）
               const participantId = this._trtcUserIdToParticipantId.value.get(userId) || userId;
               // 设置该用户的视频流状态为不可用（使用 participantId）
@@ -121,9 +121,9 @@ export class MeetRoomController {
           });
 
           $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.SCREEN_SHARE_STOPPED, () => {
-              const viewId = `meet-video`;
-              $trtc.openLocalVideo(roomId, viewId);
-              this.canOpenScreenShare.value = true;
+            const viewId = `meet-video`;
+            $trtc.openLocalVideo(roomId, viewId);
+            this.canOpenScreenShare.value = true;
           })
 
           // 监听远端用户进入房间事件
@@ -219,14 +219,14 @@ export class MeetRoomController {
               if (data.organizerId) {
                 this._organizerId.value = data.organizerId;
               }
-              
+
               // 判断是否是组织者（app端是内部用户，通过比较 userID 和 organizerId）
               if (this._organizerId.value && this.userId.value) {
                 this.isOrganizer.value = this.userId.value === this._organizerId.value;
               } else {
                 this.isOrganizer.value = false;
               }
-              
+
               // 合并内部和外部参会人
               const allParticipants: Participant[] = [
                 ...(data.innerParticipants || []),
@@ -234,7 +234,7 @@ export class MeetRoomController {
               ];
               // 确保使用新的数组引用，触发响应式更新
               this.participantList.value = [...allParticipants];
-              this.showParticipant.value = allParticipants.length > 1;
+              this.showParticipant.value = allParticipants.length > 0;
 
               // 重新建立 TRTC userId 到 participantId 的映射
               this.buildTrtcUserIdMapping();
@@ -417,42 +417,30 @@ export class MeetRoomController {
    * 结束会议
    */
   public concludeMeeting = async (roomId: number) => {
-    try {
-      // 获取当前用户ID
-      const userID = await $storage.get("userID");
-      
-      // 发送结束会议消息
-      const data = new TextEncoder().encode('conclude').buffer;
-      await $trtc.sendCustomMessage(roomId, 1, data);
-      
-      // 调用结束会议接口（需要传递 meetId, status, userId）
-      $network.request("meetStatusChange", {
-        meetId: this._meetId.value,
-        status: "Concluded",
-        userId: userID
-      },
-      async () => {
-        // 退出房间并关闭会议窗口
-        try {
-          await $trtc.exitRoom(roomId);
-          // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
-          await invoke("close_meeting_window");
-        } catch (error: any) {
-          $message.error({
-            message: "退出房间失败，请重试",
-          });
-        }
+    // 获取当前用户ID
+    const userID = await $storage.get("userID");
+    const data = new TextEncoder().encode('conclude').buffer;
+
+    // 发送 TRTC 自定义消息（通知其他参会人会议已结束）
+    $trtc.sendCustomMessage(roomId, 1, data)
+
+
+    $network.request("meetStatusChange", {
+      meetId: this._meetId.value,
+      status: "Concluded",
+      userId: userID
+    },
+      () => {
+        // 退出房间
+        $trtc.exitRoom(roomId)
+
+        // 关闭窗口（Rust 后端会自动发送 meet-exited 事件给主窗口）
+        invoke("close_meeting_window");
       },
       (error: any) => {
-        $message.error({
-          message: "结束会议失败，请重试: " + (error?.message || "未知错误"),
-        });
+        // 即使失败也继续，但记录错误
+        console.error("结束会议接口调用失败:", error);
       });
-    } catch (error: any) {
-      $message.error({
-        message: "结束会议失败，请重试: " + (error?.message || "未知错误"),
-      });
-    }
   };
 
   public exitMeeting(roomId: number) {
@@ -460,10 +448,10 @@ export class MeetRoomController {
       // 组织者：显示"是否退出/结束会议"，两个按钮"结束会议"和"退出会议"，都执行退出会议
       $popup.alert("是否退出/结束会议", {
         buttonCount: 2,
-        btnLeftText: "退出会议",
-        btnRightText: "结束会议",
-        onBtnLeft: () => this.exitAction(roomId),
-        onBtnRight: () => this.concludeMeeting(roomId),
+        btnLeftText: "结束会议",
+        btnRightText: "退出会议",
+        onBtnLeft: () => this.concludeMeeting(roomId),
+        onBtnRight: () => this.exitAction(roomId),
       });
     } else {
       // 非组织者：显示原来的弹框

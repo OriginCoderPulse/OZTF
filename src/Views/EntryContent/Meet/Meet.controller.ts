@@ -445,7 +445,8 @@ export class MeetController {
 
   public canCancelMeet(meetId: string): boolean {
     const meet = this.meetList.value.find((meet: MeetList) => meet.meetId === meetId);
-    if (!meet || !(meet.status === "Pending" || meet.status === "InProgress")) {
+    // 只有在待开始（Pending）状态时才显示取消按钮
+    if (!meet || meet.status !== "Pending") {
       return false;
     }
     return this.userPermission.value === "CEO" || meet.organizer.id === this.userID.value;
