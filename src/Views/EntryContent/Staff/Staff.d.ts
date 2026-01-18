@@ -8,7 +8,7 @@ interface StaffData {
   id: string;
   name: string;
   gender?: string;
-  department: "CEO" | "Technology" | "Technical" | "RMD" | "Finance" | "Product";
+  department: "CEO" | "Technical" | "RMD" | "Finance" | "Product";
   occupation: "CEO" | "ACT" | "FD" | "BD" | "FSD" | "QA" | "DevOps" | "HR" | "HRBP" | "PM" | "UI";
   status: "Active" | "Probation" | "Inactive";
   service_date: string;

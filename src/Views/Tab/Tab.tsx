@@ -250,9 +250,7 @@ export default defineComponent({
                       }}
                     >
                       <Svg
-                        svgPath={[
-                          "M960 588.4v-152.8c0-26.6-21.4-48-48-48H636.4V112c0-26.6-21.4-48-48-48h-152.8c-26.6 0-48 21.4-48 48v275.6H112c-26.6 0-48 21.4-48 48v152.8c0 26.6 21.4 48 48 48h275.6V912c0 26.6 21.4 48 48 48h152.8c26.6 0 48-21.4 48-48V636.4H912c26.6 0 48-21.4 48-48z",
-                        ]}
+                        svgPath={PROJECT_ADD}
                         width="14"
                         height="14"
                         class="icon"
@@ -345,7 +343,7 @@ export default defineComponent({
                                         style={{
                                           backgroundColor:
                                             projectStatusColor[
-                                              child.status as keyof typeof projectStatusColor
+                                            child.status as keyof typeof projectStatusColor
                                             ] || "#737373",
                                         }}
                                         title={child.status}

@@ -17,8 +17,8 @@ export default defineComponent({
 
     return () => (
       <div class="history-video">
-        {/* <div class="history-time-list">
-           {controller.dateList.value.map((date: any) => (
+        <div class="history-time-list">
+          {controller.dateList.value.map((date: any) => (
             <div key={date.date} class="date-item">
               <Motion
                 initial={{ opacity: 0, x: -10 }}
@@ -53,7 +53,7 @@ export default defineComponent({
                     class={["fold-icon", { folded: date.fold }]}
                   >
                     <Svg
-                      svgPath="M6 9L12 15L18 9"
+                      svgPath={HISTORY_VIDEO_FOLD}
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
@@ -122,7 +122,7 @@ export default defineComponent({
               </Motion>
             </div>
           ))}
-        </div> */}
+        </div>
         <div class="video">
           {controller.initialized.value && (
             <VideoPlayer
@@ -138,11 +138,7 @@ export default defineComponent({
               >
                 <div class="export-video">
                   <Svg
-                    svgPath={[
-                      "M641.6 660l-8.64-64 32-4.32a211.2 211.2 0 0 0-26.72-420.32 215.36 215.36 0 0 0-213.12 192 94.56 94.56 0 0 0 0 11.52v41.28h-64V384v-7.04a153.12 153.12 0 0 1 0-19.52A279.84 279.84 0 0 1 636.16 108H640A275.2 275.2 0 0 1 673.28 656z",
-                      "M490.4 446.24l-7.52-39.84a182.4 182.4 0 0 1 107.52-162.88l29.12-13.28L646.08 288l-29.12 13.28a117.92 117.92 0 0 0-70.08 101.28l6.24 30.4zM392.96 652.32h-78.72A202.24 202.24 0 0 1 256 256l30.72-9.12 18.24 61.28-30.72 9.12a138.24 138.24 0 0 0 39.68 270.72h78.72zM479.2 512h64v320h-64z",
-                      "M510.4 908l-156.32-147.68 43.84-46.4 112.48 106.08 112.8-106.08 43.84 46.56-156.64 147.52z",
-                    ]}
+                    svgPath={HISTORY_VIDEO_EXPORT}
                     width="16"
                     height="16"
                     class="icon"

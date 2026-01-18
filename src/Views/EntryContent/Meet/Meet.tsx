@@ -91,10 +91,7 @@ export default defineComponent({
                           }}
                         >
                           <Svg
-                            svgPath={[
-                              "M878.272 981.312H375.36a104.64 104.64 0 0 1-104.64-104.64V375.36c0-57.792 46.848-104.64 104.64-104.64h502.912c57.792 0 104.64 46.848 104.64 104.64v502.912c-1.6 56.192-48.448 103.04-104.64 103.04z m-502.912-616.96a10.688 10.688 0 0 0-10.944 11.008v502.912c0 6.208 4.672 10.88 10.88 10.88h502.976c6.208 0 10.88-4.672 10.88-10.88V375.36a10.688 10.688 0 0 0-10.88-10.944H375.36z",
-                              "M192.64 753.28h-45.312a104.64 104.64 0 0 1-104.64-104.64V147.328c0-57.792 46.848-104.64 104.64-104.64h502.912c57.792 0 104.64 46.848 104.64 104.64v49.92a46.016 46.016 0 0 1-46.848 46.912 46.08 46.08 0 0 1-46.848-46.848v-49.984a10.688 10.688 0 0 0-10.944-10.944H147.328a10.688 10.688 0 0 0-10.944 10.88v502.976c0 6.208 4.672 10.88 10.88 10.88h45.312a46.08 46.08 0 0 1 46.848 46.912c0 26.496-21.824 45.248-46.848 45.248z",
-                            ]}
+                            svgPath={MEET_ROOM_COPY_MEET_INFO}
                             width="12"
                             height="12"
                             class="copy-icon"
@@ -121,39 +118,39 @@ export default defineComponent({
                   {(controller.canConcludeMeet(meet.meetId) ||
                     controller.canEnterMeet(meet.meetId) ||
                     controller.canCancelMeet(meet.meetId)) && (
-                    <div className="record-item-footer-button">
-                      {controller.canEnterMeet(meet.meetId) && (
-                        <div
-                          className="enter-button"
-                          onClick={async () => {
-                            if (controller.isCurrentMeeting(meet.meetId)) {
-                              await controller.handleReturnToMeet();
-                            } else {
-                              await controller.handleEnterMeet(meet.meetId, meet.topic);
-                            }
-                          }}
-                        >
-                          {controller.isCurrentMeeting(meet.meetId) ? "返回" : "入会"}
-                        </div>
-                      )}
-                      {controller.canConcludeMeet(meet.meetId) && (
-                        <div
-                          className="conclude-button"
-                          onClick={() => controller.handleConcludeMeet(meet.meetId)}
-                        >
-                          结会
-                        </div>
-                      )}
-                      {controller.canCancelMeet(meet.meetId) && (
-                        <div
-                          className="cancel-button"
-                          onClick={() => controller.handleCancelMeet(meet.meetId)}
-                        >
-                          取消
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      <div className="record-item-footer-button">
+                        {controller.canEnterMeet(meet.meetId) && (
+                          <div
+                            className="enter-button"
+                            onClick={async () => {
+                              if (controller.isCurrentMeeting(meet.meetId)) {
+                                await controller.handleReturnToMeet();
+                              } else {
+                                await controller.handleEnterMeet(meet.meetId, meet.topic);
+                              }
+                            }}
+                          >
+                            {controller.isCurrentMeeting(meet.meetId) ? "返回" : "入会"}
+                          </div>
+                        )}
+                        {controller.canConcludeMeet(meet.meetId) && (
+                          <div
+                            className="conclude-button"
+                            onClick={() => controller.handleConcludeMeet(meet.meetId)}
+                          >
+                            结会
+                          </div>
+                        )}
+                        {controller.canCancelMeet(meet.meetId) && (
+                          <div
+                            className="cancel-button"
+                            onClick={() => controller.handleCancelMeet(meet.meetId)}
+                          >
+                            取消
+                          </div>
+                        )}
+                      </div>
+                    )}
                 </div>
               ))}
             </div>

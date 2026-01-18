@@ -3,7 +3,7 @@ import { TRTCEventTypes, TRTCSDK } from "trtc-sdk-v5";
 
 declare global {
   namespace JSX {
-    interface Element extends VNode {}
+    interface Element extends VNode { }
     interface ElementClass {
       $props: {};
     }
@@ -147,6 +147,28 @@ declare global {
       roomIdToNumber: (roomId: string | number) => number;
       numberToRoomId: (numericRoomId: number) => string;
     };
+    MEET_ROOM_SHOW_PARTICIPANT_ARROW: string[];
+    MEET_ROOM_CAMERA_OFF_PLACEHOLDER: string[];
+    MEET_ROOM_NETWORK_STATE: string[];
+    MEET_ROOM_MICROPHONE_ON: string[];
+    MEET_ROOM_MICROPHONE_OFF: string[];
+    MEET_ROOM_CAMERA_ON: string[];
+    MEET_ROOM_CAMERA_OFF: string[];
+    MEET_ROOM_COPY_MEET_INFO: string[];
+    MEET_ROOM_SCREEN_SHARE_STOP: string[];
+    MEET_ROOM_SCREEN_SHARE_START: string[];
+    MEET_ROOM_ADD_PARTICIPANT: string[];
+    MEET_ROOM_EXIT_MEETING: string[]
+    MEET_COPY_MEETING_INFO: string[];
+    VIDEO_HISTORY: string[];
+    VIDEO_BIG_SCREEN: string[];
+    HISTORY_VIDEO_FOLD: string[];
+    HISTORY_VIDEO_EXPORT: string[];
+    STAFF_DETAIL_CLOSE_PDF: string[];
+    PROJECT_FEATURE_DETAIL_BTN: string[];
+    PROJECT_BUG_DETAIL_BTN: string[];
+    PROJECT_ADD: string[];
+    NFC_WAITING: string[];
   }
 
   const $popup: Window["$popup"];
@@ -162,4 +184,26 @@ declare global {
   const $trtc: Window["$trtc"];
   const $libGenerateTestUserSig: Window["$libGenerateTestUserSig"];
   const $roomformat: Window["$roomformat"];
+  const MEET_ROOM_SHOW_PARTICIPANT_ARROW: Window["MEET_ROOM_SHOW_PARTICIPANT_ARROW"];
+  const MEET_ROOM_CAMERA_OFF_PLACEHOLDER: Window["MEET_ROOM_CAMERA_OFF_PLACEHOLDER"];
+  const MEET_ROOM_NETWORK_STATE: Window["MEET_ROOM_NETWORK_STATE"];
+  const MEET_ROOM_MICROPHONE_ON: Window["MEET_ROOM_MICROPHONE_ON"];
+  const MEET_ROOM_MICROPHONE_OFF: Window["MEET_ROOM_MICROPHONE_OFF"];
+  const MEET_ROOM_CAMERA_ON: Window["MEET_ROOM_CAMERA_ON"];
+  const MEET_ROOM_CAMERA_OFF: Window["MEET_ROOM_CAMERA_OFF"];
+  const MEET_ROOM_COPY_MEET_INFO: Window["MEET_ROOM_COPY_MEET_INFO"];
+  const MEET_ROOM_SCREEN_SHARE_STOP: Window["MEET_ROOM_SCREEN_SHARE_STOP"];
+  const MEET_ROOM_SCREEN_SHARE_START: Window["MEET_ROOM_SCREEN_SHARE_START"];
+  const MEET_ROOM_ADD_PARTICIPANT: Window["MEET_ROOM_ADD_PARTICIPANT"];
+  const MEET_ROOM_EXIT_MEETING: Window["MEET_ROOM_EXIT_MEETING"];
+  const MEET_COPY_MEETING_INFO: Window["MEET_COPY_MEETING_INFO"];
+  const VIDEO_HISTORY: Window["VIDEO_HISTORY"];
+  const VIDEO_BIG_SCREEN: Window["VIDEO_BIG_SCREEN"];
+  const HISTORY_VIDEO_FOLD: Window["HISTORY_VIDEO_FOLD"];
+  const HISTORY_VIDEO_EXPORT: Window["HISTORY_VIDEO_EXPORT"];
+  const STAFF_DETAIL_CLOSE_PDF: Window["STAFF_DETAIL_CLOSE_PDF"];
+  const PROJECT_FEATURE_DETAIL_BTN: Window["PROJECT_FEATURE_DETAIL_BTN"];
+  const PROJECT_BUG_DETAIL_BTN: Window["PROJECT_BUG_DETAIL_BTN"];
+  const PROJECT_ADD: Window["PROJECT_ADD"];
+  const NFC_WAITING: Window["NFC_WAITING"];
 }
