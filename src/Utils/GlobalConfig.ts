@@ -1,5 +1,6 @@
 class GlobalConfig {
   appName = "壹零贰肆";
+  meetWebBaseURL = "https://oztf.site/"
   urls = {
     initial: {
       method: "POST",

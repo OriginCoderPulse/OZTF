@@ -54,6 +54,7 @@ declare global {
     };
     $config: {
       appName: string;
+      meetWebBaseURL: string;
       urls: {
         [key: string]: {
           method: string["GET" | "POST" | "DELETE" | "PUT"];
