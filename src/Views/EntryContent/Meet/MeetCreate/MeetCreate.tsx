@@ -18,7 +18,7 @@ export default defineComponent({
   },
   setup(props) {
     const controller = new MeetCreateController();
-    
+
     // 设置弹窗ID
     if (props.popup_id) {
       controller.popupId.value = props.popup_id;
@@ -36,9 +36,7 @@ export default defineComponent({
         <div class="meet-create-form">
           {/* 会议主题 */}
           <div class="form-item">
-            <div class="form-label">
-              会议主题
-            </div>
+            <div class="form-label">会议主题</div>
             <div class="form-input">
               <Input
                 placeHolder="请输入会议主题"
@@ -66,12 +64,12 @@ export default defineComponent({
 
           {/* 开始时间 */}
           <div class="form-item">
-            <div class="form-label">
-              开始时间
-            </div>
+            <div class="form-label">开始时间</div>
             <div class="form-input">
               <Date
-                modelValue={controller.startTime.value ? controller.startTime.value.toISOString() : null}
+                modelValue={
+                  controller.startTime.value ? controller.startTime.value.toISOString() : null
+                }
                 onChange={(value: Date | null) => {
                   controller.startTime.value = value;
                 }}
@@ -85,9 +83,7 @@ export default defineComponent({
 
           {/* 会议时长 */}
           <div class="form-item">
-            <div class="form-label">
-              会议时长
-            </div>
+            <div class="form-label">会议时长</div>
             <div class="form-input">
               <Selector
                 modelValue={controller.duration.value}
@@ -126,7 +122,9 @@ export default defineComponent({
             <div class="form-input">
               <Selector
                 modelValue={controller.innerParticipants.value}
-                onUpdate:modelValue={(value: string[]) => controller.handleParticipantsChange(value)}
+                onUpdate:modelValue={(value: string[]) =>
+                  controller.handleParticipantsChange(value)
+                }
                 options={controller.staffOptions.value}
                 placeholder="请选择内部参会人（可选）"
                 multiple={true}

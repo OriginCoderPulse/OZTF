@@ -17,7 +17,7 @@ class LibGenerateTestUserSig {
   genTestUserSig(
     sdkAppId: number,
     userId: string,
-    sdkSecretKey: string,
+    sdkSecretKey: string
   ): { sdkAppId: number; userSig: string } {
     const SDKAPPID = sdkAppId;
     const EXPIRETIME = 604800;
@@ -33,13 +33,7 @@ class LibGenerateTestUserSig {
       return { sdkAppId: SDKAPPID, userSig: "" };
     }
 
-    const userSig = this._genSigWithUserbuf(
-      SDKAPPID,
-      SDKSECRETKEY,
-      userId,
-      EXPIRETIME,
-      null,
-    );
+    const userSig = this._genSigWithUserbuf(SDKAPPID, SDKSECRETKEY, userId, EXPIRETIME, null);
 
     return {
       sdkAppId: SDKAPPID,
@@ -52,7 +46,7 @@ class LibGenerateTestUserSig {
     privateKey: string,
     userId: string,
     expire: number,
-    userbuf: Uint8Array | null,
+    userbuf: Uint8Array | null
   ): string {
     const time = this._utc();
     const sigObj: any = {
@@ -86,9 +80,7 @@ class LibGenerateTestUserSig {
 
   validate(sig: string): void {
     const decoded = this._decode(sig);
-    const decompressed = this.inflateSync
-      ? this.inflateSync(decoded)
-      : decoded;
+    const decompressed = this.inflateSync ? this.inflateSync(decoded) : decoded;
     const result = new TextDecoder().decode(decompressed);
   }
 
@@ -103,9 +95,7 @@ class LibGenerateTestUserSig {
   private _decode(str: string): Uint8Array {
     const unescaped = this._unescape(str);
     const binaryString = atob(unescaped);
-    return Uint8Array.from(
-      binaryString.split("").map((c) => c.charCodeAt(0)),
-    );
+    return Uint8Array.from(binaryString.split("").map((c) => c.charCodeAt(0)));
   }
 
   private _base64encode(data: Uint8Array | string): string {
@@ -121,7 +111,7 @@ class LibGenerateTestUserSig {
     identifier: string,
     time: number,
     expire: number,
-    userbuf: string | null,
+    userbuf: string | null
   ): string {
     let content = `TLS.identifier:${identifier}\n`;
     content += `TLS.sdkappid:${sdkAppId}\n`;
@@ -155,8 +145,7 @@ class LibGenerateTestUserSig {
 
 export default {
   install(app: any) {
-    app.config.globalProperties.$libGenerateTestUserSig =
-      new LibGenerateTestUserSig();
+    app.config.globalProperties.$libGenerateTestUserSig = new LibGenerateTestUserSig();
     window.$libGenerateTestUserSig = new LibGenerateTestUserSig();
   },
 };

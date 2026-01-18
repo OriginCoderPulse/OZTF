@@ -4,12 +4,14 @@ export class ProjectController {
   public projectRole = ref<"M" | "D">("D");
   public globalPermission = ref<string>("");
 
-  constructor(private props: {
-    projectId: string | number | null;
-    projectName: string;
-    isOverdue: boolean;
-    roleTitle: string;
-  }) {
+  constructor(
+    private props: {
+      projectId: string | number | null;
+      projectName: string;
+      isOverdue: boolean;
+      roleTitle: string;
+    }
+  ) {
     this.initWatchers();
   }
 
@@ -23,7 +25,7 @@ export class ProjectController {
         if (this.props.projectId) {
           this.fetchProjectRole();
         }
-      },
+      }
     );
   }
 
@@ -46,7 +48,7 @@ export class ProjectController {
         (error: any) => {
           console.error("获取项目角色失败:", error);
           this.projectRole.value = "D";
-        },
+        }
       );
     });
   }

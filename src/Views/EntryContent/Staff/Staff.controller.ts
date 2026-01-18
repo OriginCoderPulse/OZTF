@@ -96,7 +96,7 @@ export class StaffController {
         if (allEmpty && !this.clearingByButton.value && !this.searching.value) {
           this.handleSearch();
         }
-      },
+      }
     );
   }
 
@@ -119,10 +119,7 @@ export class StaffController {
    * 打开员工详情
    */
   public handleOpenStaffDetail(staff: StaffData) {
-    $popup.popup(
-      {},
-      { component: StaffDetail, props: { staffDetail: staff } },
-    );
+    $popup.popup({}, { component: StaffDetail, props: { staffDetail: staff } });
   }
 
   /**
@@ -209,7 +206,7 @@ export class StaffController {
           if (old) this.currentPageNumber.value = old;
           $message.error({ message: error });
           this.searching.value = false;
-        },
+        }
       );
     });
   }
@@ -251,7 +248,7 @@ export class StaffController {
           },
           (error: any) => {
             $message.error({ message: error });
-          },
+          }
         );
       });
     });

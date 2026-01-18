@@ -27,7 +27,7 @@ export class DeveloperController {
       globalPermission: string;
       projectFeatureRole: "M" | "D";
       projectQARole: "M" | "D";
-    },
+    }
   ) {
     // 监听页码变化
     watch(this.featureCurrentPage, (newPage, oldPage) => {
@@ -47,7 +47,7 @@ export class DeveloperController {
         } else {
           this.projectDetail.value = {} as ProjectDetail;
         }
-      },
+      }
     );
   }
 
@@ -105,9 +105,7 @@ export class DeveloperController {
       ];
 
       $network.batchRequest(requests).then((results) => {
-        const failedRequests = results.filter(
-          (result) => result.status === "rejected",
-        );
+        const failedRequests = results.filter((result) => result.status === "rejected");
         if (failedRequests.length > 0) {
           return;
         }
@@ -137,7 +135,7 @@ export class DeveloperController {
         (error: any) => {
           $message.error({ message: error });
           if (old) this.featureCurrentPage.value = old;
-        },
+        }
       );
     });
   }
@@ -163,7 +161,7 @@ export class DeveloperController {
         (error: any) => {
           $message.error({ message: error });
           if (old) this.bugCurrentPage.value = old;
-        },
+        }
       );
     });
   }
@@ -224,7 +222,11 @@ export class DeveloperController {
    * 从 projectDetail 或 props 中获取角色
    */
   public projectFeatureRole = computed(() => {
-    return (this.projectDetail.value as any)?.project_feature_role || this.props.projectFeatureRole || "D";
+    return (
+      (this.projectDetail.value as any)?.project_feature_role ||
+      this.props.projectFeatureRole ||
+      "D"
+    );
   });
 
   public projectQARole = computed(() => {
@@ -274,7 +276,7 @@ export class DeveloperController {
           this.exportingFeatures.value = false;
         }
       },
-      5 * 60 * 1000,
+      5 * 60 * 1000
     );
 
     try {
@@ -296,7 +298,7 @@ export class DeveloperController {
       // 获取文件名（从响应头或默认名称）
       const contentDisposition = response.headers.get("Content-Disposition");
       let fileName = `Project_${this.projectDetail.value?.name || "unknown"}_功能列表.xlsx`;
-      
+
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
         if (fileNameMatch && fileNameMatch[1]) {
@@ -315,8 +317,8 @@ export class DeveloperController {
       });
 
       clearTimeout(timeoutId);
-      $message.success({ 
-        message: `已保存到: ${filePath}` 
+      $message.success({
+        message: `已保存到: ${filePath}`,
       });
       this.exportingFeatures.value = false;
     } catch (error: any) {

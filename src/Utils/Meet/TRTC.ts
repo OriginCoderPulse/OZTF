@@ -24,14 +24,14 @@ class TRTC {
         const result = $libGenerateTestUserSig.genTestUserSig(
           this._sdkAppId,
           this._userId,
-          this._sdkSecretKey,
+          this._sdkSecretKey
         );
         if (result.sdkAppId) this._sdkAppId = result.sdkAppId;
         if (result.userSig) this._userSig = result.userSig;
         this._initialized = true;
         resolve();
       }
-    })
+    });
   }
 
   /**
@@ -48,7 +48,7 @@ class TRTC {
   /**
    * 实际请求媒体设备权限
    */
-  private async requestMediaPermissions(): Promise<{ audio: boolean, video: boolean }> {
+  private async requestMediaPermissions(): Promise<{ audio: boolean; video: boolean }> {
     if (!this.checkMediaDevicesSupport()) {
       return { audio: false, video: false };
     }
@@ -59,30 +59,30 @@ class TRTC {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
         },
         video: {
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          frameRate: { ideal: 30 }
-        }
+          frameRate: { ideal: 30 },
+        },
       });
 
       // 获取权限状态
       const audioTracks = stream.getAudioTracks();
       const videoTracks = stream.getVideoTracks();
 
-      const audioGranted = audioTracks.length > 0 && audioTracks[0].readyState === 'live';
-      const videoGranted = videoTracks.length > 0 && videoTracks[0].readyState === 'live';
+      const audioGranted = audioTracks.length > 0 && audioTracks[0].readyState === "live";
+      const videoGranted = videoTracks.length > 0 && videoTracks[0].readyState === "live";
 
       // 停止流以释放资源
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
 
       return { audio: audioGranted, video: videoGranted };
     } catch (error: any) {
       console.error("请求媒体权限失败:", error);
       // 如果用户拒绝权限，返回 false
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
         return { audio: false, video: false };
       }
       // 其他错误（如设备不存在）也返回 false
@@ -90,40 +90,41 @@ class TRTC {
     }
   }
 
-  createTRTC(roomId: number): Promise<{ audio: boolean, video: boolean, status: boolean }> {
+  createTRTC(roomId: number): Promise<{ audio: boolean; video: boolean; status: boolean }> {
     return this.ensureInitialized().then(async () => {
-      return new Promise<{ audio: boolean, video: boolean, status: boolean }>(async (resolve, reject) => {
-        console.log("createTRTC", this._initialized, this._userSig);
-        if (!this._initialized || !this._userSig) {
-          reject();
-          return;
+      return new Promise<{ audio: boolean; video: boolean; status: boolean }>(
+        async (resolve, reject) => {
+          console.log("createTRTC", this._initialized, this._userSig);
+          if (!this._initialized || !this._userSig) {
+            reject();
+            return;
+          }
+
+          try {
+            const room = TRTCSDK.create();
+            this._rooms.set(roomId, room);
+            console.log("createRoom", this._rooms, room);
+
+            // 实际请求权限
+            const permissions = await this.requestMediaPermissions();
+            resolve({
+              audio: permissions.audio,
+              video: permissions.video,
+              status: true,
+            });
+          } catch (error: any) {
+            console.error("创建TRTC房间失败:", error);
+            resolve({ audio: false, video: false, status: false });
+          }
         }
-
-        try {
-          const room = TRTCSDK.create();
-          this._rooms.set(roomId, room);
-          console.log("createRoom", this._rooms, room);
-
-          // 实际请求权限
-          const permissions = await this.requestMediaPermissions();
-          resolve({
-            audio: permissions.audio,
-            video: permissions.video,
-            status: true
-          });
-        } catch (error: any) {
-          console.error("创建TRTC房间失败:", error);
-          resolve({ audio: false, video: false, status: false });
-        }
-
-      });
-    })
+      );
+    });
   }
 
   joinRoom(roomId: number): Promise<void> {
     return this.ensureInitialized().then(() => {
       return this._joinRoomInternal(roomId);
-    })
+    });
   }
 
   closeRoom(roomId: number) {
@@ -177,7 +178,7 @@ class TRTC {
       return Promise.reject(new Error(`View element '${view}' not found in document`));
     }
 
-    console.log(view)
+    console.log(view);
 
     return room.startLocalVideo({ view }) as Promise<void>;
   }
@@ -198,7 +199,12 @@ class TRTC {
     return room.muteRemoteAudio(userId, mute) as Promise<void>;
   }
 
-  muteRemoteVideo(roomId: number, userId: string, streamType: string | number, view: string): Promise<void> {
+  muteRemoteVideo(
+    roomId: number,
+    userId: string,
+    streamType: string | number,
+    view: string
+  ): Promise<void> {
     const room = this._rooms.get(roomId);
     if (!room) {
       return Promise.reject(new Error(`Room ${roomId} does not exist`));
@@ -217,9 +223,10 @@ class TRTC {
           width: 1920,
           height: 1080,
           frameRate: 60,
-          bitrate: 10000
-        }, fillMode: 'cover'
-      }
+          bitrate: 10000,
+        },
+        fillMode: "cover",
+      },
     }) as Promise<void>;
   }
 
@@ -231,10 +238,14 @@ class TRTC {
     return room.stopScreenShare() as Promise<void>;
   }
 
-  listenRoomProperties(roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) {
+  listenRoomProperties(
+    roomId: number,
+    event: keyof TRTCEventTypes,
+    callback: (event: any, room: TRTCSDK) => void
+  ) {
     this._rooms.get(roomId)?.on(event, ((...args: any[]) => {
       callback(args[0], this._rooms.get(roomId) as TRTCSDK);
-    }) as any)
+    }) as any);
   }
 
   private _joinRoomInternal(roomId: number): Promise<void> {
@@ -258,7 +269,7 @@ class TRTC {
     if (!room) {
       return Promise.reject(new Error(`Room ${roomId} does not exist`));
     }
-    return room.sendCustomMessage({cmdId, data}) as unknown as Promise<void>;
+    return room.sendCustomMessage({ cmdId, data }) as unknown as Promise<void>;
   }
 }
 

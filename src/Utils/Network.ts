@@ -48,8 +48,7 @@ class Network {
     "1024-B01": "Authentication failed: Invalid or expired token",
     "1024-B02": "Access denied: IP blocked or unauthorized",
     "1024-C01": "Invalid request data: Field validation failed",
-    "1024-C02":
-      "The application crashed due to a database connection exception",
+    "1024-C02": "The application crashed due to a database connection exception",
     "1024-D01": "System busy: Try again later",
     "1024-D02": "Quota exceeded: API rate limit reached",
     "1024-E01": "Network error: Backend service unavailable",
@@ -94,7 +93,7 @@ class Network {
         },
         (error) => {
           Promise.reject().then(error);
-        },
+        }
       );
 
       this._instance.interceptors.response.use((response) => {
@@ -111,7 +110,7 @@ class Network {
     urlKey: string,
     params: Object = {},
     successCallback?: (data: any) => void,
-    failCallback?: (error: any) => void,
+    failCallback?: (error: any) => void
   ) {
     if (!this._isRequestReady) {
       return failCallback?.("Request Plugin Is Not Installed !");
@@ -121,13 +120,9 @@ class Network {
     this._executeRequest(urlKey, params, successCallback, failCallback);
   }
 
-  batchRequest(
-    requests: RequestConfig[],
-  ): Promise<PromiseSettledResult<any>[]> {
+  batchRequest(requests: RequestConfig[]): Promise<PromiseSettledResult<any>[]> {
     if (!this._isRequestReady) {
-      requests.forEach((req) =>
-        req.failCallback?.("Request Plugin Is Not Installed !"),
-      );
+      requests.forEach((req) => req.failCallback?.("Request Plugin Is Not Installed !"));
       return Promise.resolve([]);
     }
 
@@ -143,12 +138,7 @@ class Network {
     });
 
     const promises = requests.map((req) =>
-      this._executeRequestPromise(
-        req.urlKey,
-        req.params,
-        req.successCallback,
-        req.failCallback,
-      ),
+      this._executeRequestPromise(req.urlKey, req.params, req.successCallback, req.failCallback)
     );
 
     return Promise.allSettled(promises);
@@ -172,7 +162,7 @@ class Network {
     urlKey: string,
     params: Object = {},
     successCallback?: (data: any) => void,
-    failCallback?: (error: any) => void,
+    failCallback?: (error: any) => void
   ) {
     this._requestMap.set(urlKey, {
       urlKey,
@@ -213,20 +203,13 @@ class Network {
         } else {
           // 根据错误码判断是否需要重试
           const errorMessage =
-            this._SERVICE_ERROR_CODES[
-              meta.code as keyof typeof this._SERVICE_ERROR_CODES
-            ] || meta.message;
+            this._SERVICE_ERROR_CODES[meta.code as keyof typeof this._SERVICE_ERROR_CODES] ||
+            meta.message;
           const shouldRetry = this._RETRYABLE_ERRORS.has(meta.code);
 
           if (shouldRetry) {
             // 可重试的错误，进行重试
-            this._handleRequestError(
-              urlKey,
-              params,
-              errorMessage,
-              successCallback,
-              failCallback,
-            );
+            this._handleRequestError(urlKey, params, errorMessage, successCallback, failCallback);
           } else {
             // 不可重试的业务错误，直接失败
             failCallback?.(errorMessage);
@@ -239,13 +222,7 @@ class Network {
 
         if (isNetworkError) {
           // 网络错误，进行重试
-          this._handleRequestError(
-            urlKey,
-            params,
-            errorMessage,
-            successCallback,
-            failCallback,
-          );
+          this._handleRequestError(urlKey, params, errorMessage, successCallback, failCallback);
         } else {
           // 非网络错误（如HTTP状态码错误），直接失败
           failCallback?.(errorMessage);
@@ -257,7 +234,7 @@ class Network {
     urlKey: string,
     params: Object = {},
     successCallback?: (data: any) => void,
-    failCallback?: (error: any) => void,
+    failCallback?: (error: any) => void
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       this._executeRequest(
@@ -270,7 +247,7 @@ class Network {
         (error) => {
           failCallback?.(error);
           reject(error);
-        },
+        }
       );
     });
   }
@@ -280,7 +257,7 @@ class Network {
     params: Object,
     errorMessage: string,
     successCallback?: (data: any) => void,
-    failCallback?: (error: any) => void,
+    failCallback?: (error: any) => void
   ) {
     const urlConfig = $config.urls[urlKey];
 
@@ -306,13 +283,7 @@ class Network {
 
     if (newCount <= retryConfig.maxRetries) {
       this._failedRequests.add(urlKey);
-      this._retryRequest(
-        urlKey,
-        params,
-        successCallback,
-        failCallback,
-        newCount,
-      );
+      this._retryRequest(urlKey, params, successCallback, failCallback, newCount);
     } else {
       // 重试次数已达上限
       this._failedRequests.add(urlKey);
@@ -376,7 +347,7 @@ class Network {
     params: Object = {},
     successCallback?: (data: any) => void,
     failCallback?: (error: any) => void,
-    retryCount: number = 1,
+    retryCount: number = 1
   ) {
     const retryConfig = this._maxRetryRequestMap.get(urlKey);
     if (!retryConfig) {
@@ -415,7 +386,7 @@ class Network {
 
         this._executeRequest(urlKey, params, successCallback, failCallback);
       },
-      delay,
+      delay
     );
   }
 
@@ -437,7 +408,7 @@ class Network {
           () => {
             this._checkAndShowRetryDialog();
           },
-          delay,
+          delay
         );
       }
     }
@@ -523,7 +494,7 @@ class Network {
           (error) => {
             originalFailCallback?.(error);
             this._onRetryCompleted(++completedRetries, totalRetries);
-          },
+          }
         );
       } else {
         // 如果请求配置不完整，直接标记为完成
@@ -550,7 +521,7 @@ class Network {
           () => {
             this._isRetryDialogShown = false;
           },
-          1000,
+          1000
         );
       }
     }

@@ -44,30 +44,33 @@ export default defineComponent({
                   icon={{
                     svgPath: (row: any) => {
                       // 判断是否是CEO（部门为CEO且职位为CEO）
-                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      const isCEO =
+                        row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
 
                       if (isCEO) {
                         // 禁止图标（圆形禁止符号）
-                        return null
+                        return null;
                       }
 
                       // 普通操作图标
                       return [
                         "M800 64h-576C134.4 64 64 134.4 64 224v640C64 953.6 134.4 1024 224 1024h576c89.6 0 160-70.4 160-160v-640C960 134.4 889.6 64 800 64zM896 864c0 51.2-44.8 96-96 96h-576c-51.2 0-96-44.8-96-96v-640C128 172.8 172.8 128 224 128h576c51.2 0 96 44.8 96 96v640z",
-                        "M736 320h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM736 512h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM544 704h-256c-19.2 0-32 12.8-32 32s12.8 32 32 32h256c19.2 0 32-12.8 32-32s-12.8-32-32-32z"
+                        "M736 320h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM736 512h-448c-19.2 0-32 12.8-32 32s12.8 32 32 32h448c19.2 0 32-12.8 32-32s-12.8-32-32-32zM544 704h-256c-19.2 0-32 12.8-32 32s12.8 32 32 32h256c19.2 0 32-12.8 32-32s-12.8-32-32-32z",
                       ];
                     },
                     width: 14,
                     height: 14,
                     fill: (row: any) => {
                       // CEO使用灰色，表示禁用
-                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      const isCEO =
+                        row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
                       return isCEO ? "#999999" : "#dddddd";
                     },
                     class: "icon",
                     onClick: (row: any) => {
                       // CEO不允许操作
-                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      const isCEO =
+                        row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
                       if (!isCEO) {
                         controller.handleOpenStaffDetail(row._raw);
                       }
@@ -78,7 +81,14 @@ export default defineComponent({
                     "cell-0": ({ row }: any) => row.name,
                     "cell-1": ({ row }: any) => row.gender,
                     "cell-2": ({ row }: any) => {
-                      const deptRaw = row._raw.department as "CEO" | "Technology" | "Technical" | "RMD" | "Finance" | "Product" | undefined;
+                      const deptRaw = row._raw.department as
+                        | "CEO"
+                        | "Technology"
+                        | "Technical"
+                        | "RMD"
+                        | "Finance"
+                        | "Product"
+                        | undefined;
                       // 将 Technology 映射到 Technical（兼容处理）
                       const dept = deptRaw === "Technology" ? "Technical" : deptRaw;
                       const deptKey = dept as keyof typeof staffConfig.department | undefined;
@@ -86,8 +96,7 @@ export default defineComponent({
                         <div
                           class="department"
                           style={{
-                            backgroundColor:
-                              staffConfig.department[deptKey]?.color || "#d4e6f156",
+                            backgroundColor: staffConfig.department[deptKey]?.color || "#d4e6f156",
                           }}
                         >
                           {staffConfig.department[deptKey]?.name || dept}
@@ -95,12 +104,15 @@ export default defineComponent({
                       ) : null;
                     },
                     "cell-3": ({ row }: any) => {
-                      const occupation = row._raw.occupation as keyof typeof staffConfig.occupation | undefined;
+                      const occupation = row._raw.occupation as
+                        | keyof typeof staffConfig.occupation
+                        | undefined;
                       return occupation && staffConfig.occupation[occupation] ? (
                         <div
                           class="occupation"
                           style={{
-                            backgroundColor: staffConfig.occupation[occupation]?.color || "#d4e6f156",
+                            backgroundColor:
+                              staffConfig.occupation[occupation]?.color || "#d4e6f156",
                           }}
                         >
                           {staffConfig.occupation[occupation]?.name || occupation}
@@ -110,25 +122,30 @@ export default defineComponent({
                       );
                     },
                     "cell-4": ({ row }: any) => {
-                      const status = row._raw.status as "Active" | "Probation" | "Inactive" | undefined;
-                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      const status = row._raw.status as
+                        | "Active"
+                        | "Probation"
+                        | "Inactive"
+                        | undefined;
+                      const isCEO =
+                        row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
                       return status ? (
                         <div class="staff-status">
-                          {!isCEO && <div
-                            class="status-dot"
-                            style={{
-                              backgroundColor:
-                                staffConfig.status[status]?.color || "#cbfed6ff",
-                            }}
-                          ></div>}
-                          <span>
-                            {staffConfig.status[status]?.name || status}
-                          </span>
+                          {!isCEO && (
+                            <div
+                              class="status-dot"
+                              style={{
+                                backgroundColor: staffConfig.status[status]?.color || "#cbfed6ff",
+                              }}
+                            ></div>
+                          )}
+                          <span>{staffConfig.status[status]?.name || status}</span>
                         </div>
                       ) : null;
                     },
                     "cell-5": ({ row }: any) => {
-                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+                      const isCEO =
+                        row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
                       return isCEO ? "-" : $date.format(row._raw.service_date, "YYYY-MM-DD");
                     },
                   }}
@@ -169,7 +186,7 @@ export default defineComponent({
                           (controller.activeStaffCount.value /
                             (controller.activeStaffCount.value +
                               controller.probationStaffCount.value)) *
-                          100 +
+                            100 +
                           "%",
                         borderTopRightRadius:
                           controller.activeStaffCount.value === controller.totalStaffCount.value
@@ -188,16 +205,16 @@ export default defineComponent({
                           (controller.probationStaffCount.value /
                             (controller.activeStaffCount.value +
                               controller.probationStaffCount.value)) *
-                          100 +
+                            100 +
                           "%",
                         borderTopLeftRadius:
                           controller.totalStaffCount.value - controller.activeStaffCount.value ===
-                            controller.totalStaffCount.value
+                          controller.totalStaffCount.value
                             ? "8px"
                             : 0,
                         borderBottomLeftRadius:
                           controller.totalStaffCount.value - controller.activeStaffCount.value ===
-                            controller.totalStaffCount.value
+                          controller.totalStaffCount.value
                             ? "8px"
                             : 0,
                       }}

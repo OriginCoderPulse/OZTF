@@ -20,10 +20,7 @@ export class VideoController {
    * 打开大屏视频
    */
   public openLiveVideo(videoUrl: string) {
-    $popup.popup(
-      { padding: "10px" },
-      { component: LargeVideo, props: { videoUrl } },
-    );
+    $popup.popup({ padding: "10px" }, { component: LargeVideo, props: { videoUrl } });
   }
 
   /**

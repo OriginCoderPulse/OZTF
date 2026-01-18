@@ -19,7 +19,7 @@ class PopupManager {
 
   popup(
     style: Partial<CSSStyleDeclaration>,
-    { component, props }: { component: any; props?: Record<string, any> },
+    { component, props }: { component: any; props?: Record<string, any> }
   ): string {
     const id: string = `popup_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const level: number = ++this.currentLevel;
@@ -39,8 +39,8 @@ class PopupManager {
         },
         {
           default: () => h(component, { popup_id: id, ...props }),
-        },
-      ),
+        }
+      )
     );
     app.mount(vm);
 
@@ -60,7 +60,7 @@ class PopupManager {
       onBtnOnly?: Function;
       onBtnLeft?: Function;
       onBtnRight?: Function;
-    },
+    }
   ): void {
     const id: string = `alert_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const level: number = ++this.currentLevel;
@@ -92,7 +92,7 @@ class PopupManager {
           options?.onBtnOnly?.();
           that.close(id);
         },
-      }),
+      })
     );
     app.mount(vm);
 
@@ -123,8 +123,7 @@ class PopupManager {
   private _listenEscSpace() {
     window.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "Escape" && this.popupInstances.value.length > 0) {
-        const last =
-          this.popupInstances.value[this.popupInstances.value.length - 1];
+        const last = this.popupInstances.value[this.popupInstances.value.length - 1];
         if (last) {
           this.close(last.id);
         }

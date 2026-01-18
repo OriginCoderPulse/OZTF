@@ -76,13 +76,11 @@ export default defineComponent({
 
       if (props.type === "pie") {
         // 环形图使用部门颜色
-        chartColors = Object.values(staffConfig.department).map(
-          (dept) => dept.color,
-        );
+        chartColors = Object.values(staffConfig.department).map((dept) => dept.color);
       } else {
         // 柱状图使用优先级颜色，映射到5个等级
         const priorityColors = Object.values(projectConfig.priority).map(
-          (priority) => priority.color,
+          (priority) => priority.color
         );
         // 为5个薪资等级分配优先级颜色
         chartColors = [
@@ -251,7 +249,7 @@ export default defineComponent({
           chartInstance.setOption(option);
         }
       },
-      { deep: true },
+      { deep: true }
     );
 
     // 监听类型变化
@@ -262,7 +260,7 @@ export default defineComponent({
           const option = getChartOption();
           chartInstance.setOption(option);
         }
-      },
+      }
     );
 
     onMounted(() => {

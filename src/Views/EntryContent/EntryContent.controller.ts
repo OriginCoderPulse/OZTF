@@ -18,18 +18,13 @@ export class EntryContentController {
 
     $event.on(
       "changeProject",
-      (
-        project: string,
-        isOverdue?: boolean,
-        roleTitle?: string,
-        name?: string,
-      ) => {
+      (project: string, isOverdue?: boolean, roleTitle?: string, name?: string) => {
         this.tabName.value = "";
         this.projectId.value = project;
         this.isProjectOverdue.value = isOverdue || false;
         this.projectRoleTitle.value = roleTitle || "";
         this.projectName.value = name || "";
-      },
+      }
     );
   }
 }

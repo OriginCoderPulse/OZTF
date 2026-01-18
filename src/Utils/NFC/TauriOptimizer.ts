@@ -7,8 +7,7 @@ import { invoke } from "@tauri-apps/api/core";
 class TauriCommandOptimizer {
   private static instance: TauriCommandOptimizer;
   private commandQueue: Map<string, AbortController> = new Map();
-  private commandStats: Map<string, { count: number; avgTime: number }> =
-    new Map();
+  private commandStats: Map<string, { count: number; avgTime: number }> = new Map();
 
   static getInstance(): TauriCommandOptimizer {
     if (!TauriCommandOptimizer.instance) {
@@ -24,11 +23,7 @@ class TauriCommandOptimizer {
    * @param timeout 超时时间（毫秒）
    * @returns 命令结果
    */
-  async invokeCommand<T>(
-    command: string,
-    args?: any,
-    timeout = 5000,
-  ): Promise<T> {
+  async invokeCommand<T>(command: string, args?: any, timeout = 5000): Promise<T> {
     const startTime = Date.now();
 
     // 检查是否已有相同命令在执行
@@ -101,9 +96,7 @@ class TauriCommandOptimizer {
    * @param command 命令名称
    * @returns 统计信息
    */
-  getCommandStats(
-    command: string,
-  ): { count: number; avgTime: number } | undefined {
+  getCommandStats(command: string): { count: number; avgTime: number } | undefined {
     return this.commandStats.get(command);
   }
 
@@ -130,8 +123,7 @@ class TauriCommandOptimizer {
       avgTime: 0,
     };
     const newCount = currentStats.count + 1;
-    const newAvgTime =
-      (currentStats.avgTime * currentStats.count + executionTime) / newCount;
+    const newAvgTime = (currentStats.avgTime * currentStats.count + executionTime) / newCount;
 
     this.commandStats.set(command, {
       count: newCount,

@@ -72,11 +72,7 @@ export default defineComponent({
       if (!config) return null;
 
       return (
-        <motion.div
-          key={props.roleTitle.toLowerCase()}
-          {...motionProps}
-          class="project-content"
-        >
+        <motion.div key={props.roleTitle.toLowerCase()} {...motionProps} class="project-content">
           {config.component}
         </motion.div>
       );

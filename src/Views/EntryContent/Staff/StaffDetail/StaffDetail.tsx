@@ -30,10 +30,7 @@ export default defineComponent({
                 transition={{ duration: 0.3 }}
                 class="img-motion"
               >
-                <img
-                  src="http://otzf.top/otzf/api/resource/lijiahang.JPG"
-                  alt="员工头像"
-                />
+                <img src="http://otzf.top/otzf/api/resource/lijiahang.JPG" alt="员工头像" />
               </Motion>
               <div class="staff-id">
                 <span>{props.staffDetail.id || ""}</span>
@@ -57,7 +54,8 @@ export default defineComponent({
                       }}
                     ></div>
                     <span>
-                      {staffConfig.status[props.staffDetail.status]?.name || props.staffDetail.status}
+                      {staffConfig.status[props.staffDetail.status]?.name ||
+                        props.staffDetail.status}
                     </span>
                   </div>
                 )}
@@ -73,7 +71,8 @@ export default defineComponent({
                         staffConfig.department[props.staffDetail.department]?.color || "#d4e6f156",
                     }}
                   >
-                    {staffConfig.department[props.staffDetail.department]?.name || props.staffDetail.department}
+                    {staffConfig.department[props.staffDetail.department]?.name ||
+                      props.staffDetail.department}
                   </div>
                 )}
               </div>
@@ -84,7 +83,8 @@ export default defineComponent({
               <div class="basic-item"></div>
               <div class="basic-item">
                 <div class="title">职位</div>
-                {props.staffDetail.occupation && staffConfig.occupation[props.staffDetail.occupation] ? (
+                {props.staffDetail.occupation &&
+                staffConfig.occupation[props.staffDetail.occupation] ? (
                   <div
                     class="occupation"
                     style={{
@@ -92,7 +92,8 @@ export default defineComponent({
                         staffConfig.occupation[props.staffDetail.occupation]?.color || "#d4e6f156",
                     }}
                   >
-                    {staffConfig.occupation[props.staffDetail.occupation]?.name || props.staffDetail.occupation}
+                    {staffConfig.occupation[props.staffDetail.occupation]?.name ||
+                      props.staffDetail.occupation}
                   </div>
                 ) : (
                   <span>{props.staffDetail.occupation || ""}</span>
@@ -102,10 +103,7 @@ export default defineComponent({
                 <div class="title" onClick={() => controller.togglePDFByStaff()}>
                   入职时间
                 </div>
-                <span>
-                  {$date.format(props.staffDetail.service_date, "YYYY-MM-DD") ||
-                    ""}
-                </span>
+                <span>{$date.format(props.staffDetail.service_date, "YYYY-MM-DD") || ""}</span>
               </div>
             </div>
           </div>
@@ -124,9 +122,7 @@ export default defineComponent({
               {props.staffDetail.status !== "Inactive" && (
                 <div
                   class="action-btn-resign"
-                  onClick={() =>
-                    controller.changeStaffStatus(props.staffDetail.id, "Inactive")
-                  }
+                  onClick={() => controller.changeStaffStatus(props.staffDetail.id, "Inactive")}
                 >
                   {controller.isResignLoading.value && (
                     <div class="loader">
@@ -149,9 +145,7 @@ export default defineComponent({
               {props.staffDetail.status === "Probation" && (
                 <div
                   class="action-btn-confirmation"
-                  onClick={() =>
-                    controller.changeStaffStatus(props.staffDetail.id, "Active")
-                  }
+                  onClick={() => controller.changeStaffStatus(props.staffDetail.id, "Active")}
                 >
                   {controller.isConfirmationLoading.value && (
                     <div class="loader">

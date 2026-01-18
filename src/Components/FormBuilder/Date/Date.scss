@@ -106,77 +106,73 @@
           color: #d5f5e3;
         }
       }
-          }
+    }
+  }
 
+  .range-input-unified {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s ease;
 
+    &:focus-within {
+      border-color: #d5f5e3;
+      box-shadow: 0 0 0 2px rgba(213, 245, 227, 0.2);
+      background-color: rgba(37, 37, 37, 0.7);
     }
 
-    .range-input-unified {
+    .range-input-item {
+      flex: 1;
       display: flex;
       align-items: center;
-      width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
-      overflow: hidden;
-      transition: all 0.2s ease;
 
-      &:focus-within {
-        border-color: #d5f5e3;
-        box-shadow: 0 0 0 2px rgba(213, 245, 227, 0.2);
-        background-color: rgba(37, 37, 37, 0.7);
-      }
+      .range-input {
+        width: 100%;
+        height: 36px; // 与Input组件保持一致的高度
+        padding: 0 12px;
+        border: none;
+        background: transparent;
+        color: #c5c2c2;
+        font-size: 13px; // 与Input组件保持一致的字体大小
+        outline: none;
+        text-align: center; // 内容居中
 
-      .range-input-item {
-        flex: 1;
-        display: flex;
-        align-items: center;
-
-
-
-        .range-input {
-          width: 100%;
-          height: 36px; // 与Input组件保持一致的高度
-          padding: 0 12px;
-          border: none;
-          background: transparent;
-          color: #c5c2c2;
-          font-size: 13px; // 与Input组件保持一致的字体大小
-          outline: none;
-          text-align: center; // 内容居中
-
-          &::placeholder {
-            color: #737373;
-          }
-
-          &.has-value {
-            color: #fff;
-            font-weight: 500;
-          }
-
-          &.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          &.readonly {
-            cursor: default;
-          }
+        &::placeholder {
+          color: #737373;
         }
-      }
 
-      .range-separator-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 8px;
+        &.has-value {
+          color: #fff;
+          font-weight: 500;
+        }
 
-        .icon {
+        &.disabled {
           opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        &.readonly {
+          cursor: default;
         }
       }
     }
 
-    .date-dropdown {
+    .range-separator-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+
+      .icon {
+        opacity: 0.6;
+      }
+    }
+  }
+
+  .date-dropdown {
     position: absolute;
     left: 0;
     right: 0;

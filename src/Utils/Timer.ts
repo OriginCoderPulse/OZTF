@@ -21,11 +21,7 @@ class Timer {
     return () => this._clear(eventName, "delay");
   }
 
-  regular(
-    eventName: string,
-    callback: Function,
-    intervalTime: number,
-  ): () => void {
+  regular(eventName: string, callback: Function, intervalTime: number): () => void {
     if (this._timers.has(eventName)) {
       throw new Error(`The ${eventName} event already exists!`);
     }

@@ -67,14 +67,19 @@ export class MeetController {
       this.userID.value = userID;
       $storage.get("permission").then((permission: string) => {
         this.userPermission.value = permission;
-        $network.request("meetGetRoom", { userId: userID }, (result: any) => {
-          this.meetList.value = result.data_list;
-          this.meetListLoading.value = false;
-          // 在加载完会议列表后，再次尝试恢复当前会议状态
-          this.restoreCurrentMeeting();
-        }, () => {
-          this.meetListLoading.value = false;
-        });
+        $network.request(
+          "meetGetRoom",
+          { userId: userID },
+          (result: any) => {
+            this.meetList.value = result.data_list;
+            this.meetListLoading.value = false;
+            // 在加载完会议列表后，再次尝试恢复当前会议状态
+            this.restoreCurrentMeeting();
+          },
+          () => {
+            this.meetListLoading.value = false;
+          }
+        );
       });
     });
   }
@@ -134,20 +139,14 @@ export class MeetController {
    * 处理创建会议窗口
    */
   public async handleCreateMeet() {
-    $popup.popup(
-      { width: "30%", height: "75%" },
-      { component: MeetCreate, props: {} },
-    );
+    $popup.popup({ width: "30%", height: "75%" }, { component: MeetCreate, props: {} });
   }
 
   /**
    * 处理加入会议按钮点击
    */
   public handleJoinMeet() {
-    $popup.popup(
-      { width: "30%", height: "30%" },
-      { component: null, props: {} },
-    );
+    $popup.popup({ width: "30%", height: "30%" }, { component: null, props: {} });
   }
 
   /**
@@ -208,7 +207,7 @@ export class MeetController {
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("close_meeting_window");
         // 等待窗口关闭完成
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error: any) {
         // 如果命令失败，尝试直接关闭窗口
         try {
@@ -450,7 +449,7 @@ export class MeetController {
       return false;
     }
     return this.userPermission.value === "CEO" || meet.organizer.id === this.userID.value;
-  };
+  }
 
   /**
    * 复制会议信息到剪贴板（静默复制，不显示提示）
@@ -469,14 +468,17 @@ export class MeetController {
     const text = `${$config.appName}邀请您参加会议\n会议名称：${meet.topic}\n会议号：${meet.meetId}\n会议开始时间：${startTime}\n会议时长：${meet.duration}分钟\n会议外部链接：${externalLink}`;
 
     // 复制到剪贴板（静默复制，不显示提示）
-    navigator.clipboard.writeText(text).then(() => {
-      $message.success({
-        message: "会议信息已复制到剪贴板",
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        $message.success({
+          message: "会议信息已复制到剪贴板",
+        });
+      })
+      .catch((error: any) => {
+        $message.error({
+          message: "复制失败: " + (error?.message || "未知错误"),
+        });
       });
-    }).catch((error: any) => {
-      $message.error({
-        message: "复制失败: " + (error?.message || "未知错误"),
-      });
-    });
   }
 }

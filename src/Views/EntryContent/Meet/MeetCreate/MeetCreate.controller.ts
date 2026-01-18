@@ -10,7 +10,9 @@ export class MeetCreateController {
   public innerParticipants = ref<string[]>([]);
 
   // 员工选项
-  public staffOptions = ref<Array<{ id: string; name: string; occupation: string; department: string }>>([]);
+  public staffOptions = ref<
+    Array<{ id: string; name: string; occupation: string; department: string }>
+  >([]);
   public loadingStaff = ref(false);
 
   // 会议时长选项
@@ -112,50 +114,54 @@ export class MeetCreateController {
     this.submitting.value = true;
 
     // 获取当前用户ID
-    $storage.get("userID").then((userID: string) => {
-      // 格式化开始时间（转换为UTC时间字符串）
-      if (!this.startTime.value) {
-        this.submitting.value = false;
-        return;
-      }
-      // 确保使用UTC时间字符串发送到后端
-      const startTimeDate = this.startTime.value instanceof Date 
-        ? this.startTime.value
-        : new Date(this.startTime.value);
-      const startTimeStr = startTimeDate.toISOString();
-
-      $network.request(
-        "meetCreateRoom",
-        {
-          topic: this.topic.value.trim(),
-          description: this.description.value.trim(),
-          organizerId: userID,
-          startTime: startTimeStr,
-          duration: this.duration.value,
-          password: this.password.value.trim() || undefined,
-          innerParticipants: this.innerParticipants.value,
-        },
-        () => {
+    $storage
+      .get("userID")
+      .then((userID: string) => {
+        // 格式化开始时间（转换为UTC时间字符串）
+        if (!this.startTime.value) {
           this.submitting.value = false;
-          $message.success({ message: "会议创建成功" });
-          // 关闭弹窗
-          if (this.popupId.value) {
-            $popup.close(this.popupId.value);
-          } else {
-            $popup.closeAll();
-          }
-          // 刷新会议列表（通过事件通知父组件）
-          window.dispatchEvent(new CustomEvent("meet-created"));
-        },
-        (error: any) => {
-          this.submitting.value = false;
-          $message.error({ message: "创建会议失败: " + (error || "未知错误") });
+          return;
         }
-      );
-    }).catch((error: any) => {
-      this.submitting.value = false;
-      $message.error({ message: "获取用户ID失败: " + (error?.message || "未知错误") });
-    });
+        // 确保使用UTC时间字符串发送到后端
+        const startTimeDate =
+          this.startTime.value instanceof Date
+            ? this.startTime.value
+            : new Date(this.startTime.value);
+        const startTimeStr = startTimeDate.toISOString();
+
+        $network.request(
+          "meetCreateRoom",
+          {
+            topic: this.topic.value.trim(),
+            description: this.description.value.trim(),
+            organizerId: userID,
+            startTime: startTimeStr,
+            duration: this.duration.value,
+            password: this.password.value.trim() || undefined,
+            innerParticipants: this.innerParticipants.value,
+          },
+          () => {
+            this.submitting.value = false;
+            $message.success({ message: "会议创建成功" });
+            // 关闭弹窗
+            if (this.popupId.value) {
+              $popup.close(this.popupId.value);
+            } else {
+              $popup.closeAll();
+            }
+            // 刷新会议列表（通过事件通知父组件）
+            window.dispatchEvent(new CustomEvent("meet-created"));
+          },
+          (error: any) => {
+            this.submitting.value = false;
+            $message.error({ message: "创建会议失败: " + (error || "未知错误") });
+          }
+        );
+      })
+      .catch((error: any) => {
+        this.submitting.value = false;
+        $message.error({ message: "获取用户ID失败: " + (error?.message || "未知错误") });
+      });
   }
 
   /**

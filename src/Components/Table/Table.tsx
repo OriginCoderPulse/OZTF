@@ -20,7 +20,10 @@ export default defineComponent({
     // 最后一列的图标配置
     icon: {
       type: Object as () => {
-        svgPath?: string | string[] | ((row: Record<string, any>, index: number) => string | string[]);
+        svgPath?:
+          | string
+          | string[]
+          | ((row: Record<string, any>, index: number) => string | string[]);
         width?: number | string;
         height?: number | string;
         fill?: string | ((row: Record<string, any>, index: number) => string);
@@ -83,13 +86,13 @@ export default defineComponent({
         const width = props.columnWidths[colIndex];
         return typeof width === "number" ? `${width}px` : width;
       }
-      
+
       // 再检查是否通过列名指定了宽度
       if (title && props.columnWidths[title] !== undefined) {
         const width = props.columnWidths[title];
         return typeof width === "number" ? `${width}px` : width;
       }
-      
+
       // 如果没有指定宽度，返回null，后续会计算平均宽度
       return null;
     };
@@ -120,7 +123,12 @@ export default defineComponent({
     });
 
     // 渲染单元格内容
-    const renderCellContent = (row: Record<string, any>, title: string, colIndex: number, rowIndex: number) => {
+    const renderCellContent = (
+      row: Record<string, any>,
+      title: string,
+      colIndex: number,
+      rowIndex: number
+    ) => {
       // 如果提供了自定义插槽，使用插槽
       const slotName = `cell-${colIndex}`;
       if (slots[slotName]) {
@@ -156,10 +164,15 @@ export default defineComponent({
             {props.data.length > 0 ? (
               <Fragment>
                 {props.data.map((row, rowIndex) => (
-                  <div key={`row-${rowIndex}`} class="table-row" style={{ height: rowHeight.value }}>
+                  <div
+                    key={`row-${rowIndex}`}
+                    class="table-row"
+                    style={{ height: rowHeight.value }}
+                  >
                     {/* 数据列 */}
                     {props.titles.map((title, colIndex) => {
-                      const width = colIndex < columnWidths.value.length ? columnWidths.value[colIndex] : null;
+                      const width =
+                        colIndex < columnWidths.value.length ? columnWidths.value[colIndex] : null;
                       return (
                         <div
                           key={`cell-${rowIndex}-${colIndex}`}
@@ -171,75 +184,98 @@ export default defineComponent({
                       );
                     })}
                     {/* 操作列（如果有icon） */}
-                    {props.icon && (() => {
-                      const svgPath = typeof props.icon.svgPath === 'function' 
-                        ? props.icon.svgPath(row, rowIndex) 
-                        : props.icon.svgPath;
-                      const fill = typeof props.icon.fill === 'function'
-                        ? props.icon.fill(row, rowIndex)
-                        : props.icon.fill;
-                      
-                      const isCEO = row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
-                      
-                      return (
-                        <div
-                          class="table-cell table-cell-action"
-                          style={columnWidths.value[props.titles.length] ? { width: columnWidths.value[props.titles.length], flexShrink: 0 } : { flex: 1 }}
-                        >
+                    {props.icon &&
+                      (() => {
+                        const svgPath =
+                          typeof props.icon.svgPath === "function"
+                            ? props.icon.svgPath(row, rowIndex)
+                            : props.icon.svgPath;
+                        const fill =
+                          typeof props.icon.fill === "function"
+                            ? props.icon.fill(row, rowIndex)
+                            : props.icon.fill;
+
+                        const isCEO =
+                          row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
+
+                        return (
                           <div
-                            class={props.icon.class || "table-icon"}
-                            onClick={() => {
-                              if (props.icon?.onClick && !isCEO) {
-                                props.icon.onClick(row, rowIndex);
-                              }
-                            }}
-                            style={{
-                              cursor: props.icon.onClick && !isCEO ? "pointer" : "not-allowed",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
+                            class="table-cell table-cell-action"
+                            style={
+                              columnWidths.value[props.titles.length]
+                                ? { width: columnWidths.value[props.titles.length], flexShrink: 0 }
+                                : { flex: 1 }
+                            }
                           >
-                            {svgPath ? (
-                              <Svg
-                                svgPath={svgPath}
-                                width={props.icon.width || 14}
-                                height={props.icon.height || 14}
-                                fill={fill}
-                                stroke={props.icon.stroke}
-                                strokeWidth={props.icon.strokeWidth}
-                                strokeLinecap={props.icon.strokeLinecap}
-                                viewBox={props.icon.viewBox}
-                                class="icon"
-                              />
-                            ) : "-"}
+                            <div
+                              class={props.icon.class || "table-icon"}
+                              onClick={() => {
+                                if (props.icon?.onClick && !isCEO) {
+                                  props.icon.onClick(row, rowIndex);
+                                }
+                              }}
+                              style={{
+                                cursor: props.icon.onClick && !isCEO ? "pointer" : "not-allowed",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {svgPath ? (
+                                <Svg
+                                  svgPath={svgPath}
+                                  width={props.icon.width || 14}
+                                  height={props.icon.height || 14}
+                                  fill={fill}
+                                  stroke={props.icon.stroke}
+                                  strokeWidth={props.icon.strokeWidth}
+                                  strokeLinecap={props.icon.strokeLinecap}
+                                  viewBox={props.icon.viewBox}
+                                  class="icon"
+                                />
+                              ) : (
+                                "-"
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
                   </div>
                 ))}
                 {/* 当数据少于pageQuantity时，添加占位行以保持固定行高 */}
-                {Array.from({ length: Math.max(0, props.pageQuantity - props.data.length) }).map((_, index) => (
-                  <div key={`placeholder-${index}`} class="table-row table-row-placeholder" style={{ height: rowHeight.value }}>
-                    {props.titles.map((_, colIndex) => {
-                      const width = colIndex < columnWidths.value.length ? columnWidths.value[colIndex] : null;
-                      return (
+                {Array.from({ length: Math.max(0, props.pageQuantity - props.data.length) }).map(
+                  (_, index) => (
+                    <div
+                      key={`placeholder-${index}`}
+                      class="table-row table-row-placeholder"
+                      style={{ height: rowHeight.value }}
+                    >
+                      {props.titles.map((_, colIndex) => {
+                        const width =
+                          colIndex < columnWidths.value.length
+                            ? columnWidths.value[colIndex]
+                            : null;
+                        return (
+                          <div
+                            key={`placeholder-cell-${index}-${colIndex}`}
+                            class="table-cell"
+                            style={width ? { width, flexShrink: 0 } : { flex: 1 }}
+                          ></div>
+                        );
+                      })}
+                      {props.icon && (
                         <div
-                          key={`placeholder-cell-${index}-${colIndex}`}
-                          class="table-cell"
-                          style={width ? { width, flexShrink: 0 } : { flex: 1 }}
+                          class="table-cell table-cell-action"
+                          style={
+                            columnWidths.value[props.titles.length]
+                              ? { width: columnWidths.value[props.titles.length], flexShrink: 0 }
+                              : { flex: 1 }
+                          }
                         ></div>
-                      );
-                    })}
-                    {props.icon && (
-                      <div
-                        class="table-cell table-cell-action"
-                        style={columnWidths.value[props.titles.length] ? { width: columnWidths.value[props.titles.length], flexShrink: 0 } : { flex: 1 }}
-                      ></div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  )
+                )}
               </Fragment>
             ) : (
               <div class="table-empty">{props.emptyText}</div>
@@ -255,8 +291,8 @@ export default defineComponent({
                   props.pageNumPosition === "left"
                     ? "flex-start"
                     : props.pageNumPosition === "right"
-                    ? "flex-end"
-                    : "center",
+                      ? "flex-end"
+                      : "center",
               }}
             >
               <Pagenition

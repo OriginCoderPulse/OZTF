@@ -23,9 +23,7 @@ export default defineComponent({
 
     return () => (
       <div class="large-video">
-        {mounted.value && (
-          <VideoPlayer videoUrl={props.videoUrl} videoType="stream" />
-        )}
+        {mounted.value && <VideoPlayer videoUrl={props.videoUrl} videoType="stream" />}
       </div>
     );
   },

@@ -18,7 +18,7 @@ export class StaffDetailController {
         () => {
           this.isShowContract.value = true;
         },
-        500,
+        500
       );
     } else {
       this.isShowContract.value = !this.isShowContract.value;
@@ -35,10 +35,7 @@ export class StaffDetailController {
   /**
    * 改变员工状态API
    */
-  private changeStaffStatusApi(
-    id: string,
-    status: "Active" | "Inactive",
-  ) {
+  private changeStaffStatusApi(id: string, status: "Active" | "Inactive") {
     $network.request(
       "changeStaffStatus",
       { staffID: id, status },
@@ -49,7 +46,7 @@ export class StaffDetailController {
         this.isConfirmationLoading.value = false;
         this.isResignLoading.value = false;
         $message.error({ message: error });
-      },
+      }
     );
   }
 

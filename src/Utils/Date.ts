@@ -9,7 +9,7 @@ class DateManager {
   format(
     date: Date | string | number,
     format: string = "YYYY-MM-DD hh:mm:ss",
-    useLocalTime: boolean = true,
+    useLocalTime: boolean = true
   ): string {
     let targetDate: Date;
 
@@ -17,9 +17,7 @@ class DateManager {
       targetDate = date;
     } else if (typeof date === "number" || /^\d+$/.test(String(date))) {
       const timestamp = Number(date);
-      targetDate = new Date(
-        timestamp.toString().length === 10 ? timestamp * 1000 : timestamp,
-      );
+      targetDate = new Date(timestamp.toString().length === 10 ? timestamp * 1000 : timestamp);
     } else {
       targetDate = new Date(date);
       if (isNaN(targetDate.getTime())) {
@@ -76,10 +74,7 @@ class DateManager {
   }
 
   // 判断是否为同一天
-  isSameDay(
-    date1: Date | string | number,
-    date2: Date | string | number,
-  ): boolean {
+  isSameDay(date1: Date | string | number, date2: Date | string | number): boolean {
     const d1 = this._parseDate(date1);
     const d2 = this._parseDate(date2);
 
@@ -101,9 +96,7 @@ class DateManager {
       return date;
     } else if (typeof date === "number" || /^\d+$/.test(String(date))) {
       const timestamp = Number(date);
-      return new Date(
-        timestamp.toString().length === 10 ? timestamp * 1000 : timestamp,
-      );
+      return new Date(timestamp.toString().length === 10 ? timestamp * 1000 : timestamp);
     } else {
       const parsedDate = new Date(date);
       if (isNaN(parsedDate.getTime())) {

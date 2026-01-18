@@ -70,7 +70,7 @@
           user-select: none;
 
           &::before {
-            content: '';
+            content: "";
             width: 3px;
             height: 16px;
             background-color: #d5f5e3;
@@ -98,7 +98,7 @@
         user-select: none;
 
         &::before {
-          content: '';
+          content: "";
           width: 3px;
           height: 16px;
           background-color: #d5f5e3;
@@ -127,8 +127,6 @@
         }
       }
     }
-
-
 
     .project-manager {
       .manager-select {
@@ -273,7 +271,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    
 
     .title {
       font-size: 16px;
@@ -284,7 +281,7 @@
       align-items: center;
 
       &::before {
-        content: '';
+        content: "";
         width: 3px;
         height: 16px;
         background-color: #d5f5e3;
@@ -332,10 +329,18 @@
           -ms-user-select: none;
           text-align: center;
 
-          &:nth-child(1) { flex: 0 0 15%; } // 姓名
-          &:nth-child(2) { flex: 0 0 20%; } // 职位
-          &:nth-child(3) { flex: 0 0 50%; } // 项目角色
-          &:nth-child(4) { flex: 0 0 15%; } // 操作
+          &:nth-child(1) {
+            flex: 0 0 15%;
+          } // 姓名
+          &:nth-child(2) {
+            flex: 0 0 20%;
+          } // 职位
+          &:nth-child(3) {
+            flex: 0 0 50%;
+          } // 项目角色
+          &:nth-child(4) {
+            flex: 0 0 15%;
+          } // 操作
         }
       }
 
@@ -368,10 +373,18 @@
             -ms-user-select: none;
             text-align: center;
 
-            &:nth-child(1) { flex: 0 0 15%; } // 姓名
-            &:nth-child(2) { flex: 0 0 20%; } // 职位
-            &:nth-child(3) { flex: 0 0 50%; } // 项目角色
-            &:nth-child(4) { flex: 0 0 15%; } // 操作
+            &:nth-child(1) {
+              flex: 0 0 15%;
+            } // 姓名
+            &:nth-child(2) {
+              flex: 0 0 20%;
+            } // 职位
+            &:nth-child(3) {
+              flex: 0 0 50%;
+            } // 项目角色
+            &:nth-child(4) {
+              flex: 0 0 15%;
+            } // 操作
 
             .selector {
               width: 140px;
@@ -379,7 +392,7 @@
               position: relative;
               z-index: 1000;
             }
-            
+
             .occupation-tag {
               width: fit-content;
               padding: 3px 5px;
@@ -413,11 +426,11 @@
                   background-color: rgba(255, 255, 255, 0.05);
                 }
 
-                        &.active {
-          background-color: rgba(213, 245, 227, 0.15);
-          border-color: rgba(213, 245, 227, 0.2);
-          color: #d5f5e3;
-        }
+                &.active {
+                  background-color: rgba(213, 245, 227, 0.15);
+                  border-color: rgba(213, 245, 227, 0.2);
+                  color: #d5f5e3;
+                }
               }
             }
 
@@ -484,14 +497,14 @@
     display: flex;
     justify-content: center;
 
-          .submit-btn {
-        padding: 10px 24px;
-        background-color: rgba(213, 245, 227, 0.3);
-        border: 1px solid rgba(213, 245, 227, 0.4);
-        border-radius: 6px;
-        color: #d5f5e3;
-        font-size: 14px;
-        font-weight: 500;
+    .submit-btn {
+      padding: 10px 24px;
+      background-color: rgba(213, 245, 227, 0.3);
+      border: 1px solid rgba(213, 245, 227, 0.4);
+      border-radius: 6px;
+      color: #d5f5e3;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 2px 8px rgba(213, 245, 227, 0.3);

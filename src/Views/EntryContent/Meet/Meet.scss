@@ -47,7 +47,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     align-content: start;
-    
+
     .meet-record-item {
       display: flex;
       flex-direction: column;
@@ -57,7 +57,7 @@
       box-sizing: border-box;
       height: 260px;
       // max-height: 280px;
-      
+
       .record-item-header {
         display: flex;
         align-items: center;
@@ -138,13 +138,13 @@
       box-sizing: border-box;
 
       .enter-button {
-        background-color: #4CAF5056;
+        background-color: #4caf5056;
         color: #c5c2c2;
         border-radius: 4px;
         padding: 4px 8px;
         cursor: pointer;
         user-select: none;
-        font-size: 12px;  
+        font-size: 12px;
       }
 
       .conclude-button {

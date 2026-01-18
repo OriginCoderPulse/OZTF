@@ -42,15 +42,13 @@ export class HistoryVideoController {
     const dateCur = new Date().toLocaleDateString();
 
     return datedays.map((date, index) => {
-      const timeList = date === dateCur
-        ? Array.from(
-            { length: new Date().getHours() },
-            (_, i) => `${i.toString().padStart(2, "0")}:00`,
-          )
-        : Array.from(
-            { length: 24 },
-            (_, i) => `${i.toString().padStart(2, "0")}:00`,
-          );
+      const timeList =
+        date === dateCur
+          ? Array.from(
+              { length: new Date().getHours() },
+              (_, i) => `${i.toString().padStart(2, "0")}:00`
+            )
+          : Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, "0")}:00`);
 
       const timeListWithIndex = timeList.map((time, timeIndex) => ({
         time,
@@ -71,12 +69,12 @@ export class HistoryVideoController {
    * 切换折叠
    */
   public toggleFold(date: any) {
-    const targetIndex = this.dateList.value.findIndex(item => item.date === date.date);
+    const targetIndex = this.dateList.value.findIndex((item) => item.date === date.date);
     if (targetIndex !== -1) {
       const newList = [...this.dateList.value];
       const targetItem = newList[targetIndex];
       const willBeExpanded = targetItem.fold; // 如果当前是折叠的，点击后会展开
-      
+
       // 如果将要展开当前项，先关闭所有其他已展开的项
       if (willBeExpanded) {
         newList.forEach((item, index) => {
@@ -88,13 +86,13 @@ export class HistoryVideoController {
           }
         });
       }
-      
+
       // 切换目标项的折叠状态
       newList[targetIndex] = {
         ...targetItem,
         fold: !targetItem.fold,
       };
-      
+
       this.dateList.value = newList;
     }
   }
@@ -123,7 +121,7 @@ export class HistoryVideoController {
           this.exportProgress.value = 0;
         }
       },
-      1000,
+      1000
     );
   }
 }

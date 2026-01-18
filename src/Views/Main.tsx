@@ -101,7 +101,7 @@ export default defineComponent({
               clearTimeout(timeout);
               $message.error({ message: error });
               reject(error);
-            },
+            }
           );
         });
       } catch (error) {
@@ -124,7 +124,7 @@ export default defineComponent({
             },
             (error: any) => {
               reject(error);
-            },
+            }
           );
         });
         $popup.closeAll();
@@ -136,14 +136,7 @@ export default defineComponent({
     // 组件挂载时设置事件监听器
     onMounted(async () => {
       // 添加用户活动事件监听器
-      const events = [
-        "mousedown",
-        "mousemove",
-        "keypress",
-        "scroll",
-        "touchstart",
-        "click",
-      ];
+      const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"];
       events.forEach((event) => {
         document.addEventListener(event, handleUserActivity, { passive: true });
       });
@@ -184,7 +177,7 @@ export default defineComponent({
               clearTimeout(timeout);
               console.error("初始化失败:", error);
               reject(error);
-            },
+            }
           );
         });
       } catch (error) {
@@ -203,14 +196,7 @@ export default defineComponent({
       }
 
       // 移除用户活动事件监听器
-      const events = [
-        "mousedown",
-        "mousemove",
-        "keypress",
-        "scroll",
-        "touchstart",
-        "click",
-      ];
+      const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"];
       events.forEach((event) => {
         document.removeEventListener(event, handleUserActivity);
       });

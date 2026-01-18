@@ -22,10 +22,7 @@ class HighFrequencyControl {
     const timerKey = fn.toString();
     return (...args: any[]) => {
       const now = Date.now();
-      if (
-        !this.lastExecTimes[timerKey] ||
-        now - this.lastExecTimes[timerKey] >= interval
-      ) {
+      if (!this.lastExecTimes[timerKey] || now - this.lastExecTimes[timerKey] >= interval) {
         fn.apply(this, args);
         this.lastExecTimes[timerKey] = now;
       } else if (trailing) {
@@ -35,7 +32,7 @@ class HighFrequencyControl {
             fn.apply(this, args);
             this.lastExecTimes[timerKey] = Date.now();
           },
-          interval - (now - this.lastExecTimes[timerKey]),
+          interval - (now - this.lastExecTimes[timerKey])
         );
       }
     };

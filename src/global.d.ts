@@ -3,7 +3,7 @@ import { TRTCEventTypes, TRTCSDK } from "trtc-sdk-v5";
 
 declare global {
   namespace JSX {
-    interface Element extends VNode { }
+    interface Element extends VNode {}
     interface ElementClass {
       $props: {};
     }
@@ -14,10 +14,7 @@ declare global {
 
   interface Window {
     $popup: {
-      popup: (
-        style: Partial<CSSStyleDeclaration>,
-        { component, props },
-      ) => string;
+      popup: (style: Partial<CSSStyleDeclaration>, { component, props }) => string;
       alert: (
         content: string,
         options?: {
@@ -29,7 +26,7 @@ declare global {
           onBtnOnly?: Function;
           onBtnLeft?: Function;
           onBtnRight?: Function;
-        },
+        }
       ) => void;
       close: (id: string) => void;
       closeAll: () => void;
@@ -39,7 +36,7 @@ declare global {
         urlKey: string,
         params: Object,
         successCallBack?: (data: any) => void,
-        failCallBack?: (error: any) => void,
+        failCallBack?: (error: any) => void
       ) => void;
       batchRequest: (
         requests: Array<{
@@ -47,7 +44,7 @@ declare global {
           params: Object;
           successCallback?: (data: any) => void;
           failCallback?: (error: any) => void;
-        }>,
+        }>
       ) => Promise<PromiseSettledResult<any>[]>;
     };
     $event: {
@@ -70,50 +67,23 @@ declare global {
       delay: (
         event_name: string,
         callback: () => void | Promise<void>,
-        delayTime: number,
+        delayTime: number
       ) => () => void;
       regular: (
         event_name: string,
         callback: () => void | Promise<void>,
-        intervalTime: number,
+        intervalTime: number
       ) => () => void;
     };
     $message: {
-      info: ({
-        message,
-        duration,
-      }: {
-        message: string;
-        duration?: number;
-      }) => void;
-      error: ({
-        message,
-        duration,
-      }: {
-        message: string;
-        duration?: number;
-      }) => void;
-      warning: ({
-        message,
-        duration,
-      }: {
-        message: string;
-        duration?: number;
-      }) => void;
-      success: ({
-        message,
-        duration,
-      }: {
-        message: string;
-        duration?: number;
-      }) => void;
+      info: ({ message, duration }: { message: string; duration?: number }) => void;
+      error: ({ message, duration }: { message: string; duration?: number }) => void;
+      warning: ({ message, duration }: { message: string; duration?: number }) => void;
+      success: ({ message, duration }: { message: string; duration?: number }) => void;
     };
     $date: {
       format: (date: Date | string | number, format?: string, useLocalTime?: boolean) => string;
-      isSameDay: (
-        date1: Date | string | number,
-        date2: Date | string | number,
-      ) => boolean;
+      isSameDay: (date1: Date | string | number, date2: Date | string | number) => boolean;
       isToday: (date: Date | string | number) => boolean;
       toUTCString: (date: Date) => string;
       fromUTCString: (utcString: string) => Date;
@@ -125,32 +95,20 @@ declare global {
       clearAll: () => Promise<void>;
     };
     $hfc: {
-      debounce: (
-        fn: Function,
-        delay: number,
-        immediate: boolean = false,
-      ) => Function;
-      throttle: (
-        fn: Function,
-        interval: number,
-        trailing: boolean = true,
-      ) => Function;
+      debounce: (fn: Function, delay: number, immediate: boolean = false) => Function;
+      throttle: (fn: Function, interval: number, trailing: boolean = true) => Function;
     };
     $nfc: {
       readerConnected: { value: boolean };
       cardPresent: { value: boolean };
       cardData: { value: any };
       initialize: (forceRestart?: boolean) => Promise<void>;
-      onCardDetected: (
-        callback: (cardInfo: { uid: string; left?: boolean }) => void,
-      ) => void;
-      offCardDetected: (
-        callback: (cardInfo: { uid: string; left?: boolean }) => void,
-      ) => void;
+      onCardDetected: (callback: (cardInfo: { uid: string; left?: boolean }) => void) => void;
+      offCardDetected: (callback: (cardInfo: { uid: string; left?: boolean }) => void) => void;
       cleanup: () => Promise<void>;
     };
     $trtc: {
-      createTRTC: (roomId: number) => Promise<{ audio: boolean, video: boolean, status: boolean }>;
+      createTRTC: (roomId: number) => Promise<{ audio: boolean; video: boolean; status: boolean }>;
       joinRoom: (roomId: number) => Promise<void>;
       exitRoom: (roomId: number) => Promise<void>;
       closeRoom: (roomId: number) => void;
@@ -160,14 +118,27 @@ declare global {
       openLocalVideo: (roomId: number, view: string) => Promise<void>;
       closeLocalVideo: (roomId: number) => Promise<void>;
       muteRemoteAudio: (roomId: number, userId: string, mute: boolean) => Promise<void>;
-      muteRemoteVideo: (roomId: number, userId: string, streamType: string | number, view: string) => Promise<void>;
+      muteRemoteVideo: (
+        roomId: number,
+        userId: string,
+        streamType: string | number,
+        view: string
+      ) => Promise<void>;
       startRemoteScreen: (roomId: number) => Promise<void>;
       stopRemoteScreen: (roomId: number) => Promise<void>;
       sendCustomMessage: (roomId: number, cmdId: number, data: ArrayBuffer) => Promise<unknown>;
-      listenRoomProperties: (roomId: number, event: keyof TRTCEventTypes, callback: (event: any, room: TRTCSDK) => void) => void;
+      listenRoomProperties: (
+        roomId: number,
+        event: keyof TRTCEventTypes,
+        callback: (event: any, room: TRTCSDK) => void
+      ) => void;
     };
     $libGenerateTestUserSig: {
-      genTestUserSig: (sdkAppId: number, userId: string, sdkSecretKey: string) => {
+      genTestUserSig: (
+        sdkAppId: number,
+        userId: string,
+        sdkSecretKey: string
+      ) => {
         sdkAppId: number;
         userSig: string;
       };

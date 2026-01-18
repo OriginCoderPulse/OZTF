@@ -1,3 +1,1 @@
-export function invoke() {
-
-}
+export function invoke() {}

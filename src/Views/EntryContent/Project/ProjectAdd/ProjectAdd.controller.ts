@@ -76,7 +76,7 @@ export class ProjectAddController {
       },
       (_error: any) => {
         $message.error({ message: "获取开发人员列表失败" });
-      },
+      }
     );
   }
 
@@ -115,7 +115,7 @@ export class ProjectAddController {
    */
   public removeParticipant(participantId: string) {
     this.selectedDevelopers.value = this.selectedDevelopers.value.filter(
-      (id) => id !== participantId,
+      (id) => id !== participantId
     );
     delete this.participantRoles.value[participantId];
   }
@@ -128,9 +128,7 @@ export class ProjectAddController {
 
     // 如果新选择的项目负责人已经在项目参与人中，将其移除
     if (value && this.selectedDevelopers.value.includes(value)) {
-      this.selectedDevelopers.value = this.selectedDevelopers.value.filter(
-        (id) => id !== value,
-      );
+      this.selectedDevelopers.value = this.selectedDevelopers.value.filter((id) => id !== value);
     }
   }
 
@@ -168,19 +166,11 @@ export class ProjectAddController {
         const startDateTime = `${startDateStr}T00:00:00`;
         const endDateTime = `${endDateStr}T00:00:00`;
 
-        parsedStartDate = new Function(
-          'return new Date("' + startDateTime + '")',
-        )();
-        parsedEndDate = new Function(
-          'return new Date("' + endDateTime + '")',
-        )();
+        parsedStartDate = new Function('return new Date("' + startDateTime + '")')();
+        parsedEndDate = new Function('return new Date("' + endDateTime + '")')();
       } catch (e) {
-        parsedStartDate = new Function(
-          'return new Date("' + startDateStr + '")',
-        )();
-        parsedEndDate = new Function(
-          'return new Date("' + endDateStr + '")',
-        )();
+        parsedStartDate = new Function('return new Date("' + startDateStr + '")')();
+        parsedEndDate = new Function('return new Date("' + endDateStr + '")')();
       }
 
       if (
@@ -253,7 +243,7 @@ export class ProjectAddController {
       (error: any) => {
         $message.error({ message: error || "项目添加失败" });
         this.submitting.value = false;
-      },
+      }
     );
   }
 

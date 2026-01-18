@@ -1,11 +1,4 @@
-import {
-  defineComponent,
-  ref,
-  onMounted,
-  onUnmounted,
-  watch,
-  nextTick,
-} from "vue";
+import { defineComponent, ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import "./Excalidraw.scss";
 
 // 基于官方 Excalidraw 的工具类型
@@ -104,8 +97,7 @@ export default defineComponent({
 
       ctx.value = canvas.getContext("2d");
       if (ctx.value) {
-        ctx.value.fillStyle =
-          props.data?.appState?.viewBackgroundColor || "transparent";
+        ctx.value.fillStyle = props.data?.appState?.viewBackgroundColor || "transparent";
         ctx.value.fillRect(0, 0, canvas.width, canvas.height);
         drawElements();
       }
@@ -119,8 +111,7 @@ export default defineComponent({
       const context = ctx.value;
 
       // 清空画布
-      context.fillStyle =
-        props.data?.appState?.viewBackgroundColor || "transparent";
+      context.fillStyle = props.data?.appState?.viewBackgroundColor || "transparent";
       context.fillRect(0, 0, canvas.width, canvas.height);
 
       // 绘制所有元素
@@ -139,12 +130,7 @@ export default defineComponent({
 
       switch (element.type) {
         case TOOL_TYPE.rectangle:
-          context.strokeRect(
-            element.x,
-            element.y,
-            element.width,
-            element.height,
-          );
+          context.strokeRect(element.x, element.y, element.width, element.height);
           break;
         case TOOL_TYPE.ellipse:
           context.beginPath();
@@ -153,7 +139,7 @@ export default defineComponent({
             element.y + element.height / 2,
             Math.min(element.width, element.height) / 2,
             0,
-            2 * Math.PI,
+            2 * Math.PI
           );
           context.stroke();
           break;
@@ -248,11 +234,7 @@ export default defineComponent({
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <g
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M6 6l4.153 11.793a0.365 .365 0 0 0 .331 .207a0.366 .366 0 0 0 .332 -.207l2.184 -4.793l4.787 -1.994a0.355 .355 0 0 0 .213 -.323a0.355 .355 0 0 0 -.213 -.323l-11.787 -4.36z" />
                 <path d="M13.5 13.5l4.5 4.5" />
@@ -449,24 +431,12 @@ export default defineComponent({
         <div class="layer-ui__wrapper">
           <div class="FixedSideContainer FixedSideContainer--top">
             <div class="App-menu App-menu_top">
-              <div
-                class="Stack Stack--col App-menu_top__left"
-                style={{ gap: "6px" }}
-              >
+              <div class="Stack Stack--col App-menu_top__left" style={{ gap: "6px" }}>
                 <div class="Section shapes-section">
                   <div style={{ position: "relative" }}>
-                    <div
-                      class="Stack Stack--col"
-                      style={{ gap: "4px", alignItems: "flex-start" }}
-                    >
-                      <div
-                        class="Stack Stack--row App-toolbar-container"
-                        style={{ gap: "1px" }}
-                      >
-                        <div
-                          class="Island App-toolbar"
-                          style={{ padding: "1px" }}
-                        >
+                    <div class="Stack Stack--col" style={{ gap: "4px", alignItems: "flex-start" }}>
+                      <div class="Stack Stack--row App-toolbar-container" style={{ gap: "1px" }}>
+                        <div class="Island App-toolbar" style={{ padding: "1px" }}>
                           <div class="Stack Stack--row" style={{ gap: "1px" }}>
                             {/* PenModeButton */}
                             <button class={`ToolIcon`} title="Pen mode">
@@ -479,11 +449,7 @@ export default defineComponent({
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <g strokeWidth="1.5">
-                                    <path
-                                      stroke="none"
-                                      d="M0 0h24v24H0z"
-                                      fill="none"
-                                    />
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M5 19c2-1.5 4-2.5 6-2.5s4 .5 6 2.5" />
                                     <path d="M12 5c-2 0 -3 1 -3 3s1 3 3 3s3 -1 3 -3s-1 -3 -3 -3" />
                                   </g>
@@ -502,19 +468,8 @@ export default defineComponent({
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <g strokeWidth="1.5">
-                                    <path
-                                      stroke="none"
-                                      d="M0 0h24v24H0z"
-                                      fill="none"
-                                    />
-                                    <rect
-                                      x="5"
-                                      y="11"
-                                      width="14"
-                                      height="10"
-                                      rx="2"
-                                      ry="2"
-                                    />
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <rect x="5" y="11" width="14" height="10" rx="2" ry="2" />
                                     <circle cx="12" cy="16" r="1" />
                                     <path d="M8 11v-5a4 4 0 0 1 8 0v5" />
                                   </g>
@@ -528,9 +483,7 @@ export default defineComponent({
                             {/* HandButton */}
                             <button
                               class={`ToolIcon ${currentTool.value === TOOL_TYPE.hand ? "ToolIcon--selected" : ""}`}
-                              onClick={() =>
-                                (currentTool.value = TOOL_TYPE.hand)
-                              }
+                              onClick={() => (currentTool.value = TOOL_TYPE.hand)}
                               title="Hand — H"
                             >
                               <div class="ToolIcon__icon">
@@ -542,11 +495,7 @@ export default defineComponent({
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <g strokeWidth="1.5">
-                                    <path
-                                      stroke="none"
-                                      d="M0 0h24v24H0z"
-                                      fill="none"
-                                    />
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M8 13v-8.5a1.5 1.5 0 0 1 3 0v7.5" />
                                     <path d="M11 11.5v-2a1.5 1.5 0 1 1 3 0v2.5" />
                                     <path d="M14 10v-1.5a1.5 1.5 0 0 1 3 0v1.5" />
@@ -587,11 +536,7 @@ export default defineComponent({
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <g strokeWidth="1.5">
-                                    <path
-                                      stroke="none"
-                                      d="M0 0h24v24H0z"
-                                      fill="none"
-                                    />
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <circle cx="12" cy="12" r="1" />
                                     <circle cx="12" cy="19" r="1" />
                                     <circle cx="12" cy="5" r="1" />
@@ -620,7 +565,7 @@ export default defineComponent({
           drawElements();
         }).then();
       },
-      { deep: true },
+      { deep: true }
     );
 
     // 监听只读状态变化
@@ -630,7 +575,7 @@ export default defineComponent({
         if (props.readOnly) {
           currentTool.value = "selection";
         }
-      },
+      }
     );
 
     onMounted(() => {
@@ -667,11 +612,7 @@ export default defineComponent({
           />
         </div>
         {renderToolbar()}
-        {props.readOnly && (
-          <div class="excalidraw-readonly-notice">
-            只读模式 - 仅UI角色可编辑
-          </div>
-        )}
+        {props.readOnly && <div class="excalidraw-readonly-notice">只读模式 - 仅UI角色可编辑</div>}
       </div>
     );
   },

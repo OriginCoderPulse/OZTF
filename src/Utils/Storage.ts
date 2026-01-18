@@ -13,10 +13,7 @@ class Storage {
   set(key: string, value: any): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        localStorage.setItem(
-          key,
-          typeof value === "string" ? value : JSON.stringify(value),
-        );
+        localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value));
         resolve();
       } catch (err: Error | any) {
         reject(err?.message);

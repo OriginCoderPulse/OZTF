@@ -8,7 +8,7 @@ interface Participant {
   occupation: string;
   device: string;
   joinTime: string;
-  type: 'inner' | 'out';
+  type: "inner" | "out";
 }
 
 export class MeetRoomController {
@@ -33,7 +33,6 @@ export class MeetRoomController {
     topic: string;
     startTime: string;
     duration: number;
-
   } | null>(null);
   // 跟踪每个参与人的视频流状态（使用 participantId 作为 key）
   private _participantVideoStates = ref<Map<string, boolean>>(new Map());
@@ -58,121 +57,131 @@ export class MeetRoomController {
             message: "麦克风或摄像头权限未授予",
           });
         }
-        $trtc.joinRoom(roomId).then(async () => {
-          // 添加内部参与人
-          await this.addInnerParticipant(meetId);
+        $trtc
+          .joinRoom(roomId)
+          .then(async () => {
+            // 添加内部参与人
+            await this.addInnerParticipant(meetId);
 
-          // 获取会议属性和参会人（内部和外部）
-          await this.fetchRoomProperties(meetId);
+            // 获取会议属性和参会人（内部和外部）
+            await this.fetchRoomProperties(meetId);
 
-          // 建立 TRTC userId 到 participantId 的映射
-          // App 端：TRTC userId = 数据库用户 ID，应该匹配内部参与人的 participantId
-          this._trtcUserIdToParticipantId.value.set(this.userId.value, this.userId.value);
-          // 对于其他参与人，在 REMOTE_USER_ENTER 事件中建立映射
+            // 建立 TRTC userId 到 participantId 的映射
+            // App 端：TRTC userId = 数据库用户 ID，应该匹配内部参与人的 participantId
+            this._trtcUserIdToParticipantId.value.set(this.userId.value, this.userId.value);
+            // 对于其他参与人，在 REMOTE_USER_ENTER 事件中建立映射
 
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.NETWORK_QUALITY, (event) => {
-            console.log("网络质量:", event);
-          });
-
-          // 监听远端音频可用事件 - 当远端用户发布音频时触发
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_AUDIO_AVAILABLE, (event) => {
-            // 取消静音，开始播放远端音频
-            $trtc.muteRemoteAudio(roomId, event.userId, false).catch(() => {
-              this.microphoneState.value = false;
+            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.NETWORK_QUALITY, (event) => {
+              console.log("网络质量:", event);
             });
-          });
 
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_VIDEO_AVAILABLE, ({ userId, streamType }) => {
+            // 监听远端音频可用事件 - 当远端用户发布音频时触发
+            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_AUDIO_AVAILABLE, (event) => {
+              // 取消静音，开始播放远端音频
+              $trtc.muteRemoteAudio(roomId, event.userId, false).catch(() => {
+                this.microphoneState.value = false;
+              });
+            });
 
-            // 忽略自己的视频流
-            if (userId === this.userId.value) {
-              return;
-            }
+            $trtc.listenRoomProperties(
+              roomId,
+              TRTCSDK.EVENT.REMOTE_VIDEO_AVAILABLE,
+              ({ userId, streamType }) => {
+                // 忽略自己的视频流
+                if (userId === this.userId.value) {
+                  return;
+                }
 
-            // 查找对应的 participantId（如果映射不存在，使用 userId 作为 fallback）
-            const participantId = this._trtcUserIdToParticipantId.value.get(userId) || userId;
+                // 查找对应的 participantId（如果映射不存在，使用 userId 作为 fallback）
+                const participantId = this._trtcUserIdToParticipantId.value.get(userId) || userId;
 
-            if (streamType === TRTCSDK.TYPE.STREAM_TYPE_MAIN) {
-              // 设置该用户的视频流状态为可用（使用 participantId）
-              this._participantVideoStates.value.set(participantId, true);
-              // 使用 participantId 作为 view id，确保与 DOM 中的 id 匹配
-              const viewId = `${participantId}_remote_video`;
-              const normalizedStreamType = this.normalizeStreamType(streamType);
+                if (streamType === TRTCSDK.TYPE.STREAM_TYPE_MAIN) {
+                  // 设置该用户的视频流状态为可用（使用 participantId）
+                  this._participantVideoStates.value.set(participantId, true);
+                  // 使用 participantId 作为 view id，确保与 DOM 中的 id 匹配
+                  const viewId = `${participantId}_remote_video`;
+                  const normalizedStreamType = this.normalizeStreamType(streamType);
 
-              // 尝试启动远端视频，如果 DOM 元素不存在则重试（使用 TRTC userId）
-              this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);
-            } else {
-              $trtc.closeLocalVideo(roomId)
-              const viewId = `meet-video`;
-              const normalizedStreamType = this.normalizeStreamType(streamType);
-              this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);
-              this.canOpenScreenShare.value = false;
-            }
-          });
+                  // 尝试启动远端视频，如果 DOM 元素不存在则重试（使用 TRTC userId）
+                  this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);
+                } else {
+                  $trtc.closeLocalVideo(roomId);
+                  const viewId = `meet-video`;
+                  const normalizedStreamType = this.normalizeStreamType(streamType);
+                  this.startRemoteVideoWithRetry(roomId, userId, normalizedStreamType, viewId, 0);
+                  this.canOpenScreenShare.value = false;
+                }
+              }
+            );
 
-          // 监听远端视频不可用事件 - 当远端用户关闭摄像头时触发
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_VIDEO_UNAVAILABLE, ({ userId, streamType }) => {
-            // 忽略自己的视频流
-            if (userId === this.userId.value) {
-              return;
-            }
+            // 监听远端视频不可用事件 - 当远端用户关闭摄像头时触发
+            $trtc.listenRoomProperties(
+              roomId,
+              TRTCSDK.EVENT.REMOTE_VIDEO_UNAVAILABLE,
+              ({ userId, streamType }) => {
+                // 忽略自己的视频流
+                if (userId === this.userId.value) {
+                  return;
+                }
 
-            if (streamType === TRTCSDK.TYPE.STREAM_TYPE_SUB) {
+                if (streamType === TRTCSDK.TYPE.STREAM_TYPE_SUB) {
+                  const viewId = `meet-video`;
+                  $trtc.openLocalVideo(roomId, viewId);
+                  this.canOpenScreenShare.value = true;
+                } else {
+                  // 查找对应的 participantId（如果映射不存在，使用 userId 作为 fallback）
+                  const participantId = this._trtcUserIdToParticipantId.value.get(userId) || userId;
+                  // 设置该用户的视频流状态为不可用（使用 participantId）
+                  this._participantVideoStates.value.set(participantId, false);
+                }
+              }
+            );
+
+            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.SCREEN_SHARE_STOPPED, () => {
               const viewId = `meet-video`;
               $trtc.openLocalVideo(roomId, viewId);
               this.canOpenScreenShare.value = true;
-            } else {
-              // 查找对应的 participantId（如果映射不存在，使用 userId 作为 fallback）
-              const participantId = this._trtcUserIdToParticipantId.value.get(userId) || userId;
-              // 设置该用户的视频流状态为不可用（使用 participantId）
-              this._participantVideoStates.value.set(participantId, false);
-            }
-          });
-
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.SCREEN_SHARE_STOPPED, () => {
-            const viewId = `meet-video`;
-            $trtc.openLocalVideo(roomId, viewId);
-            this.canOpenScreenShare.value = true;
-          })
-
-          // 监听远端用户进入房间事件
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_USER_ENTER, (event) => {
-            // 取消静音，开始播放远端音频
-            $trtc.muteRemoteAudio(roomId, event.userId, false).catch(() => {
-              this.microphoneState.value = false;
             });
 
-            // 延迟一下再拉取，确保后端数据已更新
-            setTimeout(() => {
-              const meetId = this._meetId.value;
-              if (meetId) {
-                this.fetchRoomProperties(meetId).then(() => {
-                  // 拉取参会人列表后，建立 TRTC userId 到 participantId 的映射
-                  this.buildTrtcUserIdMapping(event.userId);
-                })
-              }
-            }, 500);
-          });
+            // 监听远端用户进入房间事件
+            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_USER_ENTER, (event) => {
+              // 取消静音，开始播放远端音频
+              $trtc.muteRemoteAudio(roomId, event.userId, false).catch(() => {
+                this.microphoneState.value = false;
+              });
 
-          // 监听远端用户离开房间事件 - 清除状态
-          $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_USER_EXIT, (event) => {
-            // 查找对应的 participantId 并清除状态
-            const participantId = this._trtcUserIdToParticipantId.value.get(event.userId) || event.userId;
-            this._participantVideoStates.value.delete(participantId);
-            this._trtcUserIdToParticipantId.value.delete(event.userId);
-            // 延迟一下再拉取，确保后端数据已更新
-            setTimeout(() => {
-              const meetId = this._meetId.value;
-              if (meetId) {
-                this.fetchRoomProperties(meetId).catch(() => {
-                });
-              }
-            }, 500);
+              // 延迟一下再拉取，确保后端数据已更新
+              setTimeout(() => {
+                const meetId = this._meetId.value;
+                if (meetId) {
+                  this.fetchRoomProperties(meetId).then(() => {
+                    // 拉取参会人列表后，建立 TRTC userId 到 participantId 的映射
+                    this.buildTrtcUserIdMapping(event.userId);
+                  });
+                }
+              }, 500);
+            });
+
+            // 监听远端用户离开房间事件 - 清除状态
+            $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.REMOTE_USER_EXIT, (event) => {
+              // 查找对应的 participantId 并清除状态
+              const participantId =
+                this._trtcUserIdToParticipantId.value.get(event.userId) || event.userId;
+              this._participantVideoStates.value.delete(participantId);
+              this._trtcUserIdToParticipantId.value.delete(event.userId);
+              // 延迟一下再拉取，确保后端数据已更新
+              setTimeout(() => {
+                const meetId = this._meetId.value;
+                if (meetId) {
+                  this.fetchRoomProperties(meetId).catch(() => {});
+                }
+              }, 500);
+            });
+          })
+          .catch((error: any) => {
+            console.error("加入房间失败:", error);
+            // invoke("close_meeting_window")
           });
-        }).catch((error: any) => {
-          console.error("加入房间失败:", error);
-          // invoke("close_meeting_window")
-        });
       }
     } catch (error: any) {
       console.error("初始化房间失败:", error);
@@ -194,19 +203,15 @@ export class MeetRoomController {
       const device = "app";
       const joinTime = new Date().toISOString();
 
-      $network.request(
-        "meetAddInnerParticipant",
-        {
-          meetId,
-          participantId: userID,
-          participantInfo: JSON.stringify({
-            device,
-            joinTime
-          })
-        }
-      );
-    } catch (error: any) {
-    }
+      $network.request("meetAddInnerParticipant", {
+        meetId,
+        participantId: userID,
+        participantInfo: JSON.stringify({
+          device,
+          joinTime,
+        }),
+      });
+    } catch (error: any) {}
   }
 
   /**
@@ -229,9 +234,9 @@ export class MeetRoomController {
             try {
               // 保存会议信息
               this._meetingInfo.value = {
-                meetId: data.meetId || '',
-                topic: data.topic || '',
-                startTime: data.startTime || '',
+                meetId: data.meetId || "",
+                topic: data.topic || "",
+                startTime: data.startTime || "",
                 duration: data.duration || 0,
               };
 
@@ -250,7 +255,7 @@ export class MeetRoomController {
               // 合并内部和外部参会人
               const allParticipants: Participant[] = [
                 ...(data.innerParticipants || []),
-                ...(data.outParticipants || [])
+                ...(data.outParticipants || []),
               ];
               // 确保使用新的数组引用，触发响应式更新
               this.participantList.value = [...allParticipants];
@@ -277,17 +282,16 @@ export class MeetRoomController {
     });
   }
 
-
   /**
    * 将 streamType 转换为有效的字符串格式
    */
   private normalizeStreamType(streamType: any): string {
-    if (typeof streamType === 'string') {
+    if (typeof streamType === "string") {
       // 如果是字符串，检查是否为 'main' 或 'sub'
-      return streamType === 'sub' ? 'sub' : 'main';
+      return streamType === "sub" ? "sub" : "main";
     }
     // 如果是数字，0 或 falsy 值表示主视频流，其他值表示子视频流
-    return streamType === 1 || streamType === 'sub' ? 'sub' : 'main';
+    return streamType === 1 || streamType === "sub" ? "sub" : "main";
   }
 
   /**
@@ -311,16 +315,26 @@ export class MeetRoomController {
       // DOM 元素存在，启动远端视频
       $trtc.muteRemoteVideo(roomId, userId, streamType, viewId).catch((error: any) => {
         // 如果是"用户未发布流"的错误，静默处理（等待用户发布流）
-        if (error?.message?.includes('does not publishing stream')) {
+        if (error?.message?.includes("does not publishing stream")) {
           return;
         }
       });
     } else {
       // DOM 元素不存在，延迟重试
       if (retryCount < maxRetries) {
-        setTimeout(() => {
-          this.startRemoteVideoWithRetry(roomId, userId, streamType, viewId, retryCount + 1, maxRetries);
-        }, 200 * (retryCount + 1)); // 递增延迟：200ms, 400ms, 600ms...
+        setTimeout(
+          () => {
+            this.startRemoteVideoWithRetry(
+              roomId,
+              userId,
+              streamType,
+              viewId,
+              retryCount + 1,
+              maxRetries
+            );
+          },
+          200 * (retryCount + 1)
+        ); // 递增延迟：200ms, 400ms, 600ms...
       }
     }
   }
@@ -335,15 +349,11 @@ export class MeetRoomController {
         return;
       }
 
-      $network.request(
-        "meetRemoveInnerParticipant",
-        {
-          meetId,
-          participantId: userID
-        }
-      );
-    } catch (error: any) {
-    }
+      $network.request("meetRemoveInnerParticipant", {
+        meetId,
+        participantId: userID,
+      });
+    } catch (error: any) {}
   }
 
   /**
@@ -364,8 +374,7 @@ export class MeetRoomController {
           message: "开启麦克风失败: " + (error?.message || "未知错误"),
         });
       });
-    }
-    else {
+    } else {
       $trtc.closeLocalAudio(this._roomId.value).catch((error: any) => {
         $message.error({
           message: "关闭麦克风失败: " + (error?.message || "未知错误"),
@@ -405,7 +414,7 @@ export class MeetRoomController {
   public startRemoteScreen() {
     $trtc.startRemoteScreen(this._roomId.value).then(() => {
       this.screenShareState.value = true;
-    })
+    });
   }
 
   /**
@@ -414,7 +423,7 @@ export class MeetRoomController {
   public stopRemoteScreen() {
     $trtc.stopRemoteScreen(this._roomId.value).then(() => {
       this.screenShareState.value = false;
-    })
+    });
   }
 
   /**
@@ -426,14 +435,17 @@ export class MeetRoomController {
       await this.removeInnerParticipant(this._meetId.value);
     }
 
-    $trtc.exitRoom(roomId).then(async () => {
-      // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
-      invoke("close_meeting_window")
-    }).catch(() => {
-      $message.error({
-        message: "退出房间失败，请重试",
+    $trtc
+      .exitRoom(roomId)
+      .then(async () => {
+        // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
+        invoke("close_meeting_window");
+      })
+      .catch(() => {
+        $message.error({
+          message: "退出房间失败，请重试",
+        });
       });
-    });
   };
 
   /**
@@ -442,20 +454,21 @@ export class MeetRoomController {
   public concludeMeeting = async (roomId: number) => {
     // 获取当前用户ID
     const userID = await $storage.get("userID");
-    const data = new TextEncoder().encode('conclude').buffer;
+    const data = new TextEncoder().encode("conclude").buffer;
 
     // 发送 TRTC 自定义消息（通知其他参会人会议已结束）
-    $trtc.sendCustomMessage(roomId, 1, data)
+    $trtc.sendCustomMessage(roomId, 1, data);
 
-
-    $network.request("meetStatusChange", {
-      meetId: this._meetId.value,
-      status: "Concluded",
-      userId: userID
-    },
+    $network.request(
+      "meetStatusChange",
+      {
+        meetId: this._meetId.value,
+        status: "Concluded",
+        userId: userID,
+      },
       () => {
         // 退出房间
-        $trtc.exitRoom(roomId)
+        $trtc.exitRoom(roomId);
 
         // 关闭窗口（Rust 后端会自动发送 meet-exited 事件给主窗口）
         invoke("close_meeting_window");
@@ -463,7 +476,8 @@ export class MeetRoomController {
       (error: any) => {
         // 即使失败也继续，但记录错误
         console.error("结束会议接口调用失败:", error);
-      });
+      }
+    );
   };
 
   public exitMeeting(roomId: number) {
@@ -490,7 +504,7 @@ export class MeetRoomController {
    */
   private buildTrtcUserIdMapping(trtcUserId?: string) {
     // 遍历参会人列表，建立映射关系
-    this.participantList.value.forEach(participant => {
+    this.participantList.value.forEach((participant) => {
       // 如果提供了 trtcUserId，只建立该用户的映射
       if (trtcUserId) {
         // 尝试匹配：TRTC userId 可能是数据库 ID 或生成的字符串
@@ -502,8 +516,11 @@ export class MeetRoomController {
       } else {
         // 如果没有提供 trtcUserId，为所有参与人建立映射
         // 对于内部参与人，TRTC userId 应该等于 participantId（数据库 ID）
-        if (participant.type === 'inner') {
-          this._trtcUserIdToParticipantId.value.set(participant.participantId, participant.participantId);
+        if (participant.type === "inner") {
+          this._trtcUserIdToParticipantId.value.set(
+            participant.participantId,
+            participant.participantId
+          );
         }
         // 对于外部参与人，需要等待 REMOTE_USER_ENTER 事件来建立映射
       }
@@ -522,7 +539,7 @@ export class MeetRoomController {
    */
   public copyMeetingInfo() {
     // 获取 web 端基础 URL（从环境变量或配置中获取，如果没有则使用默认值）
-    const webBaseURL = import.meta.env.VITE_WEB_BASE_URL
+    const webBaseURL = import.meta.env.VITE_WEB_BASE_URL;
     const externalLink = `${webBaseURL}${this._meetId.value}`;
 
     // 格式化开始时间
@@ -534,15 +551,18 @@ export class MeetRoomController {
     const text = `${$config.appName}邀请您参加会议\n会议名称：${this._meetingInfo.value?.topic}\n会议号：${this._meetingInfo.value?.meetId}\n会议开始时间：${startTime}\n会议时长：${this._meetingInfo.value?.duration}分钟\n会议外部链接：${externalLink}`;
 
     // 复制到剪贴板
-    navigator.clipboard.writeText(text).then(() => {
-      $message.success({
-        message: "会议信息已复制到剪贴板",
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        $message.success({
+          message: "会议信息已复制到剪贴板",
+        });
+      })
+      .catch((error: any) => {
+        $message.error({
+          message: "复制失败: " + (error?.message || "未知错误"),
+        });
       });
-    }).catch((error: any) => {
-      $message.error({
-        message: "复制失败: " + (error?.message || "未知错误"),
-      });
-    });
   }
 
   /**

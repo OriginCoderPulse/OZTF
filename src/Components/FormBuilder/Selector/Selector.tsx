@@ -7,59 +7,59 @@ export default defineComponent({
   props: {
     emptyText: {
       type: String,
-      default: '暂无选项'
+      default: "暂无选项",
     },
     modelValue: {
       type: [String, Number, Array],
-      default: null
+      default: null,
     },
     options: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     placeholder: {
       type: String,
-      default: "请选择"
+      default: "请选择",
     },
     multiple: {
       type: Boolean,
-      default: false
+      default: false,
     },
     searchable: {
       type: Boolean,
-      default: true
+      default: true,
     },
     disabled: {
       type: Boolean,
-      default: false
+      default: false,
     },
     clearable: {
       type: Boolean,
-      default: true
+      default: true,
     },
     maxHeight: {
       type: String,
-      default: "200px"
+      default: "200px",
     },
     optionLabel: {
       type: String,
-      default: "label"
+      default: "label",
     },
     optionValue: {
       type: String,
-      default: "value"
+      default: "value",
     },
     filterable: {
       type: Boolean,
-      default: true
+      default: true,
     },
     dropdownPlacement: {
       type: String,
-      default: 'bottom',
-      validator: (value: string) => ['top', 'bottom'].includes(value)
-    }
+      default: "bottom",
+      validator: (value: string) => ["top", "bottom"].includes(value),
+    },
   },
-  emits: ['update:modelValue', 'change', 'focus', 'blur', 'search'],
+  emits: ["update:modelValue", "change", "focus", "blur", "search"],
   setup(props, { emit }) {
     const showDropdown = ref(false);
     const searchQuery = ref("");
@@ -67,8 +67,8 @@ export default defineComponent({
     const dropdownRef = ref<HTMLElement>();
 
     const closeOtherFormComponents = () => {
-      const closeEvent = new CustomEvent('closeFormComponents', {
-        detail: { source: 'selector' }
+      const closeEvent = new CustomEvent("closeFormComponents", {
+        detail: { source: "selector" },
       });
       document.dispatchEvent(closeEvent);
     };
@@ -77,7 +77,7 @@ export default defineComponent({
       // 关闭所有其他表单组件的下拉框，包括其他Selector和Date组件
       if (showDropdown.value) {
         showDropdown.value = false;
-        emit('blur');
+        emit("blur");
       }
     };
 
@@ -86,11 +86,12 @@ export default defineComponent({
 
       const target = event.target as Element;
 
-      const isClickInInput = inputRef.value && inputRef.value.contains && inputRef.value.contains(target);
+      const isClickInInput =
+        inputRef.value && inputRef.value.contains && inputRef.value.contains(target);
 
       let isClickInDropdown = false;
       if (dropdownRef.value) {
-        if (typeof dropdownRef.value.contains === 'function') {
+        if (typeof dropdownRef.value.contains === "function") {
           isClickInDropdown = dropdownRef.value.contains(target);
         }
       }
@@ -100,7 +101,7 @@ export default defineComponent({
       if (!isClickInside) {
         closeOtherFormComponents();
         showDropdown.value = false;
-        emit('blur');
+        emit("blur");
       }
     };
 
@@ -118,31 +119,31 @@ export default defineComponent({
 
     // 获取选项标签
     const getOptionLabel = (option: any): string => {
-      if (typeof option === 'string') return option;
-      if (typeof option === 'object' && option !== null) {
-        return option[props.optionLabel] || option.label || '';
+      if (typeof option === "string") return option;
+      if (typeof option === "object" && option !== null) {
+        return option[props.optionLabel] || option.label || "";
       }
       return String(option);
     };
 
     // 获取选项值
     const getOptionValue = (option: any): any => {
-      if (typeof option === 'string') return option;
-      if (typeof option === 'object' && option !== null) {
+      if (typeof option === "string") return option;
+      if (typeof option === "object" && option !== null) {
         return option[props.optionValue] || option.value || option;
       }
       return option;
     };
 
-
-
     // 当前显示的标签
     const displayLabel = computed(() => {
       if (props.multiple && Array.isArray(props.modelValue)) {
-        const selectedLabels = props.modelValue.map(value => {
-          const option = props.options.find((opt: any) => getOptionValue(opt) === value);
-          return option ? getOptionLabel(option) : '';
-        }).filter(Boolean);
+        const selectedLabels = props.modelValue
+          .map((value) => {
+            const option = props.options.find((opt: any) => getOptionValue(opt) === value);
+            return option ? getOptionLabel(option) : "";
+          })
+          .filter(Boolean);
 
         if (selectedLabels.length === 0) {
           return props.placeholder;
@@ -153,15 +154,19 @@ export default defineComponent({
           const firstTwo = selectedLabels.slice(0, 2);
           const remaining = selectedLabels.length - 2;
           return {
-            type: 'multiple-with-plus',
-            text: firstTwo.join(', '),
-            plusCount: remaining
+            type: "multiple-with-plus",
+            text: firstTwo.join(", "),
+            plusCount: remaining,
           };
         }
 
-        return selectedLabels.join(', ');
+        return selectedLabels.join(", ");
       } else {
-        if (props.modelValue === null || props.modelValue === undefined || props.modelValue === '') {
+        if (
+          props.modelValue === null ||
+          props.modelValue === undefined ||
+          props.modelValue === ""
+        ) {
           return props.placeholder;
         }
 
@@ -173,10 +178,10 @@ export default defineComponent({
     // 获取placeholder文本（确保返回字符串）
     const placeholderText = computed(() => {
       const label = displayLabel.value;
-      if (typeof label === 'string') {
+      if (typeof label === "string") {
         return label;
       }
-      if (label && typeof label === 'object' && label.type === 'multiple-with-plus') {
+      if (label && typeof label === "object" && label.type === "multiple-with-plus") {
         return `${label.text} +${label.plusCount}`;
       }
       return props.placeholder;
@@ -187,7 +192,9 @@ export default defineComponent({
       if (props.multiple) {
         return Array.isArray(props.modelValue) && props.modelValue.length > 0;
       } else {
-        return props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== '';
+        return (
+          props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== ""
+        );
       }
     });
 
@@ -216,14 +223,14 @@ export default defineComponent({
           currentValues.push(value);
         }
 
-        emit('update:modelValue', currentValues);
-        emit('change', currentValues);
+        emit("update:modelValue", currentValues);
+        emit("change", currentValues);
       } else {
-        emit('update:modelValue', value);
-        emit('change', value);
+        emit("update:modelValue", value);
+        emit("change", value);
         showDropdown.value = false;
         searchQuery.value = "";
-        emit('blur');
+        emit("blur");
       }
     };
 
@@ -232,11 +239,11 @@ export default defineComponent({
       event.stopPropagation();
 
       if (props.multiple) {
-        emit('update:modelValue', []);
-        emit('change', []);
+        emit("update:modelValue", []);
+        emit("change", []);
       } else {
-        emit('update:modelValue', null);
-        emit('change', null);
+        emit("update:modelValue", null);
+        emit("change", null);
       }
     };
 
@@ -255,28 +262,28 @@ export default defineComponent({
       showDropdown.value = newState;
 
       if (newState) {
-        emit('focus');
+        emit("focus");
         searchQuery.value = "";
       } else {
-        emit('blur');
+        emit("blur");
       }
     };
 
     const handleSearch = (event: Event) => {
       const target = event.target as HTMLInputElement;
       searchQuery.value = target.value;
-      emit('search', searchQuery.value);
+      emit("search", searchQuery.value);
     };
 
     const handleKeydown = (event: KeyboardEvent) => {
       if (!showDropdown.value) return;
 
       switch (event.key) {
-        case 'Escape':
+        case "Escape":
           showDropdown.value = false;
-          emit('blur');
+          emit("blur");
           break;
-        case 'Enter':
+        case "Enter":
           event.preventDefault();
           if (filteredOptions.value.length > 0) {
             selectOption(filteredOptions.value[0]);
@@ -286,19 +293,19 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      document.addEventListener('click', handleDocumentClick);
-      document.addEventListener('closeFormComponents', handleGlobalClose);
+      document.addEventListener("click", handleDocumentClick);
+      document.addEventListener("closeFormComponents", handleGlobalClose);
     });
 
     onUnmounted(() => {
-      document.removeEventListener('click', handleDocumentClick);
-      document.removeEventListener('closeFormComponents', handleGlobalClose);
+      document.removeEventListener("click", handleDocumentClick);
+      document.removeEventListener("closeFormComponents", handleGlobalClose);
     });
 
     return () => (
       <div class="selector" ref={inputRef}>
         <div
-          class={`selector-input ${hasValue.value ? 'has-value' : ''} ${props.disabled ? 'disabled' : ''} ${showDropdown.value ? 'focused' : ''}`}
+          class={`selector-input ${hasValue.value ? "has-value" : ""} ${props.disabled ? "disabled" : ""} ${showDropdown.value ? "focused" : ""}`}
           onClick={(event: Event) => {
             event.stopPropagation();
             toggleDropdown(event);
@@ -317,25 +324,24 @@ export default defineComponent({
                 closeOtherFormComponents();
                 if (!showDropdown.value) {
                   showDropdown.value = true;
-                  emit('focus');
+                  emit("focus");
                 }
               }}
               onClick={(e: Event) => {
                 e.stopPropagation();
                 if (!showDropdown.value) {
                   showDropdown.value = true;
-                  emit('focus');
+                  emit("focus");
                 }
               }}
             />
           ) : (
-            <span class={`display-text ${!hasValue.value ? 'placeholder' : ''}`}>
-              {typeof displayLabel.value === 'string' ? (
+            <span class={`display-text ${!hasValue.value ? "placeholder" : ""}`}>
+              {typeof displayLabel.value === "string" ? (
                 displayLabel.value
-              ) : displayLabel.value && displayLabel.value.type === 'multiple-with-plus' ? (
+              ) : displayLabel.value && displayLabel.value.type === "multiple-with-plus" ? (
                 <Fragment>
-                  {displayLabel.value.text}
-                  {' '}
+                  {displayLabel.value.text}{" "}
                   <span class="plus-count">+{displayLabel.value.plusCount}</span>
                 </Fragment>
               ) : (
@@ -346,46 +352,35 @@ export default defineComponent({
 
           <div class="selector-actions">
             {hasValue.value && props.clearable && !props.disabled && (
-              <button
-                type="button"
-                class="clear-btn"
-                onClick={clearSelection}
-                title="清除"
-              >
+              <button type="button" class="clear-btn" onClick={clearSelection} title="清除">
                 ×
               </button>
             )}
-            <div class={`dropdown-arrow ${showDropdown.value ? 'open' : ''}`}>
-              ▼
-            </div>
+            <div class={`dropdown-arrow ${showDropdown.value ? "open" : ""}`}>▼</div>
           </div>
         </div>
 
         {showDropdown.value && (
           <Motion
-            initial={{opacity: 0, y: props.dropdownPlacement === 'top' ? 10 : -10}}
-            animate={{opacity: 1, y: 0}}
-            exit={{opacity: 0, y: props.dropdownPlacement === 'top' ? 10 : -10}}
-            transition={{duration: 0.2, ease: 'easeOut'}}
-            class={`selector-dropdown ${props.dropdownPlacement === 'top' ? 'dropdown-top' : 'dropdown-bottom'}`}
+            initial={{ opacity: 0, y: props.dropdownPlacement === "top" ? 10 : -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: props.dropdownPlacement === "top" ? 10 : -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            class={`selector-dropdown ${props.dropdownPlacement === "top" ? "dropdown-top" : "dropdown-bottom"}`}
             ref={dropdownRef}
           >
             <div class="dropdown-content" style={{ maxHeight: props.maxHeight }}>
               {filteredOptions.value.length === 0 ? (
-                <div class="no-options">
-                  {searchQuery.value ? '未找到匹配项' : props.emptyText}
-                </div>
+                <div class="no-options">{searchQuery.value ? "未找到匹配项" : props.emptyText}</div>
               ) : (
                 filteredOptions.value.map((option: any, index: number) => (
                   <div
                     key={index}
-                    class={`dropdown-item ${isOptionSelected(option) ? 'selected' : ''}`}
+                    class={`dropdown-item ${isOptionSelected(option) ? "selected" : ""}`}
                     onClick={() => selectOption(option)}
                   >
                     <span class="item-label">{getOptionLabel(option)}</span>
-                    {isOptionSelected(option) && (
-                      <span class="selected-icon">✓</span>
-                    )}
+                    {isOptionSelected(option) && <span class="selected-icon">✓</span>}
                   </div>
                 ))
               )}
@@ -394,5 +389,5 @@ export default defineComponent({
         )}
       </div>
     );
-  }
+  },
 });

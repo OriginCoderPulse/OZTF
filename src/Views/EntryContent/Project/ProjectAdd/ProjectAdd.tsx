@@ -131,7 +131,8 @@ export default defineComponent({
                 2: "280px",
               }}
               icon={{
-                svgPath: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+                svgPath:
+                  "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
                 width: 16,
                 height: 16,
                 viewBox: "0 0 24 24",
@@ -147,21 +148,27 @@ export default defineComponent({
                 "cell-1": ({ row }: any) => {
                   // 映射 occupation 到 role 配置的键
                   const occupationMap: Record<string, keyof typeof projectAddConfig.role> = {
-                    'BD': 'BD',
-                    'Backend': 'BD',
-                    'FD': 'FD',
-                    'Frontend': 'FD',
-                    'QA': 'QA',
-                    'Tester': 'QA',
-                    'UI': 'UI',
-                    'DevOps': 'DevOps',
+                    BD: "BD",
+                    Backend: "BD",
+                    FD: "FD",
+                    Frontend: "FD",
+                    QA: "QA",
+                    Tester: "QA",
+                    UI: "UI",
+                    DevOps: "DevOps",
                   };
-                  const rawOccupation = row._raw?.occupation || row.occupation || '';
+                  const rawOccupation = row._raw?.occupation || row.occupation || "";
                   const roleKey = occupationMap[rawOccupation] || rawOccupation;
-                  const roleConfig = projectAddConfig.occupation[roleKey as keyof typeof projectAddConfig.occupation];
-                  
+                  const roleConfig =
+                    projectAddConfig.occupation[
+                      roleKey as keyof typeof projectAddConfig.occupation
+                    ];
+
                   return (
-                    <div class="occupation-tag" style={{ backgroundColor: roleConfig?.color || "#737373" }}>
+                    <div
+                      class="occupation-tag"
+                      style={{ backgroundColor: roleConfig?.color || "#737373" }}
+                    >
                       {roleConfig?.name || rawOccupation || "开发工程师"}
                     </div>
                   );

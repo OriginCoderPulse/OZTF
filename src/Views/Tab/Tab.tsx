@@ -28,7 +28,7 @@ export default defineComponent({
       () => {
         // 响应tabList变化
       },
-      { deep: true },
+      { deep: true }
     );
 
     const permissionStyle = computed(() => {
@@ -37,23 +37,23 @@ export default defineComponent({
       if (Array.isArray(permissionKey)) {
         permissionKey = permissionKey[0] || "Super";
       }
-      if (!permissionKey || typeof permissionKey !== 'string') {
+      if (!permissionKey || typeof permissionKey !== "string") {
         permissionKey = "Super"; // 默认值
       }
 
       // 角色名称映射：后端返回 "Developer"，前端配置使用 "Dev"
       const roleNameMap: Record<string, keyof typeof permissionBgColor> = {
-        'Developer': 'Dev',
-        'Super': 'Super',
-        'RMD': 'RMD',
-        'Treasurer': 'Treasurer'
+        Developer: "Dev",
+        Super: "Super",
+        RMD: "RMD",
+        Treasurer: "Treasurer",
       };
 
       const mappedKey = roleNameMap[permissionKey] || permissionKey;
 
-      return permissionBgColor[
-        mappedKey as keyof typeof permissionBgColor
-      ] || permissionBgColor.Super; // 如果找不到，使用 Super 的样式
+      return (
+        permissionBgColor[mappedKey as keyof typeof permissionBgColor] || permissionBgColor.Super
+      ); // 如果找不到，使用 Super 的样式
     });
 
     const utilTextShadowStyle = computed(() => {
@@ -72,9 +72,7 @@ export default defineComponent({
       return props.tabList.map((tab) => {
         if (tab.name === "Project" && tab.children) {
           const filteredChildren = tab.children.filter((child) =>
-            child.name
-              .toLowerCase()
-              .includes(searchText.value.toLowerCase().trim()),
+            child.name.toLowerCase().includes(searchText.value.toLowerCase().trim())
           );
           return {
             ...tab,
@@ -108,7 +106,7 @@ export default defineComponent({
       project_id: string,
       isOverdue: boolean,
       roleTitle: string,
-      projectName: string,
+      projectName: string
     ) => {
       // 点击util项时直接跳转到Project页面，传递角色title参数
       const utilId = `${project_id}-${roleTitle}`;
@@ -119,13 +117,7 @@ export default defineComponent({
       // 设置选中项目并跳转，传递角色title参数
       selectedTab.value = "";
       projectId.value = project_id;
-      $event.emit(
-        "changeProject",
-        project_id,
-        isOverdue,
-        roleTitle,
-        projectName,
-      );
+      $event.emit("changeProject", project_id, isOverdue, roleTitle, projectName);
     };
 
     const selectProject = (child: TabChild) => {
@@ -156,35 +148,35 @@ export default defineComponent({
           props: {
             id,
           },
-        },
+        }
       );
     };
 
     onMounted(() => {
-      $storage.get("permission").then((result) => {
-        // 处理权限值：如果是数组，取第一个；如果是字符串，直接使用
-        let permissionValue: string;
-        if (Array.isArray(result)) {
-          permissionValue = result[0] || "Super";
-        } else if (typeof result === 'string') {
-          permissionValue = result;
-        } else {
-          permissionValue = "Super"; // 默认值
-        }
-        permission.value = permissionValue;
-      }).catch(() => {
-        permission.value = "Super"; // 如果获取失败，使用默认值
-      });
+      $storage
+        .get("permission")
+        .then((result) => {
+          // 处理权限值：如果是数组，取第一个；如果是字符串，直接使用
+          let permissionValue: string;
+          if (Array.isArray(result)) {
+            permissionValue = result[0] || "Super";
+          } else if (typeof result === "string") {
+            permissionValue = result;
+          } else {
+            permissionValue = "Super"; // 默认值
+          }
+          permission.value = permissionValue;
+        })
+        .catch(() => {
+          permission.value = "Super"; // 如果获取失败，使用默认值
+        });
     });
 
     return () => (
       <div class="tab-container">
         <div class="tab-head">
           <div class="logo">
-            <img
-              src="http://localhost:1024/oztf/api/v1/static/logo.png"
-              alt="Logo"
-            />
+            <img src="http://localhost:1024/oztf/api/v1/static/logo.png" alt="Logo" />
           </div>
           <span>{$config.appName}</span>
           <div
@@ -215,8 +207,7 @@ export default defineComponent({
               key={tab.name}
               class={{
                 "tab-item": true,
-                active:
-                  selectedTab.value === tab.name && tab.name !== "Project",
+                active: selectedTab.value === tab.name && tab.name !== "Project",
                 "has-children": tab.children && tab.children.length > 0,
               }}
               onClick={() => selectTab(tab.name)}
@@ -233,12 +224,7 @@ export default defineComponent({
                 <div class="tab-header">
                   <div class="tab-icon">
                     {tab.icon ? (
-                      <Svg
-                        svgPath={tab.icon}
-                        width="18"
-                        height="18"
-                        class="icon"
-                      />
+                      <Svg svgPath={tab.icon} width="18" height="18" class="icon" />
                     ) : null}
                   </div>
                   <span
@@ -252,36 +238,38 @@ export default defineComponent({
                   >
                     {tab.name}
                   </span>
-                  {permission.value === "CEO" &&
-                    tab.name == "Project" && (
-                      <div
-                        class={{
-                          "fold-icon": true,
-                          folded: tab.fold,
-                        }}
-                        onClick={(e: any) => {
-                          e.stopPropagation();
-                          showAddProjectModal(tab.id);
-                        }}
-                      >
-                        <Svg
-                          svgPath={[
-                            "M960 588.4v-152.8c0-26.6-21.4-48-48-48H636.4V112c0-26.6-21.4-48-48-48h-152.8c-26.6 0-48 21.4-48 48v275.6H112c-26.6 0-48 21.4-48 48v152.8c0 26.6 21.4 48 48 48h275.6V912c0 26.6 21.4 48 48 48h152.8c26.6 0 48-21.4 48-48V636.4H912c26.6 0 48-21.4 48-48z",
-                          ]}
-                          width="14"
-                          height="14"
-                          class="icon"
-                          fill="#999999"
-                        />
-                      </div>
-                    )}
+                  {permission.value === "CEO" && tab.name == "Project" && (
+                    <div
+                      class={{
+                        "fold-icon": true,
+                        folded: tab.fold,
+                      }}
+                      onClick={(e: any) => {
+                        e.stopPropagation();
+                        showAddProjectModal(tab.id);
+                      }}
+                    >
+                      <Svg
+                        svgPath={[
+                          "M960 588.4v-152.8c0-26.6-21.4-48-48-48H636.4V112c0-26.6-21.4-48-48-48h-152.8c-26.6 0-48 21.4-48 48v275.6H112c-26.6 0-48 21.4-48 48v152.8c0 26.6 21.4 48 48 48h275.6V912c0 26.6 21.4 48 48 48h152.8c26.6 0 48-21.4 48-48V636.4H912c26.6 0 48-21.4 48-48z",
+                        ]}
+                        width="14"
+                        height="14"
+                        class="icon"
+                        fill="#999999"
+                      />
+                    </div>
+                  )}
                 </div>
                 {/* 对于Project项，基于原始项目列表判断是否显示；对于其他项，基于过滤后的列表 */}
                 {(() => {
                   if (tab.name === "Project") {
                     // 获取原始项目列表（未过滤的）
-                    const originalProjectTab = props.tabList.find(t => t.name === "Project");
-                    const hasOriginalProjects = originalProjectTab && originalProjectTab.children && originalProjectTab.children.length > 0;
+                    const originalProjectTab = props.tabList.find((t) => t.name === "Project");
+                    const hasOriginalProjects =
+                      originalProjectTab &&
+                      originalProjectTab.children &&
+                      originalProjectTab.children.length > 0;
 
                     if (!hasOriginalProjects) return null;
 
@@ -306,10 +294,7 @@ export default defineComponent({
                             value={searchText.value}
                           />
                           {searchText.value && (
-                            <button
-                              onClick={clearSearch}
-                              class="clear-search-btn"
-                            >
+                            <button onClick={clearSearch} class="clear-search-btn">
                               ✕
                             </button>
                           )}
@@ -348,8 +333,7 @@ export default defineComponent({
                                         class="child-title"
                                         style={{
                                           textShadow:
-                                            child.id === projectId.value &&
-                                              !child.utils
+                                            child.id === projectId.value && !child.utils
                                               ? `0 2px 8px ${permissionStyle.value.bg}`
                                               : "",
                                         }}
@@ -361,7 +345,7 @@ export default defineComponent({
                                         style={{
                                           backgroundColor:
                                             projectStatusColor[
-                                            child.status as keyof typeof projectStatusColor
+                                              child.status as keyof typeof projectStatusColor
                                             ] || "#737373",
                                         }}
                                         title={child.status}
@@ -392,8 +376,7 @@ export default defineComponent({
                                               key={util.title}
                                               class={{
                                                 "util-item": true,
-                                                selected:
-                                                  selectedUtil.value === utilId,
+                                                selected: selectedUtil.value === utilId,
                                               }}
                                               onClick={(e: any) => {
                                                 e.stopPropagation();
@@ -402,17 +385,13 @@ export default defineComponent({
                                                   child.id,
                                                   child.isOverdue || false,
                                                   util.title,
-                                                  child.name,
+                                                  child.name
                                                 );
                                               }}
                                             >
                                               <div class="util-icon">
                                                 {util.icon ? (
-                                                  <Svg
-                                                    svgPath={util.icon}
-                                                    width="14"
-                                                    height="14"
-                                                  />
+                                                  <Svg svgPath={util.icon} width="14" height="14" />
                                                 ) : null}
                                               </div>
                                               <span

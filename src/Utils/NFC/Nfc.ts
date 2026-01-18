@@ -74,71 +74,65 @@ class Nfc {
     }
   }
 
-  private _debouncedReaderStateUpdate = $hfc.debounce(
-    async (newState: boolean) => {
-      if (this._lastReaderState !== newState) {
-        this._lastReaderState = newState;
+  private _debouncedReaderStateUpdate = $hfc.debounce(async (newState: boolean) => {
+    if (this._lastReaderState !== newState) {
+      this._lastReaderState = newState;
+      await nextTick();
+      this._readerConnected.value = newState;
+
+      if (!newState) {
         await nextTick();
-        this._readerConnected.value = newState;
+        this._cardPresent.value = false;
+        this._cardData.value = null;
+        this._readerName.value = "";
+        $popup.closeAll();
+        this._isProcessingCard = false;
 
-        if (!newState) {
-          await nextTick();
-          this._cardPresent.value = false;
-          this._cardData.value = null;
-          this._readerName.value = "";
-          $popup.closeAll();
-          this._isProcessingCard = false;
-
-          try {
-            await $storage.remove("userID");
-            await $storage.remove("permission");
-          } catch (error) {
-            // 清除存储数据失败
-          }
+        try {
+          await $storage.remove("userID");
+          await $storage.remove("permission");
+        } catch (error) {
+          // 清除存储数据失败
         }
       }
-    },
-    50,
-  );
+    }
+  }, 50);
 
-  private _debouncedCardStateUpdate = $hfc.debounce(
-    async (newState: boolean) => {
-      if (this._lastCardState !== newState) {
-        this._lastCardState = newState;
+  private _debouncedCardStateUpdate = $hfc.debounce(async (newState: boolean) => {
+    if (this._lastCardState !== newState) {
+      this._lastCardState = newState;
+      await nextTick();
+      this._cardPresent.value = newState;
+
+      if (!newState) {
+        // 卡片被拿起，清除所有状态
         await nextTick();
-        this._cardPresent.value = newState;
+        this._cardData.value = null;
+        $popup.closeAll();
+        this._isProcessingCard = false;
 
-        if (!newState) {
-          // 卡片被拿起，清除所有状态
-          await nextTick();
-          this._cardData.value = null;
-          $popup.closeAll();
-          this._isProcessingCard = false;
+        // 卡片已离开，标记为离开状态
+        this._cardWasRemoved = true;
 
-          // 卡片已离开，标记为离开状态
-          this._cardWasRemoved = true;
-
-          // 触发卡片离开事件，清除tabList数据
-          this._cardDetectedCallbacks.forEach((callback) => {
-            try {
-              // 发送一个特殊的离开事件
-              callback({ uid: "", left: true });
-            } catch (error) {
-              // 忽略回调错误
-            }
-          });
-
+        // 触发卡片离开事件，清除tabList数据
+        this._cardDetectedCallbacks.forEach((callback) => {
           try {
-            await $storage.remove("userID");
-            await $storage.remove("permission");
+            // 发送一个特殊的离开事件
+            callback({ uid: "", left: true });
           } catch (error) {
-            // 清除存储数据失败
+            // 忽略回调错误
           }
+        });
+
+        try {
+          await $storage.remove("userID");
+          await $storage.remove("permission");
+        } catch (error) {
+          // 清除存储数据失败
         }
       }
-    },
-    50,
-  );
+    }
+  }, 50);
 
   private _setCardFailed(): void {
     // 简化失败处理逻辑
@@ -214,33 +208,27 @@ class Nfc {
       await nextTick();
       this._monitoringActive.value = true;
 
-      const unlisten1 = await listen<boolean>(
-        "reader_status_change",
-        (event) => {
-          this._debouncedReaderStateUpdate(event.payload);
-        },
-      );
+      const unlisten1 = await listen<boolean>("reader_status_change", (event) => {
+        this._debouncedReaderStateUpdate(event.payload);
+      });
 
       const unlisten2 = await listen<boolean>("card_status_change", (event) => {
         this._debouncedCardStateUpdate(event.payload);
       });
 
-      const unlisten3 = await listen<NfcCardData>(
-        "card_data_received",
-        async (event) => {
-          // 保存卡片数据，但不立即处理
-          await nextTick();
-          this._cardData.value = event.payload;
+      const unlisten3 = await listen<NfcCardData>("card_data_received", async (event) => {
+        // 保存卡片数据，但不立即处理
+        await nextTick();
+        this._cardData.value = event.payload;
 
-          // 如果已经有回调函数注册，立即处理
-          if (this._cardDetectedCallbacks.length > 0) {
-            this._initData(event.payload).catch(() => {});
-          } else {
-            // 否则保存为待处理数据
-            this._pendingCardData = event.payload;
-          }
-        },
-      );
+        // 如果已经有回调函数注册，立即处理
+        if (this._cardDetectedCallbacks.length > 0) {
+          this._initData(event.payload).catch(() => {});
+        } else {
+          // 否则保存为待处理数据
+          this._pendingCardData = event.payload;
+        }
+      });
 
       this._eventUnlisteners = [unlisten1, unlisten2, unlisten3];
 
@@ -254,9 +242,7 @@ class Nfc {
     try {
       // 使用优化器调用，避免阻塞
       const status: ReaderStatus =
-        await tauriOptimizer.invokeCommand<ReaderStatus>(
-          "check_reader_connection",
-        );
+        await tauriOptimizer.invokeCommand<ReaderStatus>("check_reader_connection");
       await nextTick();
       this._readerConnected.value = status.connected;
       this._readerName.value = status.reader_name || "";
