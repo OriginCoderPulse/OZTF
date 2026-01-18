@@ -4,7 +4,6 @@ class TRTC {
   private _sdkAppId: number = Number(import.meta.env.VITE_TRTC_APP_ID);
   private _userId: string = "";
   private _userSig: string = "";
-  private _sdkSecretKey: string = import.meta.env.VITE_TRTC_SECRET_KEY;
   private _rooms: Map<number, TRTCSDK> = new Map();
   private _initialized: boolean = false;
 
@@ -17,20 +16,44 @@ class TRTC {
    */
   private async ensureInitialized() {
     this._userId = await $storage.get("userID");
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       if (this._initialized) {
         resolve();
       } else {
-        const result = $libGenerateTestUserSig.genTestUserSig(
-          this._sdkAppId,
-          this._userId,
-          this._sdkSecretKey
-        );
-        if (result.sdkAppId) this._sdkAppId = result.sdkAppId;
-        if (result.userSig) this._userSig = result.userSig;
-        this._initialized = true;
-        resolve();
+        // 从后端获取 UserSig
+        this._fetchUserSigFromBackend(this._userId)
+          .then(() => {
+            this._initialized = true;
+            resolve();
+          })
+          .catch(reject);
       }
+    });
+  }
+
+  /**
+   * 从后端获取 UserSig（必须成功，失败则不允许进入房间）
+   */
+  private _fetchUserSigFromBackend(userId: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      $network.request(
+        "meetGenerateUserSig",
+        { userId },
+        (data: any) => {
+          if (data.sdkAppId) {
+            this._sdkAppId = data.sdkAppId;
+          }
+          if (data.userSig) {
+            this._userSig = data.userSig;
+            resolve();
+          } else {
+            reject(new Error("后端返回的 UserSig 为空，无法进入房间"));
+          }
+        },
+        (error: any) => {
+          reject(new Error(`无法从后端获取 UserSig，无法进入房间: ${error}`));
+        }
+      );
     });
   }
 
