@@ -134,16 +134,6 @@ declare global {
         callback: (event: any, room: TRTCSDK) => void
       ) => void;
     };
-    $libGenerateTestUserSig: {
-      genTestUserSig: (
-        sdkAppId: number,
-        userId: string,
-        sdkSecretKey: string
-      ) => {
-        sdkAppId: number;
-        userSig: string;
-      };
-    };
     $roomformat: {
       roomIdToNumber: (roomId: string | number) => number;
       numberToRoomId: (numericRoomId: number) => string;
@@ -183,7 +173,6 @@ declare global {
   const $hfc: Window["$hfc"];
   const $nfc: Window["$nfc"];
   const $trtc: Window["$trtc"];
-  const $libGenerateTestUserSig: Window["$libGenerateTestUserSig"];
   const $roomformat: Window["$roomformat"];
   const MEET_ROOM_SHOW_PARTICIPANT_ARROW: Window["MEET_ROOM_SHOW_PARTICIPANT_ARROW"];
   const MEET_ROOM_CAMERA_OFF_PLACEHOLDER: Window["MEET_ROOM_CAMERA_OFF_PLACEHOLDER"];

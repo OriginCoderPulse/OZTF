@@ -205,7 +205,6 @@ OZTF/
 │   │   ├── HighFrequencyControl.ts # 高频控制
 │   │   └── Meet/          # 会议工具
 │   │       ├── TRTC.ts    # TRTC SDK 封装
-│   │       ├── LibGenerateTestUserSig.ts # UserSig 生成
 │   │       └── RoomFormat.ts # 房间格式化
 │   ├── App.tsx             # 根组件
 │   ├── App.scss            # 全局样式
