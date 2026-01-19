@@ -65,8 +65,20 @@ export class MeetRoomController {
               this.fetchRoomProperties(meetId).then(() => {
                 const viewIdVideo = `${this.userId.value}_remote_video`;
                 const viewScreen = `meet-video`;
-                this.startRemoteVideoWithRetry(this._roomId.value, this.userId.value, "main", viewIdVideo, 0);
-                this.startRemoteVideoWithRetry(this._roomId.value, this.userId.value, "sub", viewScreen, 0);
+                this.startRemoteVideoWithRetry(
+                  this._roomId.value,
+                  this.userId.value,
+                  "main",
+                  viewIdVideo,
+                  0
+                );
+                this.startRemoteVideoWithRetry(
+                  this._roomId.value,
+                  this.userId.value,
+                  "sub",
+                  viewScreen,
+                  0
+                );
               });
             });
 
@@ -201,7 +213,7 @@ export class MeetRoomController {
               setTimeout(() => {
                 const meetId = this._meetId.value;
                 if (meetId) {
-                  this.fetchRoomProperties(meetId)
+                  this.fetchRoomProperties(meetId);
                 }
               }, 500);
             });
@@ -290,8 +302,12 @@ export class MeetRoomController {
                 ...(data.outParticipants || []),
               ];
               // 确保使用新的数组引用，触发响应式更新
-              this.participantList.value = [...allParticipants.filter(item => item.trtcId !== this.userId.value)];
-              if (this.canShowParticipant.value) this.showParticipant.value = allParticipants.filter(item => item.trtcId !== this.userId.value).length > 0;
+              this.participantList.value = [
+                ...allParticipants.filter((item) => item.trtcId !== this.userId.value),
+              ];
+              if (this.canShowParticipant.value)
+                this.showParticipant.value =
+                  allParticipants.filter((item) => item.trtcId !== this.userId.value).length > 0;
 
               // 接口完成，允许复制
               this.canCopyMeetProperties.value = true;
@@ -548,7 +564,7 @@ export class MeetRoomController {
    */
   public copyMeetingInfo() {
     // 获取 web 端基础 URL（从环境变量或配置中获取，如果没有则使用默认值）
-    const webBaseURL = import.meta.env.VITE_OZTF_WEB_BASE_URL;
+    const webBaseURL = $config.meetWebBaseURL;
     console.log(webBaseURL, "webBaseURL");
     const externalLink = `${webBaseURL}${this._meetId.value}`;
 

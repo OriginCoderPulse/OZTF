@@ -353,7 +353,7 @@ export class MeetController {
             }
           }
           // 刷新会议列表
-          await this.initMeetList();
+          this.initMeetList();
         },
         (error: any) => {
           $message.error({
@@ -409,7 +409,7 @@ export class MeetController {
             }
           }
           // 刷新会议列表
-          await this.initMeetList();
+          this.initMeetList();
         },
         (error: any) => {
           $message.error({
