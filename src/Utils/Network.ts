@@ -15,7 +15,7 @@ interface RetryConfig {
 
 class Network {
   private _instance: AxiosInstance | null = null;
-  private _baseURL = "http://localhost:1024/oztf/api/v1/";
+  private _baseURL = "https://oztf.site/oztf/api/v1/";
   private _timeout = 2500;
   private _isRequestReady = false;
   private _maxRetryRequestMap = new Map<string, RetryConfig>();

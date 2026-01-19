@@ -71,16 +71,10 @@ export default defineComponent({
       try {
         // 调用initial API
         await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error("网络请求超时"));
-          }, 3000);
-
           $network.request(
             "initial",
-            { uid: cardInfo.uid },
+            { uid: cardInfo.uid, device: "pc" },
             (result: any) => {
-              clearTimeout(timeout);
-
               // 使用Promise.all确保两个存储操作都完成
               // 如果 roles 是数组，取第一个角色；否则直接使用
               const permissionValue = Array.isArray(result.roles)
@@ -116,7 +110,7 @@ export default defineComponent({
         await new Promise<void>((resolve, reject) => {
           $network.request(
             "initial",
-            { uid: userID },
+            { uid: userID, device: "pc" },
             (result: any) => {
               // 直接使用后端返回的完整TabItem结构
               tabList.value = result.permissions;
@@ -153,15 +147,10 @@ export default defineComponent({
       const defaultUid = "696665fd9a4a020c2b9cb39f"; // 默认使用第一个员工（ObjectId格式）
       try {
         await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error("网络请求超时"));
-          }, 3000);
-
           $network.request(
             "initial",
-            { uid: defaultUid },
+            { uid: defaultUid, device: "pc" },
             (result: any) => {
-              clearTimeout(timeout);
               Promise.all([
                 $storage.set("permission", result.department),
                 $storage.set("userID", defaultUid),

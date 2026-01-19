@@ -54,6 +54,16 @@ export default defineComponent({
             justifyContent: "center",
             alignItems: "center",
           }}
+          onClick={(e: any) => {
+            // 点击遮罩层关闭弹窗
+            if (e.target === e.currentTarget) {
+              if (props.buttonCount === 1 && props.onBtnOnly) {
+                props.onBtnOnly();
+              } else if (props.buttonCount === 2 && props.onBtnLeft) {
+                props.onBtnLeft();
+              }
+            }
+          }}
         >
           <Motion
             initial={{ opacity: 0, scale: 0 }}
@@ -70,6 +80,10 @@ export default defineComponent({
               borderRadius: "12px",
               boxSizing: "border-box",
               zIndex: (props.level ?? 1000) + 1,
+            }}
+            onClick={(e: any) => {
+              // 阻止事件冒泡，点击弹窗内容区域不关闭
+              e.stopPropagation();
             }}
           >
             <div class="alert-title">{props.title}</div>
@@ -97,7 +111,7 @@ export default defineComponent({
                       exit={{ y: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                       class="motion-btn"
-                      style={!props.onBtnLeft ? { width: "60%" } : {}}
+                      style={!props.onBtnLeft ? { width: "40%" } : {}}
                     >
                       <div class="confirm" onClick={() => props.onBtnRight && props.onBtnRight()}>
                         {props.btnRightText}
@@ -112,7 +126,7 @@ export default defineComponent({
                   exit={{ y: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   class="motion-btn"
-                  style={{ width: "60%" }}
+                  style={{ width: "40%" }}
                 >
                   <div class="confirm" onClick={() => props.onBtnOnly && props.onBtnOnly()}>
                     {props.btnOnlyText}
