@@ -77,6 +77,7 @@ export default defineComponent({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 180, damping: 22 }}
+        v-loading={!palyerStatus.value}
       >
         <video
           ref={videoRef}
@@ -92,21 +93,6 @@ export default defineComponent({
           v-show={palyerStatus.value}
         ></video>
         {palyerStatus.value && <div class="video-action">{slots.default?.()}</div>}
-        {!palyerStatus.value && (
-          <div class="spinner-container">
-            <div class="spinner">
-              <div class="spinner">
-                <div class="spinner">
-                  <div class="spinner">
-                    <div class="spinner">
-                      <div class="spinner"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </motion.div>
     );
   },

@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, onUnmounted, ref } from "vue";
+import { defineComponent, onMounted, onUnmounted, ref, Fragment } from "vue";
 import { RouterView } from "vue-router";
 import Tab from "../Views/Tab/Tab.tsx";
 import EntryContent from "../Views/EntryContent/EntryContent.tsx";
@@ -92,7 +92,6 @@ export default defineComponent({
                 .catch(reject);
             },
             (error: any) => {
-              clearTimeout(timeout);
               $message.error({ message: error });
               reject(error);
             }
@@ -163,7 +162,6 @@ export default defineComponent({
                 .catch(reject);
             },
             (error: any) => {
-              clearTimeout(timeout);
               console.error("初始化失败:", error);
               reject(error);
             }
@@ -205,38 +203,18 @@ export default defineComponent({
       <div class="window">
         <RouterView />
         {true ? ( // NFC暂时静默处理，直接显示内容
-          tabList.value.length > 0 ? (
-            <div class="entry">
-              <div class="tab">
-                <Tab tabList={tabList.value} />
-              </div>
-              <div class="entry-content">
-                <EntryContent />
-              </div>
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
-              className="init-loading"
-            >
-              <div class="spinner-container">
-                <div class="spinner">
-                  <div class="spinner">
-                    <div class="spinner">
-                      <div class="spinner">
-                        <div class="spinner">
-                          <div class="spinner"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+          <div class="entry" v-loading={tabList.value.length === 0}>
+            {tabList.value.length > 0 && (
+              <>
+                <div class="tab">
+                  <Tab tabList={tabList.value} />
                 </div>
-              </div>
-            </motion.div>
-          )
+                <div class="entry-content">
+                  <EntryContent />
+                </div>
+              </>
+            )}
+          </div>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}

@@ -15,6 +15,7 @@ import Nfc from "./Utils/NFC/Nfc.ts";
 import TRTC from "./Utils/TRTC/TRTC.ts";
 import RoomFormat from "./Utils/TRTC/RoomFormat.ts";
 import IconPath from "./Utils/IconPath.ts";
+import VLoading from "./Scripts/VLoading.ts";
 
 const app = createApp(App);
 
@@ -33,4 +34,5 @@ app
   .use(TRTC)
   .use(RoomFormat)
   .use(IconPath)
+  .directive("loading", VLoading)
   .mount("#app");

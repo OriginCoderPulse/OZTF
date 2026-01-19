@@ -2,9 +2,9 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8"/>
-    <link rel="icon" type="image/svg+xml" href="/vite.svg"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         @font-face {
             font-family: "Inter";
@@ -48,41 +48,13 @@
         ::-webkit-scrollbar {
             display: none;
         }
-
-        .spinner-container {
-            width: 60px;
-            height: 60px;
-            position: relative;
-            margin: 30px auto;
-            overflow: hidden;
-        }
-
-        .spinner {
-            position: absolute;
-            width: calc(100% - 10px);
-            height: calc(100% - 10px);
-            border: 2px solid transparent;
-            border-radius: 50%;
-            border-top-color: #b9bbff;
-            animation: spin 5s cubic-bezier(0.17, 0.49, 0.96, 0.79) infinite;
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-        }
     </style>
     <title></title>
 </head>
 
 <body>
-<div id="app"></div>
-<script type="module" src="/src/main.ts"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
 </body>
 
 </html>

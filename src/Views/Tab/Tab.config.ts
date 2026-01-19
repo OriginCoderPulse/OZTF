@@ -20,7 +20,7 @@ const projectStatusColor: PSC = {
 /** 权限背景颜色配置 */
 const permissionBgColor: PBC = {
   /** 超级管理员权限样式 */
-  Super: {
+  CEO: {
     bg: "#B2A190",
     text: "#FFE5C9",
   },

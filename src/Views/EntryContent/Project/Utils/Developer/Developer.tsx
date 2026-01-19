@@ -43,10 +43,11 @@ export default defineComponent({
       controller.init();
     });
 
-    return () =>
-      controller.requestComplete.value ? (
-        <div class="project-developer">
-          <div class="project-info">
+    return () => (
+      <div class="project-developer" v-loading={!controller.requestComplete.value}>
+        {controller.requestComplete.value ? (
+          <>
+            <div class="project-info">
             {controller.projectDetail.value && (
               <div class="project-header">
                 <div class="project-title">
@@ -411,25 +412,9 @@ export default defineComponent({
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div class="project-developer-empty">
-          <div class="staff-loader">
-            <div class="spinner-container">
-              <div class="spinner">
-                <div class="spinner">
-                  <div class="spinner">
-                    <div class="spinner">
-                      <div class="spinner">
-                        <div class="spinner"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+          </>
+        ) : null}
+      </div>
+    );
   },
 });

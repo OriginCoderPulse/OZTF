@@ -388,18 +388,36 @@ export class MeetRoomController {
   /**
    * 删除内部参与人
    */
-  private async removeInnerParticipant(meetId: string) {
+  private async removeInnerParticipant(meetId: string): Promise<void> {
     try {
       const userID = await $storage.get("userID");
       if (!userID) {
+        console.warn("无法删除内部参与人: userID 不存在");
         return;
       }
 
-      $network.request("meetRemoveInnerParticipant", {
-        meetId,
-        participantId: userID,
+      // 使用 Promise 包装网络请求，确保等待完成
+      await new Promise<void>((resolve, reject) => {
+        $network.request(
+          "meetRemoveInnerParticipant",
+          {
+            meetId,
+            participantId: userID,
+          },
+          () => {
+            console.log("成功删除内部参与人:", userID);
+            resolve();
+          },
+          (error: any) => {
+            console.error("删除内部参与人失败:", error);
+            // 即使失败也继续，不阻塞退出流程
+            resolve();
+          }
+        );
       });
-    } catch (error: any) { }
+    } catch (error: any) {
+      console.error("删除内部参与人异常:", error);
+    }
   }
 
   /**
@@ -483,54 +501,72 @@ export class MeetRoomController {
    * 退出会议
    */
   private exitAction = async (roomId: number) => {
-    // 删除内部参与人
-    if (this._meetId.value) {
-      await this.removeInnerParticipant(this._meetId.value);
-    }
+    try {
+      // 删除内部参与人（确保在退出前完成）
+      if (this._meetId.value) {
+        await this.removeInnerParticipant(this._meetId.value);
+      }
 
-    $trtc
-      .exitRoom(roomId)
-      .then(async () => {
-        // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
-        invoke("close_meeting_window");
-      })
-      .catch(() => {
-        $message.error({
-          message: "退出房间失败，请重试",
-        });
+      // 退出 TRTC 房间
+      await $trtc.exitRoom(roomId);
+
+      // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("close_meeting_window");
+    } catch (error: any) {
+      console.error("退出会议失败:", error);
+      $message.error({
+        message: "退出房间失败，请重试",
       });
+    }
   };
 
   /**
    * 结束会议
    */
   public concludeMeeting = async (roomId: number) => {
-    // 获取当前用户ID
-    const userID = await $storage.get("userID");
-    const data = new TextEncoder().encode("conclude").buffer;
-
-    // 发送 TRTC 自定义消息（通知其他参会人会议已结束）
-    $trtc.sendCustomMessage(roomId, 1, data);
-
-    $network.request(
-      "meetStatusChange",
-      {
-        meetId: this._meetId.value,
-        status: "Concluded",
-        userId: userID,
-      },
-      () => {
-        // 退出房间
-        $trtc.exitRoom(roomId);
-
-        // 关闭窗口（Rust 后端会自动发送 meet-exited 事件给主窗口）
-        invoke("close_meeting_window");
-      },
-      (error: any) => {
-        // 即使失败也继续，但记录错误
-        console.error("结束会议接口调用失败:", error);
+    try {
+      // 删除内部参与人（确保在结束前完成）
+      if (this._meetId.value) {
+        await this.removeInnerParticipant(this._meetId.value);
       }
-    );
+
+      // 获取当前用户ID
+      const userID = await $storage.get("userID");
+      const data = new TextEncoder().encode("conclude").buffer;
+
+      // 发送 TRTC 自定义消息（通知其他参会人会议已结束）
+      $trtc.sendCustomMessage(roomId, 1, data);
+
+      // 更新会议状态
+      await new Promise<void>((resolve, reject) => {
+        $network.request(
+          "meetStatusChange",
+          {
+            meetId: this._meetId.value,
+            status: "Concluded",
+            userId: userID,
+          },
+          () => {
+            resolve();
+          },
+          (error: any) => {
+            console.error("结束会议接口调用失败:", error);
+            // 即使失败也继续，但记录错误
+            resolve();
+          }
+        );
+      });
+
+      // 退出房间
+      await $trtc.exitRoom(roomId);
+
+      // 关闭窗口（Rust 后端会自动发送 meet-exited 事件给主窗口）
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("close_meeting_window");
+    } catch (error: any) {
+      console.error("结束会议失败:", error);
+    }
   };
 
   public exitMeeting(roomId: number) {

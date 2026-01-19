@@ -63,6 +63,8 @@ export class MeetController {
   }
 
   public initMeetList() {
+    // 重置loading状态
+    this.meetListLoading.value = true;
     $storage.get("userID").then((userID: string) => {
       this.userID.value = userID;
       $storage.get("permission").then((permission: string) => {

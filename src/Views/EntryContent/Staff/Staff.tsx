@@ -26,10 +26,11 @@ export default defineComponent({
       controller.cleanup();
     });
 
-    return () =>
-      controller.requestComplete.value ? (
-        <div class="staff">
-          <div class="staff-detail">
+    return () => (
+      <div class="staff" v-loading={!controller.requestComplete.value}>
+        {controller.requestComplete.value ? (
+          <>
+            <div class="staff-detail">
             <div className="staff-header"></div>
             <div className="staff-content">
               <div class="staff-list">
@@ -325,23 +326,9 @@ export default defineComponent({
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div class="staff-loader">
-          <div class="spinner-container">
-            <div class="spinner">
-              <div class="spinner">
-                <div class="spinner">
-                  <div class="spinner">
-                    <div class="spinner">
-                      <div class="spinner"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+          </>
+        ) : null}
+      </div>
+    );
   },
 });
