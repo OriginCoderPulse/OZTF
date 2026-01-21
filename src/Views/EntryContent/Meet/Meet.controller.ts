@@ -1,11 +1,10 @@
-import { ref } from "vue";
+import {ref} from "vue";
 import MeetCreate from "./MeetCreate/MeetCreate.tsx";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import {WebviewWindow} from "@tauri-apps/api/webviewWindow";
 
 export class MeetController {
   public meetList = ref<MeetList[]>([]);
   public meetListLoading = ref(true);
-  public meetRoomTitle = ref("测试房间");
   public userPermission = ref<string>("");
   public userID = ref<string>("");
   // 当前正在进行的会议ID（字符串格式的meetId）
@@ -158,8 +157,7 @@ export class MeetController {
     try {
       const window = await WebviewWindow.getByLabel("meet-room");
       if (window) {
-        const isVisible = await window.isVisible();
-        return isVisible;
+          return await window.isVisible();
       }
       return false;
     } catch {
@@ -429,10 +427,8 @@ export class MeetController {
 
   public canEnterMeet(meetId: string): boolean {
     const meet = this.meetList.value.find((meet: MeetList) => meet.meetId === meetId);
-    if (!meet || meet.status !== "InProgress") {
-      return false;
-    }
-    return true;
+    return !(!meet || meet.status !== "InProgress");
+
   }
 
   public canConcludeMeet(meetId: string): boolean {
