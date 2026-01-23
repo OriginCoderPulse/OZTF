@@ -24,7 +24,6 @@ const createLoadingInstance = (el: LoadingElement): App => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(37, 37, 37, 0.49);
     border-radius: 8px;
     z-index: 9999;
   `;

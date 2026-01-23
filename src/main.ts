@@ -42,6 +42,21 @@ app.mount("#app");
 // 应用启动时检查登录状态并初始化窗口
 router.isReady().then(async () => {
   try {
+    // 获取当前窗口
+    const appWindow = getCurrentWindow();
+    const windowLabel = appWindow.label;
+
+    // 如果是会议窗口（meet-room），不执行自动跳转逻辑，保持当前路由
+    if (windowLabel === "meet-room") {
+      // 会议窗口只需要显示即可，不需要跳转
+      try {
+        await appWindow.show();
+      } catch (error) {
+        console.error("显示窗口失败:", error);
+      }
+      return;
+    }
+
     // 检查是否有userID（作为登录凭证）
     const authorization = await $storage.get("authorization");
 
