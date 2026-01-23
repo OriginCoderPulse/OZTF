@@ -99,15 +99,6 @@ declare global {
       debounce: (fn: Function, delay: number, immediate: boolean = false) => Function;
       throttle: (fn: Function, interval: number, trailing: boolean = true) => Function;
     };
-    $nfc: {
-      readerConnected: { value: boolean };
-      cardPresent: { value: boolean };
-      cardData: { value: any };
-      initialize: (forceRestart?: boolean) => Promise<void>;
-      onCardDetected: (callback: (cardInfo: { uid: string; left?: boolean }) => void) => void;
-      offCardDetected: (callback: (cardInfo: { uid: string; left?: boolean }) => void) => void;
-      cleanup: () => Promise<void>;
-    };
     $trtc: {
       createTRTC: (roomId: number) => Promise<{ audio: boolean; video: boolean; status: boolean }>;
       joinRoom: (roomId: number) => Promise<void>;
@@ -159,7 +150,6 @@ declare global {
     PROJECT_FEATURE_DETAIL_BTN: string[];
     PROJECT_BUG_DETAIL_BTN: string[];
     PROJECT_ADD: string[];
-    NFC_WAITING: string[];
   }
 
   const $popup: Window["$popup"];
@@ -171,7 +161,6 @@ declare global {
   const $date: Window["$date"];
   const $storage: Window["$storage"];
   const $hfc: Window["$hfc"];
-  const $nfc: Window["$nfc"];
   const $trtc: Window["$trtc"];
   const $roomformat: Window["$roomformat"];
   const MEET_ROOM_SHOW_PARTICIPANT_ARROW: Window["MEET_ROOM_SHOW_PARTICIPANT_ARROW"];
@@ -195,5 +184,4 @@ declare global {
   const PROJECT_FEATURE_DETAIL_BTN: Window["PROJECT_FEATURE_DETAIL_BTN"];
   const PROJECT_BUG_DETAIL_BTN: Window["PROJECT_BUG_DETAIL_BTN"];
   const PROJECT_ADD: Window["PROJECT_ADD"];
-  const NFC_WAITING: Window["NFC_WAITING"];
 }

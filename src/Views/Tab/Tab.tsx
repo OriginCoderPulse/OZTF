@@ -35,25 +35,26 @@ export default defineComponent({
       // 处理权限值：如果是数组，取第一个；如果是字符串，直接使用
       let permissionKey = permission.value;
       if (Array.isArray(permissionKey)) {
-        permissionKey = permissionKey[0] || "Super";
+        permissionKey = permissionKey[0] || "CEO";
       }
       if (!permissionKey || typeof permissionKey !== "string") {
-        permissionKey = "Super"; // 默认值
+        permissionKey = "CEO"; // 默认值
       }
 
-      // 角色名称映射：后端返回 "Developer"，前端配置使用 "Dev"
+      // 角色名称映射：后端返回的部门名称映射到前端配置
       const roleNameMap: Record<string, keyof typeof permissionBgColor> = {
-        Developer: "Dev",
-        Super: "Super",
+        Technical: "Dev", // Technical 部门映射到 Dev
+        CEO: "CEO",
         RMD: "RMD",
-        Treasurer: "Treasurer",
+        Finance: "Treasurer",
+        Product: "Product",
       };
 
       const mappedKey = roleNameMap[permissionKey] || permissionKey;
 
       return (
-        permissionBgColor[mappedKey as keyof typeof permissionBgColor] || permissionBgColor.Super
-      ); // 如果找不到，使用 Super 的样式
+        permissionBgColor[mappedKey as keyof typeof permissionBgColor] || permissionBgColor.CEO
+      ); // 如果找不到，使用 CEO 的样式
     });
 
     const utilTextShadowStyle = computed(() => {
@@ -159,16 +160,16 @@ export default defineComponent({
           // 处理权限值：如果是数组，取第一个；如果是字符串，直接使用
           let permissionValue: string;
           if (Array.isArray(result)) {
-            permissionValue = result[0] || "Super";
+            permissionValue = result[0] || "CEO";
           } else if (typeof result === "string") {
             permissionValue = result;
           } else {
-            permissionValue = "Super"; // 默认值
+            permissionValue = "CEO"; // 默认值
           }
           permission.value = permissionValue;
         })
         .catch(() => {
-          permission.value = "Super"; // 如果获取失败，使用默认值
+          permission.value = "CEO"; // 如果获取失败，使用默认值
         });
     });
 

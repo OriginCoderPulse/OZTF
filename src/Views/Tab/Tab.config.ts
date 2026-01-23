@@ -39,6 +39,11 @@ const permissionBgColor: PBC = {
     bg: "#B3A095",
     text: "#FFE5C9",
   },
+  /** 产品部权限样式 */
+  Product: {
+    bg: "#B3A095",
+    text: "#FFD700",
+  },
 };
 
 export { projectStatusColor, permissionBgColor };

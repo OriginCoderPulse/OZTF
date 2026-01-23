@@ -1,478 +1,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use pcsc::*;
-use std::ffi::CStr;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use tauri::{command, AppHandle, Emitter, Manager};
+use tauri::{Emitter, Manager};
 
-use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
-use tokio::task;
 
 use lazy_static::lazy_static;
 use scopeguard;
-use serde::{Deserialize, Serialize};
 use tokio::fs as async_fs;
+use std::time::{Duration, Instant};
 
 
 // 全局操作队列管理，避免阻塞主线程
 lazy_static! {
     static ref OPERATION_SEMAPHORE: Semaphore = Semaphore::new(5); // 最多5个并发操作
-    static ref NFC_OPERATION_QUEUE: Mutex<Vec<Box<dyn FnOnce() + Send>>> = Mutex::new(Vec::new());
 }
 
-// NFC系统状态管理
-#[derive(Debug)]
-struct NfcSystem {
-    reader_connected: Arc<AtomicBool>,
-    card_present: Arc<AtomicBool>,
-    monitoring_active: Arc<AtomicBool>,
-    reader_task: Option<task::JoinHandle<()>>,
-    card_task: Option<task::JoinHandle<()>>,
-    last_activity: Arc<Mutex<Instant>>,
-}
-
-impl NfcSystem {
-    fn new() -> Self {
-        Self {
-            reader_connected: Arc::new(AtomicBool::new(false)),
-            card_present: Arc::new(AtomicBool::new(false)),
-            monitoring_active: Arc::new(AtomicBool::new(false)),
-            reader_task: None,
-            card_task: None,
-            last_activity: Arc::new(Mutex::new(Instant::now())),
-        }
-    }
-
-    fn start_monitoring(&mut self, app_handle: AppHandle) {
-        if self.monitoring_active.load(Ordering::Relaxed) {
-            return;
-        }
-
-        self.monitoring_active.store(true, Ordering::Relaxed);
-
-        // 启动读卡器状态监听 - 使用异步任务
-        let reader_connected = Arc::clone(&self.reader_connected);
-        let monitoring_active = Arc::clone(&self.monitoring_active);
-        let app_handle_clone = app_handle.clone();
-
-        let reader_task = task::spawn(async move {
-            reader_status_monitor_async(app_handle_clone, reader_connected, monitoring_active)
-                .await;
-        });
-
-        // 启动卡片读取监听 - 使用异步任务
-        let card_present = Arc::clone(&self.card_present);
-        let monitoring_active = Arc::clone(&self.monitoring_active);
-        let app_handle_clone = app_handle.clone();
-
-        let card_task = task::spawn(async move {
-            card_reading_monitor_async(app_handle_clone, card_present, monitoring_active).await;
-        });
-
-        // 保存任务句柄以便管理
-        self.reader_task = Some(reader_task);
-        self.card_task = Some(card_task);
-    }
-
-    fn stop_monitoring(&mut self) {
-        if !self.monitoring_active.load(Ordering::Relaxed) {
-            return;
-        }
-
-        self.monitoring_active.store(false, Ordering::Relaxed);
-
-        // 等待异步任务结束
-        if let Some(handle) = self.reader_task.take() {
-            let _ = handle.abort();
-        }
-        if let Some(handle) = self.card_task.take() {
-            let _ = handle.abort();
-        }
-    }
-
-    // 重新启动NFC监控
-    fn restart_monitoring(&mut self, app_handle: AppHandle) {
-        if self.monitoring_active.load(Ordering::Relaxed) {
-            return;
-        }
-        self.start_monitoring(app_handle);
-    }
-
-    // 检查系统是否从睡眠恢复
-    fn check_system_recovery(&self, app_handle: &AppHandle) {
-        if let Ok(mut last_activity) = self.last_activity.lock() {
-            let now = Instant::now();
-            let time_since_last = now.duration_since(*last_activity);
-
-            // 如果超过30秒没有活动，可能系统刚从睡眠恢复
-            if time_since_last > Duration::from_secs(30) {
-                // 更新活动时间
-                *last_activity = now;
-
-                // 重新启动监控
-                if !self.monitoring_active.load(Ordering::Relaxed) {
-                    let app_handle_clone = app_handle.clone();
-                    tokio::spawn(async move {
-                        // 延长系统恢复等待时间至5秒，确保读卡器就绪
-                        tokio::time::sleep(Duration::from_secs(5)).await;
-
-                        // 检查读卡器是否就绪
-                        if let Ok(status) = check_reader_connection().await {
-                            if status.connected {
-                                // 使用异步锁避免死锁
-                                let mut nfc_system = NFC_SYSTEM.lock().await;
-                                if let Some(system) = nfc_system.as_mut() {
-                                    system.start_monitoring(app_handle_clone);
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    // 如果监控已经在运行，检查读卡器连接状态
-                    let app_handle_clone = app_handle.clone();
-                    tokio::spawn(async move {
-                        // 使用异步锁避免阻塞
-                        let nfc_system = NFC_SYSTEM.lock().await;
-                        if let Some(system) = nfc_system.as_ref() {
-                            if !system.monitoring_active.load(Ordering::Relaxed) {
-                                drop(nfc_system); // 提前释放锁
-                                let mut nfc_system = NFC_SYSTEM.lock().await;
-                                if let Some(system) = nfc_system.as_mut() {
-                                    system.restart_monitoring(app_handle_clone);
-                                }
-                            }
-                        }
-                    });
-                }
-            } else {
-                // 更新活动时间
-                *last_activity = now;
-            }
-        }
-    }
-}
-
-// 使用tokio异步锁替代同步锁，避免阻塞
-lazy_static! {
-    static ref NFC_SYSTEM: tokio::sync::Mutex<Option<NfcSystem>> = tokio::sync::Mutex::new(None);
-}
-
-// 关闭所有子窗口的函数
-fn close_all_child_windows(app_handle: &AppHandle) {
-    // 获取所有窗口
-    let windows = app_handle.webview_windows();
-    for (label, window) in windows {
-        // 跳过主窗口，只关闭子窗口
-        if label != "main" {
-            let _ = window.close();
-        }
-    }
-}
-
-
-
-#[derive(Serialize, Deserialize, Clone)]
-struct NfcCardData {
-    uid: String,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct ReaderStatus {
-    connected: bool,
-    reader_name: Option<String>,
-}
-
-// 读卡器状态监听函数 - 异步版本
-async fn reader_status_monitor_async(
-    app_handle: AppHandle,
-    reader_connected: Arc<AtomicBool>,
-    monitoring_active: Arc<AtomicBool>,
-) {
-    let mut _reader_check_count = 0;
-
-    loop {
-        if !monitoring_active.load(Ordering::Relaxed) {
-            break;
-        }
-
-        // reader_check_count += 1;
-        let now = std::time::Instant::now();
-
-        match Context::establish(Scope::User) {
-            Ok(ctx) => {
-                let mut readers_buf = [0; 2048];
-                match ctx.list_readers(&mut readers_buf) {
-                    Ok(readers) => {
-                        let reader_list: Vec<_> = readers.collect();
-                        let has_reader = !reader_list.is_empty();
-                        let was_connected = reader_connected.load(Ordering::Relaxed);
-
-                        if has_reader != was_connected {
-                            reader_connected.store(has_reader, Ordering::Relaxed);
-
-                            // 发送读卡器状态变化事件
-                            let _ = app_handle.emit_to("main", "reader_status_change", has_reader);
-
-                            if !has_reader {
-                                // 读卡器断开时，重置卡片状态
-                                let _ = app_handle.emit_to("main", "card_status_change", false);
-                                // 关闭所有子窗口
-                                close_all_child_windows(&app_handle);
-                            } else {
-                                // 读卡器重新连接时，检查是否需要重启监控
-                                let should_restart = {
-                                    let nfc_system = NFC_SYSTEM.lock().await;
-                                    if let Some(system) = nfc_system.as_ref() {
-                                        !system.monitoring_active.load(Ordering::Relaxed)
-                                    } else {
-                                        false
-                                    }
-                                };
-
-                                if should_restart {
-                                    // 添加延迟重启，避免频繁重启导致的问题
-                                    let app_handle_clone = app_handle.clone();
-                                    tokio::time::sleep(Duration::from_millis(1000)).await;
-                                    let mut nfc_system = NFC_SYSTEM.lock().await;
-                                    if let Some(system) = nfc_system.as_mut() {
-                                        system.restart_monitoring(app_handle_clone);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        reader_connected.store(false, Ordering::Relaxed);
-                    }
-                }
-            }
-            Err(_) => {
-                reader_connected.store(false, Ordering::Relaxed);
-            }
-        }
-
-        // 动态调整检查间隔
-        let elapsed = now.elapsed();
-        if elapsed < Duration::from_millis(1000) {
-            tokio::time::sleep(Duration::from_millis(1000) - elapsed).await;
-        } else {
-            tokio::time::sleep(Duration::from_millis(100)).await; // 如果检查时间过长，短暂休眠
-        }
-    }
-}
-
-// 判断是否为临时错误（需要重试）
-fn is_temporary_error(e: &pcsc::Error) -> bool {
-    matches!(
-        e,
-        pcsc::Error::SharingViolation |  // 资源忙
-        pcsc::Error::Timeout |           // 超时
-        pcsc::Error::InternalError |     // 临时内部错误
-        pcsc::Error::UnresponsiveCard // 卡片暂时无响应
-    )
-}
-
-// 协议连接增加重试机制
-async fn connect_with_retry(
-    ctx: &Context,
-    reader: &CStr,
-    protocol: Protocols,
-) -> Result<Card, pcsc::Error> {
-    let mut retry_count = 0;
-    loop {
-        match ctx.connect(reader, ShareMode::Shared, protocol) {
-            Ok(card) => return Ok(card),
-            Err(e) => {
-                retry_count += 1;
-                if retry_count >= 3 || !is_temporary_error(&e) {
-                    return Err(e);
-                }
-                // 临时错误，延迟重试
-                // 协议连接失败，继续重试
-                tokio::time::sleep(Duration::from_millis(500)).await;
-            }
-        }
-    }
-}
-
-// MIFARE卡片认证
-fn authenticate_mifare_card(card: &Card) -> Result<(), pcsc::Error> {
-    // 扇区0认证指令
-    let auth_cmd = vec![0xFF, 0x86, 0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x60, 0x00];
-    // 默认密钥 (FF FF FF FF FF FF)
-    let default_key = vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
-
-    let mut cmd = auth_cmd.clone();
-    cmd.extend(default_key);
-
-    let mut buf = [0u8; 256];
-    card.transmit(&cmd, &mut buf)?;
-    Ok(())
-}
-
-// 卡片读取监听函数 - 只读取UID - 异步版本
-async fn card_reading_monitor_async(
-    app_handle: AppHandle,
-    card_present: Arc<AtomicBool>,
-    monitoring_active: Arc<AtomicBool>,
-) {
-    loop {
-        if !monitoring_active.load(Ordering::Relaxed) {
-            break;
-        }
-
-        // 检查读卡器是否连接
-        match Context::establish(Scope::User) {
-            Ok(ctx) => {
-                let mut readers_buf = [0; 2048];
-                match ctx.list_readers(&mut readers_buf) {
-                    Ok(readers) => {
-                        let reader_list: Vec<_> = readers.collect();
-
-                        if let Some(reader) = reader_list.into_iter().next() {
-
-                            // 扩展支持的协议，提高兼容性
-                            let protocols_to_try = vec![
-                                Protocols::T1,  // 通用T1协议
-                                Protocols::T0,  // 通用T0协议
-                                Protocols::RAW, // 原始协议
-                            ];
-
-                            let mut _connection_success = false;
-                            let mut card = None;
-
-                            for protocol in protocols_to_try {
-                                match connect_with_retry(&ctx, reader, protocol).await {
-                                    Ok(connected_card) => {
-                                        card = Some(connected_card);
-                                        break;
-                                    }
-                                    Err(_) => {
-                                        // 协议连接失败，继续尝试其他协议
-                                    }
-                                }
-                            }
-
-                            if let Some(card) = card {
-                                // 使用scopeguard确保退出时正确断开连接
-                                let card_guard = scopeguard::guard(card, |_c| {
-                                    // 卡片连接将在作用域结束时自动断开
-                                });
-                                // 读取卡片UID - 支持多种指令提高兼容性
-                                let mut uid_bytes = Vec::new();
-                                let mut read_success = false;
-
-                                // 扩展UID读取指令，支持更多卡片类型
-                                let uid_commands = vec![
-                                    vec![0xFF, 0xCA, 0x00, 0x00, 0x04], // 标准4字节UID
-                                    vec![0x00, 0x04, 0x00, 0x00],       // MIFARE Ultralight专属指令
-                                    vec![0xFF, 0xCA, 0x00, 0x00, 0x08], // 8字节扩展UID
-                                    vec![0xFF, 0xCA, 0x01, 0x00, 0x00], // 读取卡片类型+UID
-                                    vec![0xFF, 0xCA, 0x02, 0x00, 0x00], // 读取完整UID（含校验位）
-                                ];
-
-                                let mut response_buf = [0u8; 256];
-                                let mut authenticated = false;
-
-                                for uid_command in &uid_commands {
-                                    match card_guard.transmit(uid_command, &mut response_buf) {
-                                        Ok(response) => {
-                                            if response.len() >= 2 {
-                                                // 至少需要2字节状态码
-                                                // 检查状态字节 (SW1SW2)
-                                                let sw1 = response[response.len() - 2];
-                                                let sw2 = response[response.len() - 1];
-
-                                                // 成功状态码: 0x90 0x00
-                                                if sw1 == 0x90 && sw2 == 0x00 {
-                                                    // 移除最后两个字节（状态字节）
-                                                    uid_bytes =
-                                                        response[..response.len() - 2].to_vec();
-                                                    read_success = true;
-                                                    break;
-                                                }
-                                                // 需要认证 (0x69 0x82)
-                                                else if sw1 == 0x69
-                                                    && sw2 == 0x82
-                                                    && !authenticated
-                                                {
-                                                    if authenticate_mifare_card(&card_guard).is_ok()
-                                                    {
-                                                        authenticated = true;
-                                                        continue;
-                                                    } else {
-                                                    }
-                                                } else {
-                                                }
-                                            }
-                                        }
-                                        Err(_) => {
-                                            // UID读取命令失败，继续尝试其他命令
-                                        }
-                                    }
-                                }
-
-                                let current_uid = hex::encode(&uid_bytes);
-
-                                if read_success && !current_uid.is_empty() {
-                                    // 读取到UID就立即发送
-                                    card_present.store(true, Ordering::Relaxed);
-
-                                    // 发送卡片数据
-                                    let card_data = NfcCardData { uid: current_uid };
-                                    let _ =
-                                        app_handle.emit_to("main", "card_data_received", card_data);
-                                    let _ = app_handle.emit_to("main", "card_status_change", true);
-                                } else {
-                                    if card_present.load(Ordering::Relaxed) {
-                                        card_present.store(false, Ordering::Relaxed);
-                                        let _ =
-                                            app_handle.emit_to("main", "card_status_change", false);
-                                    }
-                                }
-                            } else {
-                                // 所有协议都连接失败时重置状态
-                                if card_present.load(Ordering::Relaxed) {
-                                    card_present.store(false, Ordering::Relaxed);
-                                    let _ = app_handle.emit_to("main", "card_status_change", false);
-                                    close_all_child_windows(&app_handle);
-                                }
-                            }
-                        } else {
-                            // 没有读卡器，重置状态
-                            if card_present.load(Ordering::Relaxed) {
-                                card_present.store(false, Ordering::Relaxed);
-                                let _ = app_handle.emit_to("main", "card_status_change", false);
-                                close_all_child_windows(&app_handle);
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        // 读取读卡器列表失败，重置状态
-                        if card_present.load(Ordering::Relaxed) {
-                            card_present.store(false, Ordering::Relaxed);
-                            let _ = app_handle.emit_to("main", "card_status_change", false);
-                            close_all_child_windows(&app_handle);
-                        }
-                    }
-                }
-            }
-            Err(_) => {
-                // PCSC上下文建立失败，重置状态
-                if card_present.load(Ordering::Relaxed) {
-                    card_present.store(false, Ordering::Relaxed);
-                    let _ = app_handle.emit_to("main", "card_status_change", false);
-                    close_all_child_windows(&app_handle);
-                }
-            }
-        }
-
-        // 休眠逻辑
-        tokio::time::sleep(Duration::from_millis(200)).await;
-    }
-}
 
 // 操作队列管理函数，避免主线程阻塞
 async fn execute_with_semaphore<F, Fut, T>(operation: F) -> Result<T, String>
@@ -491,107 +33,6 @@ where
     result
 }
 
-// PCSC错误恢复函数
-fn handle_pcsc_error(error: &pcsc::Error) -> String {
-    match error {
-        pcsc::Error::NoReadersAvailable => "没有可用的读卡器".to_string(),
-        pcsc::Error::UnsupportedCard => "不支持的卡片类型".to_string(),
-        pcsc::Error::UnresponsiveCard => "卡片无响应".to_string(),
-        pcsc::Error::UnpoweredCard => "卡片未供电".to_string(),
-        pcsc::Error::RemovedCard => "卡片已被移除".to_string(),
-        pcsc::Error::InternalError => "内部错误".to_string(),
-        pcsc::Error::InvalidHandle => "无效句柄".to_string(),
-        pcsc::Error::InvalidParameter => "无效参数".to_string(),
-        pcsc::Error::InvalidValue => "无效值".to_string(),
-        pcsc::Error::NoService => "服务不可用".to_string(),
-        pcsc::Error::NoSmartcard => "没有智能卡".to_string(),
-        pcsc::Error::NotTransacted => "未完成事务".to_string(),
-        pcsc::Error::ProtoMismatch => "协议不匹配".to_string(),
-        pcsc::Error::ReaderUnavailable => "读卡器不可用".to_string(),
-        pcsc::Error::SharingViolation => "资源共享冲突".to_string(),
-        pcsc::Error::SystemCancelled => "系统取消".to_string(),
-        pcsc::Error::Timeout => "操作超时".to_string(),
-        pcsc::Error::UnknownError => "未知错误".to_string(),
-        pcsc::Error::UnsupportedFeature => "不支持的功能".to_string(),
-        _ => format!("PCSC错误: {:?}", error),
-    }
-}
-
-#[command]
-async fn check_reader_connection() -> Result<ReaderStatus, String> {
-    execute_with_semaphore(|| async {
-        let ctx = Context::establish(Scope::User).map_err(|e| {
-            format!(
-                "Failed to establish PCSC context: {}",
-                handle_pcsc_error(&e)
-            )
-        })?;
-
-        let mut readers_buf = [0; 2048];
-        let readers = ctx
-            .list_readers(&mut readers_buf)
-            .map_err(|e| format!("Failed to list readers: {}", handle_pcsc_error(&e)))?;
-
-        let reader = readers.into_iter().next();
-
-        let connected = reader.is_some();
-        let reader_name = reader.map(|r| r.to_string_lossy().to_string());
-
-        Ok(ReaderStatus {
-            connected,
-            reader_name,
-        })
-    })
-    .await
-}
-
-#[command]
-async fn start_nfc_monitoring(app_handle: AppHandle) -> Result<(), String> {
-    execute_with_semaphore(|| async {
-        let mut nfc_system = NFC_SYSTEM.lock().await;
-        if nfc_system.is_none() {
-            *nfc_system = Some(NfcSystem::new());
-        }
-
-        if let Some(system) = nfc_system.as_mut() {
-            system.start_monitoring(app_handle);
-        } else {
-            return Err("NFC系统初始化失败".to_string());
-        }
-
-        Ok(())
-    })
-    .await
-}
-
-#[command]
-async fn stop_nfc_monitoring() -> Result<(), String> {
-    execute_with_semaphore(|| async {
-        let mut nfc_system = NFC_SYSTEM.lock().await;
-        if let Some(system) = nfc_system.as_mut() {
-            system.stop_monitoring();
-        } else {
-            return Err("NFC系统未初始化".to_string());
-        }
-
-        Ok(())
-    })
-    .await
-}
-
-#[command]
-async fn restart_nfc_monitoring(app_handle: AppHandle) -> Result<(), String> {
-    execute_with_semaphore(|| async {
-        let mut nfc_system = NFC_SYSTEM.lock().await;
-        if let Some(system) = nfc_system.as_mut() {
-            system.restart_monitoring(app_handle);
-            Ok(())
-        } else {
-            Err("NFC系统未初始化，无法重启".to_string())
-        }
-    })
-    .await
-}
 
 #[tauri::command]
 async fn close_meeting_window(app: tauri::AppHandle) -> Result<(), String> {
@@ -653,6 +94,157 @@ async fn save_file_to_downloads(file_data: Vec<u8>, file_name: String) -> Result
     Ok(file_path_str)
 }
 
+/// 平滑放大窗口并在放大过程中实时居中
+/// 
+/// # Arguments
+/// * `app` - Tauri应用句柄
+/// * `target_width` - 目标宽度
+/// * `target_height` - 目标高度
+/// * `duration_ms` - 动画时长（毫秒），默认300ms
+/// 
+/// # Returns
+/// * `Ok(())` - 动画成功完成
+/// * `Err(String)` - 动画失败的错误信息
+#[tauri::command]
+async fn animate_window_expand_and_center(
+    app: tauri::AppHandle,
+    target_width: f64,
+    target_height: f64,
+    duration_ms: Option<u64>,
+) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "无法获取主窗口".to_string())?;
+
+    // 获取当前窗口大小
+    let start_size = window
+        .inner_size()
+        .map_err(|e| format!("获取窗口大小失败: {}", e))?;
+
+    let start_width = start_size.width as f64;
+    let start_height = start_size.height as f64;
+
+    // 获取窗口缩放因子（Retina 显示器通常是 2.0）
+    let scale_factor = window.scale_factor().unwrap_or(1.0) as f64;
+
+    // 获取屏幕信息用于居中计算
+    let monitor = window
+        .current_monitor()
+        .map_err(|e| format!("获取屏幕信息失败: {}", e))?
+        .ok_or_else(|| "无法获取当前显示器".to_string())?;
+
+    let screen_size = monitor.size();
+    let screen_position = monitor.position();
+    
+    // monitor.size() 和 monitor.position() 返回的是物理坐标
+    // 需要转换为逻辑坐标以匹配 LogicalPosition
+    let screen_width = (screen_size.width as f64) / scale_factor;
+    let screen_height = (screen_size.height as f64) / scale_factor;
+    let screen_x = (screen_position.x as f64) / scale_factor;
+    let screen_y = (screen_position.y as f64) / scale_factor;
+
+    // 计算差值
+    let width_diff = target_width - start_width;
+    let height_diff = target_height - start_height;
+
+    // 如果目标大小和当前大小相同，直接返回成功
+    if width_diff.abs() < 0.1 && height_diff.abs() < 0.1 {
+        return Ok(());
+    }
+
+    // 启用窗口可调整大小
+    window
+        .set_resizable(true)
+        .map_err(|e| format!("启用窗口可调整大小失败: {}", e))?;
+
+    // 动画时长，默认300ms
+    let duration = Duration::from_millis(duration_ms.unwrap_or(300));
+    let frame_duration = Duration::from_millis(16); // 约60fps
+    let start_time = Instant::now();
+
+    // 使用通道来传递动画完成状态
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<(), String>>();
+
+    // 在后台任务中执行动画
+    let window_clone = window.clone();
+    tokio::spawn(async move {
+        let mut last_frame_time = Instant::now();
+
+        loop {
+            let elapsed = start_time.elapsed();
+            let progress = (elapsed.as_secs_f64() / duration.as_secs_f64()).min(1.0);
+
+            // 使用缓动函数（ease-out-cubic）让动画更自然
+            let ease_progress = 1.0 - (1.0 - progress).powf(3.0);
+
+            // 计算当前大小
+            let current_width = start_width + width_diff * ease_progress;
+            let current_height = start_height + height_diff * ease_progress;
+
+            // 实时计算居中位置
+            let current_center_x = screen_x + (screen_width - current_width) / 2.0;
+            let current_center_y = screen_y + (screen_height - current_height) / 2.0;
+
+            // 设置窗口大小和位置
+            if let Err(e) = window_clone.set_size(tauri::LogicalSize::new(
+                current_width,
+                current_height,
+            )) {
+                let _ = tx.send(Err(format!("设置窗口大小失败: {}", e)));
+                return;
+            }
+
+            if let Err(e) = window_clone.set_position(tauri::LogicalPosition::new(
+                current_center_x,
+                current_center_y,
+            )) {
+                let _ = tx.send(Err(format!("设置窗口位置失败: {}", e)));
+                return;
+            }
+
+            if progress >= 1.0 {
+                // 动画完成，确保最终位置和大小精确
+                let final_x = screen_x + (screen_width - target_width) / 2.0;
+                let final_y = screen_y + (screen_height - target_height) / 2.0;
+
+                if let Err(e) = window_clone.set_size(tauri::LogicalSize::new(
+                    target_width,
+                    target_height,
+                )) {
+                    let _ = tx.send(Err(format!("设置最终窗口大小失败: {}", e)));
+                    return;
+                }
+
+                if let Err(e) = window_clone.set_position(tauri::LogicalPosition::new(
+                    final_x,
+                    final_y,
+                )) {
+                    let _ = tx.send(Err(format!("设置最终窗口位置失败: {}", e)));
+                    return;
+                }
+
+                // 动画成功完成
+                let _ = tx.send(Ok(()));
+                return;
+            }
+
+            // 控制帧率，确保约60fps，避免卡顿
+            let frame_elapsed = last_frame_time.elapsed();
+            if frame_elapsed < frame_duration {
+                tokio::time::sleep(frame_duration - frame_elapsed).await;
+            }
+            last_frame_time = Instant::now();
+        }
+    });
+
+    // 等待动画完成，设置超时时间（动画时长 + 1秒缓冲）
+    match tokio::time::timeout(duration + Duration::from_secs(1), rx).await {
+        Ok(Ok(result)) => result,
+        Ok(Err(_)) => Err("接收动画结果失败".to_string()),
+        Err(_) => Err("窗口动画超时".to_string()),
+    }
+}
+
 
 fn main() {
     // 设置tokio运行时，确保异步操作不会阻塞主线程
@@ -666,52 +258,22 @@ fn main() {
         tauri::Builder::default()
             .plugin(tauri_plugin_opener::init())
             .invoke_handler(tauri::generate_handler![
-                check_reader_connection,
-                start_nfc_monitoring,
-                stop_nfc_monitoring,
-                restart_nfc_monitoring,
                 close_meeting_window,
-                save_file_to_downloads
+                save_file_to_downloads,
+                animate_window_expand_and_center
             ])
             .setup(|_app| {
-                // 应用启动时初始化NFC系统 - 使用异步任务
-                tokio::spawn(async {
-                    let mut nfc_system = NFC_SYSTEM.lock().await;
-                    if nfc_system.is_none() {
-                        *nfc_system = Some(NfcSystem::new());
-                    }
-                });
                 Ok(())
             })
             .on_window_event(|window, event| match event {
                 tauri::WindowEvent::CloseRequested { .. } => {
-                    if window.label() == "main" {
-                        // 停止NFC监控 - 使用异步任务
-                        tokio::spawn(async {
-                            let mut nfc_system = NFC_SYSTEM.lock().await;
-                            if let Some(system) = nfc_system.as_mut() {
-                                system.stop_monitoring();
-                            }
-                        });
-                    } else if window.label() == "meet-room" {
+                    if window.label() == "meet-room" {
                         // 会议窗口关闭时，发送 canJoinRoom 和 meet-exited 事件
                         let app_handle = window.app_handle().clone();
                         tokio::spawn(async move {
                             let _ = app_handle.emit_to("main", "canJoinRoom", true);
                             // 发送会议退出事件，通知主窗口刷新数据
                             let _ = app_handle.emit_to("main", "meet-exited", true);
-                        });
-                    }
-                }
-                tauri::WindowEvent::Focused(focused) => {
-                    if *focused {
-                        // 窗口获得焦点时检查系统恢复
-                        let app_handle = window.app_handle().clone();
-                        tokio::spawn(async move {
-                            let nfc_system = NFC_SYSTEM.lock().await;
-                            if let Some(system) = nfc_system.as_ref() {
-                                system.check_system_recovery(&app_handle);
-                            }
                         });
                     }
                 }

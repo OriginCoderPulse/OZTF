@@ -30,7 +30,7 @@ export default defineComponent({
       <div class="staff" v-loading={!controller.requestComplete.value}>
         {controller.requestComplete.value ? (
           <>
-            <div class="staff-detail">
+          <div class="staff-detail">
             <div className="staff-header"></div>
             <div className="staff-content">
               <div class="staff-list">
@@ -328,7 +328,7 @@ export default defineComponent({
           </div>
           </>
         ) : null}
-      </div>
-    );
+        </div>
+      );
   },
 });

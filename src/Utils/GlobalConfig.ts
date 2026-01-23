@@ -116,6 +116,30 @@ class GlobalConfig {
       retry: false,
       cache: false,
     },
+    qrcodeGenerate: {
+      method: "POST",
+      path: ["qrcode", "generate"],
+      retry: false,
+      cache: false,
+    },
+    qrcodeStatus: {
+      method: "POST",
+      path: ["qrcode", "status"],
+      retry: true,
+      cache: false,
+    },
+    qrcodeScan: {
+      method: "POST",
+      path: ["qrcode", "scan"],
+      retry: false,
+      cache: false,
+    },
+    qrcodeAuthorize: {
+      method: "POST",
+      path: ["qrcode", "authorize"],
+      retry: false,
+      cache: false,
+    },
   };
 }
 

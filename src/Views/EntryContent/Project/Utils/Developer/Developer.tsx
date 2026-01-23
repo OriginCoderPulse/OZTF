@@ -47,7 +47,7 @@ export default defineComponent({
       <div class="project-developer" v-loading={!controller.requestComplete.value}>
         {controller.requestComplete.value ? (
           <>
-            <div class="project-info">
+          <div class="project-info">
             {controller.projectDetail.value && (
               <div class="project-header">
                 <div class="project-title">
@@ -414,7 +414,7 @@ export default defineComponent({
           </div>
           </>
         ) : null}
-      </div>
-    );
+        </div>
+      );
   },
 });
