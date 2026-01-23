@@ -401,8 +401,8 @@ export class MeetRoomController {
         $network.request(
           "meetRemoveInnerParticipant",
           {
-        meetId,
-        participantId: userID,
+            meetId,
+            participantId: userID,
           },
           () => {
             console.log("成功删除内部参与人:", userID);
@@ -503,20 +503,20 @@ export class MeetRoomController {
   private exitAction = async (roomId: number) => {
     try {
       // 删除内部参与人（确保在退出前完成）
-    if (this._meetId.value) {
-      await this.removeInnerParticipant(this._meetId.value);
-    }
+      if (this._meetId.value) {
+        await this.removeInnerParticipant(this._meetId.value);
+      }
 
       // 退出 TRTC 房间
       await $trtc.exitRoom(roomId);
 
-        // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
+      // 关闭窗口，Rust 后端会自动发送 meet-exited 事件
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("close_meeting_window");
     } catch (error: any) {
       console.error("退出会议失败:", error);
-        $message.error({
-          message: "退出房间失败，请重试",
+      $message.error({
+        message: "退出房间失败，请重试",
       });
     }
   };
@@ -531,28 +531,28 @@ export class MeetRoomController {
         await this.removeInnerParticipant(this._meetId.value);
       }
 
-    // 获取当前用户ID
-    const userID = await $storage.get("userID");
-    const data = new TextEncoder().encode("conclude").buffer;
+      // 获取当前用户ID
+      const userID = await $storage.get("userID");
+      const data = new TextEncoder().encode("conclude").buffer;
 
-    // 发送 TRTC 自定义消息（通知其他参会人会议已结束）
-    $trtc.sendCustomMessage(roomId, 1, data);
+      // 发送 TRTC 自定义消息（通知其他参会人会议已结束）
+      $trtc.sendCustomMessage(roomId, 1, data);
 
       // 更新会议状态
       await new Promise<void>((resolve, reject) => {
-    $network.request(
-      "meetStatusChange",
-      {
-        meetId: this._meetId.value,
-        status: "Concluded",
-        userId: userID,
-      },
-      () => {
+        $network.request(
+          "meetStatusChange",
+          {
+            meetId: this._meetId.value,
+            status: "Concluded",
+            userId: userID,
+          },
+          () => {
             resolve();
-      },
-      (error: any) => {
+          },
+          (error: any) => {
             console.error("结束会议接口调用失败:", error);
-        // 即使失败也继续，但记录错误
+            // 即使失败也继续，但记录错误
             resolve();
           }
         );
@@ -566,7 +566,7 @@ export class MeetRoomController {
       await invoke("close_meeting_window");
     } catch (error: any) {
       console.error("结束会议失败:", error);
-      }
+    }
   };
 
   public exitMeeting(roomId: number) {

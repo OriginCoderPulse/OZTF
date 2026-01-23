@@ -1,6 +1,6 @@
-import {ref} from "vue";
+import { ref } from "vue";
 import MeetCreate from "./MeetCreate/MeetCreate.tsx";
-import {WebviewWindow} from "@tauri-apps/api/webviewWindow";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 export class MeetController {
   public meetList = ref<MeetList[]>([]);
@@ -157,7 +157,7 @@ export class MeetController {
     try {
       const window = await WebviewWindow.getByLabel("meet-room");
       if (window) {
-          return await window.isVisible();
+        return await window.isVisible();
       }
       return false;
     } catch {

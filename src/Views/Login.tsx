@@ -12,7 +12,7 @@ export default defineComponent({
         // 二维码扫描成功处理
         const handleQrcodeScanned = async (authorization: string) => {
             try {
-                // 保存授权token（作为userID）
+                // 保存authorization token（永久有效）和userID
                 await $storage.set("userID", authorization);
                 await $storage.set("authorization", authorization);
 

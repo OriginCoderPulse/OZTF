@@ -38,12 +38,13 @@ router.beforeEach(async (to, _from, next) => {
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     try {
-      const userID = await $storage.get("userID");
-      if (!userID || userID.trim() === "") {
-        // 没有userID，跳转到登录页
+      // 使用authorization token（永久有效）作为登录凭证
+      const authorization = await $storage.get("authorization");
+      if (!authorization || authorization.trim() === "") {
+        // 没有authorization token，跳转到登录页
         next({ name: "Login" });
       } else {
-        // 有userID，允许访问
+        // 有authorization token，允许访问
         next();
       }
     } catch (error) {

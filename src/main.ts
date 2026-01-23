@@ -57,11 +57,11 @@ router.isReady().then(async () => {
       return;
     }
 
-    // 检查是否有userID（作为登录凭证）
+    // 检查是否有authorization token（永久有效的登录凭证）
     const authorization = await $storage.get("authorization");
 
     if (authorization && authorization.trim() !== "") {
-      // 有userID，跳转到/main并设置窗口大小为1620*1080
+      // 有authorization token，跳转到/main并设置窗口大小为1620*1080
       await router.push({ name: "Main" });
 
       // 设置窗口大小
@@ -75,7 +75,7 @@ router.isReady().then(async () => {
         console.error("设置窗口大小失败:", error);
       }
     } else {
-      // 没有userID，跳转到登录页
+      // 没有authorization token，跳转到登录页
       await router.push({ name: "Login" });
     }
   } catch (error) {
