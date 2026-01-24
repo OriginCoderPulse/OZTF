@@ -7,7 +7,7 @@ export class HomeController {
    * 初始化 - 在组件 onMounted 时调用
    */
   public init() {
-    $storage.get("permission").then((res) => {
+    $token.getPermission().then((res) => {
       this.permission.value = res;
     });
   }

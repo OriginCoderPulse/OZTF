@@ -162,7 +162,7 @@ export class StaffController {
    * 获取员工信息
    */
   public fetchStaffInfo(page = 1, old?: number) {
-    $storage.get("userID").then((userID: string) => {
+    $token.getUserId().then((userID: string) => {
       const searchParams: any = {
         current_page: page,
         user_id: userID,
@@ -236,7 +236,7 @@ export class StaffController {
     this.fetchStaffInfo();
 
     $event.on("changeStaffStatus", () => {
-      $storage.get("userID").then((userID: string) => {
+      $token.getUserId().then((userID: string) => {
         $network.request(
           "staffInfo",
           { current_page: this.currentPageNumber.value, user_id: userID },

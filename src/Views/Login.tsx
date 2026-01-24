@@ -12,19 +12,27 @@ export default defineComponent({
         // 二维码扫描成功处理
         const handleQrcodeScanned = async (authorization: string) => {
             try {
-                // 保存authorization token（永久有效）和userID
-                await $storage.set("userID", authorization);
+                router.replace({
+                    name: "Middle",
+                    query: { target: "Main" }
+                });
+                // 保存authorization token（永久有效）到IndexedDB
                 await $storage.set("authorization", authorization);
 
-                // 放大窗口并居中
-                await invoke("animate_window_expand_and_center", {
+                // 连接会议 WebSocket
+                if (window.$ws) {
+                    window.$ws.initMeetWebSocket();
+                }
+
+                // 使用 macOS 原生动画放大窗口
+                await invoke("expand_window", {
                     targetWidth: 1620,
                     targetHeight: 1080,
-                    durationMs: 300,
+                    durationMs: 0.3,
                 });
 
                 // 跳转到主页面
-                await router.push({ name: "Main" });
+
             } catch (error) {
                 console.error("登录失败:", error);
                 $message.error({ message: `登录失败: ${error}` });
@@ -44,7 +52,6 @@ export default defineComponent({
                 <Qrcode
                     content={`login_${Date.now()}`}
                     size={250}
-                    pollingInterval={2000}
                     onScanned={handleQrcodeScanned}
                     onLayout={handleQrcodeLayout}
                     onRefresh={handleQrcodeRefresh}

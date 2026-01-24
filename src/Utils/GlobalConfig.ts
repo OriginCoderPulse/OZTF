@@ -1,6 +1,7 @@
 class GlobalConfig {
   appName = "壹零贰肆";
-  meetWebBaseURL = "https://oztf.site/"
+  meetWebBaseURL = "https://oztf.site/";
+  wsUrl = "http://localhost:1024"; // WebSocket 服务器地址
   urls = {
     initial: {
       method: "POST",
@@ -120,12 +121,6 @@ class GlobalConfig {
       method: "POST",
       path: ["qrcode", "generate"],
       retry: false,
-      cache: false,
-    },
-    qrcodeStatus: {
-      method: "POST",
-      path: ["qrcode", "status"],
-      retry: true,
       cache: false,
     },
     qrcodeScan: {

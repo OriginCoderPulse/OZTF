@@ -114,8 +114,8 @@ export class MeetCreateController {
     this.submitting.value = true;
 
     // 获取当前用户ID
-    $storage
-      .get("userID")
+    $token
+      .getUserId()
       .then((userID: string) => {
         // 格式化开始时间（转换为UTC时间字符串）
         if (!this.startTime.value) {
@@ -153,6 +153,7 @@ export class MeetCreateController {
             window.dispatchEvent(new CustomEvent("meet-created"));
           },
           (error: any) => {
+            console.log(error);
             this.submitting.value = false;
             $message.error({ message: "创建会议失败: " + (error || "未知错误") });
           }

@@ -57,7 +57,7 @@ export class DeveloperController {
   public fetchProjectData() {
     if (!this.props.projectId) return;
     this.requestComplete.value = false;
-    $storage.get("userID").then((userID: string) => {
+    $token.getUserId().then((userID: string) => {
       const requests = [
         {
           urlKey: "projectDetail",
@@ -120,7 +120,7 @@ export class DeveloperController {
   public fetchFeatureList(page = 1, old?: number) {
     if (!this.props.projectId) return;
 
-    $storage.get("userID").then((userID: string) => {
+    $token.getUserId().then((userID: string) => {
       $network.request(
         "featureList",
         {
@@ -146,7 +146,7 @@ export class DeveloperController {
   public fetchBugList(page = 1, old?: number) {
     if (!this.props.projectId) return;
 
-    $storage.get("userID").then((userID: string) => {
+    $token.getUserId().then((userID: string) => {
       $network.request(
         "bugList",
         {

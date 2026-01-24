@@ -12,7 +12,7 @@ export default defineComponent({
     // 项目添加成功事件处理函数
     const handleProjectAdded = async () => {
       try {
-        const userID = await $storage.get("userID");
+        const userID = await $token.getUserId();
         await new Promise<void>((resolve, reject) => {
           $network.request(
             "initial",
@@ -35,25 +35,22 @@ export default defineComponent({
 
     // 组件挂载时设置事件监听器
     onMounted(async () => {
-      // 使用默认测试用户ID进行初始化
-      // 注意：现在使用 MongoDB ObjectId 格式，不再是字符串 ID
-      const defaultUid = "696665fd9a4a020c2b9cb39f"; // 默认使用第一个员工（ObjectId格式）
+      // 从token中获取userID
       try {
+        const userID = await $token.getUserId();
+        if (!userID || userID.trim() === "") {
+          console.error("无法获取userID，请先登录");
+          return;
+        }
+
         await new Promise<void>((resolve, reject) => {
           $network.request(
             "initial",
-            { uid: defaultUid, device: "pc" },
+            { uid: userID, device: "pc" },
             (result: any) => {
-              Promise.all([
-                $storage.set("permission", result.department),
-                $storage.set("userID", defaultUid),
-              ])
-                .then(() => {
                   // 直接使用后端返回的完整TabItem结构
                   tabList.value = result.permissions;
                   resolve();
-                })
-                .catch(reject);
             },
             (error: any) => {
               console.error("初始化失败:", error);
@@ -62,7 +59,7 @@ export default defineComponent({
           );
         });
       } catch (error) {
-        console.error("默认用户初始化失败:", error);
+        console.error("初始化失败:", error);
       }
 
       // 监听项目添加成功事件

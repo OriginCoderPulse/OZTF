@@ -15,7 +15,7 @@ class TRTC {
    * 懒加载初始化，只在第一次使用时调用
    */
   private async ensureInitialized() {
-    this._userId = await $storage.get("userID");
+    this._userId = await $token.getUserId();
     return new Promise<void>((resolve, reject) => {
       if (this._initialized) {
         resolve();

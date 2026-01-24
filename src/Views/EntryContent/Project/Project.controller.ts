@@ -35,7 +35,7 @@ export class ProjectController {
   public fetchProjectRole() {
     if (!this.props.projectId) return;
 
-    $storage.get("userID").then((userID: string) => {
+    $token.getUserId().then((userID: string) => {
       $network.request(
         "projectGetRole",
         {
@@ -57,7 +57,7 @@ export class ProjectController {
    * 获取全局权限
    */
   public fetchGlobalPermission() {
-    $storage.get("permission").then((permission: string) => {
+    $token.getPermission().then((permission: string) => {
       this.globalPermission.value = permission || "";
     });
   }

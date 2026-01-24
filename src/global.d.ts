@@ -52,6 +52,12 @@ declare global {
       off: (event: string, callback?: (...args: any[]) => any) => void;
       emit: (event: string, ...args: any[]) => void;
     };
+    $ws: {
+      initMeetWebSocket: () => void;
+      disconnectMeetWebSocket: () => void;
+      getConnectionStatus: () => boolean;
+      destroy: () => void;
+    };
     $config: {
       appName: string;
       meetWebBaseURL: string;
@@ -94,6 +100,11 @@ declare global {
       set: (key: string, value: any) => Promise<void>;
       remove: (key: string) => Promise<void>;
       clearAll: () => Promise<void>;
+    };
+    $token: {
+      getUserId: () => Promise<string>;
+      getPermission: () => Promise<string>;
+      getToken: () => Promise<string>;
     };
     $hfc: {
       debounce: (fn: Function, delay: number, immediate: boolean = false) => Function;
@@ -160,6 +171,7 @@ declare global {
   const $message: Window["$message"];
   const $date: Window["$date"];
   const $storage: Window["$storage"];
+  const $token: Window["$token"];
   const $hfc: Window["$hfc"];
   const $trtc: Window["$trtc"];
   const $roomformat: Window["$roomformat"];

@@ -1,11 +1,11 @@
 import { defineComponent, ref, onMounted, onUnmounted, watch } from "vue";
+import { io, Socket } from "socket.io-client";
 import "./Qrcode.scss";
 import Svg from "../Svg/Svg";
 
 interface QrcodeProps {
     content?: string; // 二维码内容，如果不提供则自动生成
     size?: number; // 二维码尺寸，默认200
-    pollingInterval?: number; // 轮询间隔（毫秒），默认2000
     onScanned?: (authorization: string) => void; // 扫描成功回调
     onError?: (error: string) => void; // 错误回调
     onLayout?: () => void; // 布局回调
@@ -22,10 +22,6 @@ export default defineComponent({
         size: {
             type: Number,
             default: 200,
-        },
-        pollingInterval: {
-            type: Number,
-            default: 2000,
         },
         onError: {
             type: Function,
@@ -52,7 +48,7 @@ export default defineComponent({
         const isLoading = ref<boolean>(true);
         const errorMessage = ref<string>("");
         const refresh = ref<boolean>(false);
-        let pollingTimer: number | null = null;
+        let socket: Socket | null = null;
 
         const qrImgBorder = {
             "pending": "1px solid rgba(251, 251, 161, 0.2)",
@@ -91,82 +87,87 @@ export default defineComponent({
             );
         };
 
-        // 检查二维码状态
-        const checkStatus = () => {
-            if (!qrcodeId.value) {
+        // 连接 WebSocket
+        const connectWebSocket = () => {
+            if (!qrcodeId.value || socket) {
                 return;
             }
 
-            $network.request(
-                "qrcodeStatus",
-                {
-                    qrcodeId: qrcodeId.value,
-                },
-                (data) => {
-                    status.value = data.status;
-                    statusText.value = data.statusText || "";
+            // 创建 WebSocket 连接
+            const wsUrl = ($config as any).wsUrl || "http://localhost:1024";
+            socket = io(`${wsUrl}/qrcode`, {
+                transports: ["websocket"],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+            });
 
-                    if (data.status === "authorized" && data.authorization) {
-                        // 已认证，立即停止轮询并返回authorization
-                        stopPolling();
-                        props.onScanned?.(data.authorization);
-                    } else if (data.status === "expired") {
-                        // 已过期，立即停止轮询
-                        stopPolling();
-                        refresh.value = true;
-                    } else if (data.status === "scanned") {
-                        refresh.value = true;
-                    }
-                    // pending和scanned状态继续轮询，不需要特殊处理
-                },
-                (error) => {
-                    // 轮询错误不显示给用户，只记录
-                    console.error("检查二维码状态失败:", error);
+            socket.on("connect", () => {
+                console.log("[QrcodeWebSocket] 连接成功");
+                // 订阅二维码状态
+                socket?.emit("subscribe", { qrcodeId: qrcodeId.value });
+            });
+
+            socket.on("subscribed", (data: any) => {
+                console.log("[QrcodeWebSocket] 订阅成功:", data);
+            });
+
+            socket.on("status", (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => {
+                console.log("[QrcodeWebSocket] 收到状态更新:", data);
+                status.value = data.status as any;
+                statusText.value = data.statusText || "";
+
+                if (data.status === "authorized" && data.authorization) {
+                    // 已认证，断开连接并返回authorization
+                    disconnectWebSocket();
+                    props.onScanned?.(data.authorization);
+                } else if (data.status === "expired") {
+                    // 已过期，断开连接
+                    disconnectWebSocket();
+                    refresh.value = true;
+                } else if (data.status === "scanned") {
+                    refresh.value = true;
                 }
-            );
+            });
+
+            socket.on("error", (error: any) => {
+                console.error("[QrcodeWebSocket] 错误:", error);
+            });
+
+            socket.on("disconnect", () => {
+                console.log("[QrcodeWebSocket] 连接断开");
+            });
         };
 
-        // 开始轮询
-        const startPolling = () => {
-            if (pollingTimer) {
-                return;
-            }
-
-            pollingTimer = window.setInterval(() => {
-                // pending和scanned状态都要继续轮询，直到变为authorized或expired
-                if ((status.value === "pending" || status.value === "scanned") && qrcodeId.value) {
-                    checkStatus();
-                } else {
-                    // 状态是authorized或expired，停止轮询
-                    stopPolling();
+        // 断开 WebSocket
+        const disconnectWebSocket = () => {
+            if (socket) {
+                if (qrcodeId.value) {
+                    socket.emit("unsubscribe", { qrcodeId: qrcodeId.value });
                 }
-            }, props.pollingInterval);
-        };
-
-        // 停止轮询
-        const stopPolling = () => {
-            if (pollingTimer) {
-                clearInterval(pollingTimer);
-                pollingTimer = null;
+                socket.disconnect();
+                socket = null;
             }
         };
 
         // 刷新二维码
         const refreshQrcode = () => {
             refresh.value = false;
-            stopPolling();
+            disconnectWebSocket();
             generateQrcode();
             props.onRefresh?.();
         };
 
-        // 监听qrcodeId和status变化，自动开始/停止轮询
+        // 监听qrcodeId变化，自动连接/断开 WebSocket
         watch(
-            [qrcodeId, status],
-            ([newQrcodeId, newStatus]) => {
-                if (newQrcodeId && (newStatus === "pending" || newStatus === "scanned") && !pollingTimer) {
-                    startPolling();
-                } else if (newStatus === "authorized" || newStatus === "expired") {
-                    stopPolling();
+            qrcodeId,
+            (newQrcodeId) => {
+                if (newQrcodeId) {
+                    // 有新的二维码ID，连接 WebSocket
+                    connectWebSocket();
+                } else {
+                    // 没有二维码ID，断开连接
+                    disconnectWebSocket();
                 }
             },
             { immediate: true }
@@ -177,7 +178,7 @@ export default defineComponent({
         });
 
         onUnmounted(() => {
-            stopPolling();
+            disconnectWebSocket();
         });
 
         return () => (

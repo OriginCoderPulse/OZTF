@@ -10,10 +10,12 @@ import Timer from "./Utils/Timer";
 import Message from "./Utils/MessageHook";
 import Date from "./Utils/Date";
 import Storage from "./Utils/Storage";
+import Token from "./Utils/Token";
 import HighFrequencyControl from "./Utils/HighFrequencyControl";
 import TRTC from "./Utils/TRTC/TRTC.ts";
 import RoomFormat from "./Utils/TRTC/RoomFormat.ts";
 import IconPath from "./Utils/IconPath.ts";
+import WebSocket from "./Utils/WebSocket.ts";
 import VLoading from "./Scripts/VLoading.ts";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -30,10 +32,12 @@ app
   .use(Message)
   .use(Date)
   .use(Storage)
+  .use(Token)
   .use(HighFrequencyControl)
   .use(TRTC)
   .use(RoomFormat)
   .use(IconPath)
+  .use(WebSocket)
   .directive("loading", VLoading);
 
 // 挂载应用
@@ -61,15 +65,20 @@ router.isReady().then(async () => {
     const authorization = await $storage.get("authorization");
 
     if (authorization && authorization.trim() !== "") {
-      // 有authorization token，跳转到/main并设置窗口大小为1620*1080
-      await router.push({ name: "Main" });
+      // 有authorization token，跳转到/main并设置窗口大小为1620*1080（使用replace，不允许返回）
+      await router.replace({ name: "Main" });
 
-      // 设置窗口大小
+      // 连接会议 WebSocket
+      if (window.$ws) {
+        window.$ws.initMeetWebSocket();
+      }
+
+      // 使用 macOS 原生动画放大窗口
       try {
-        await invoke("animate_window_expand_and_center", {
+        await invoke("expand_window", {
           targetWidth: 1620,
           targetHeight: 1080,
-          durationMs: 300,
+          durationMs: 0.3,
         });
       } catch (error) {
         console.error("设置窗口大小失败:", error);

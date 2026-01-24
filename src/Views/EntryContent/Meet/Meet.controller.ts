@@ -29,8 +29,22 @@ export class MeetController {
   };
 
   private _unlistenMeetExited: (() => void) | null = null;
+  private _handleMeetStatusChange: ((data: { meetId: string; status: string; oldStatus: string; timestamp: string }) => void) | null = null;
 
   public init() {
+    // 监听会议状态变更事件（通过 $event 下发）
+    this._handleMeetStatusChange = (data: { meetId: string; status: string; oldStatus: string; timestamp: string }) => {
+      console.log("[MeetController] 收到会议状态变更事件:", data);
+      // 刷新会议列表（静默刷新，不设置loading）
+      this.initMeetList(true);
+    };
+    // 使用 window.$event 确保全局事件总线可用
+    if (window.$event) {
+      window.$event.on("meetStatusChange", this._handleMeetStatusChange);
+    } else {
+      console.error("[MeetController] $event 未初始化，无法监听会议状态变更");
+    }
+
     // 监听会议创建事件
     window.addEventListener("meet-created", this.handleMeetCreated);
     // 监听会议窗口关闭事件（在主窗口中监听）
@@ -54,6 +68,10 @@ export class MeetController {
 
   public destroy() {
     // 移除事件监听
+    if (this._handleMeetStatusChange && window.$event) {
+      window.$event.off("meetStatusChange", this._handleMeetStatusChange);
+      this._handleMeetStatusChange = null;
+    }
     window.removeEventListener("meet-created", this.handleMeetCreated);
     if (this._unlistenMeetExited) {
       this._unlistenMeetExited();
@@ -61,24 +79,34 @@ export class MeetController {
     }
   }
 
-  public initMeetList() {
+  /**
+   * 初始化会议列表
+   * @param silent 是否静默刷新（不设置loading），默认为false
+   */
+  public initMeetList(silent: boolean = false) {
     // 重置loading状态
-    this.meetListLoading.value = true;
-    $storage.get("userID").then((userID: string) => {
+    if (!silent) {
+      this.meetListLoading.value = true;
+    }
+    $token.getUserId().then((userID: string) => {
       this.userID.value = userID;
-      $storage.get("permission").then((permission: string) => {
+      $token.getPermission().then((permission: string) => {
         this.userPermission.value = permission;
         $network.request(
           "meetGetRoom",
           { userId: userID },
           (result: any) => {
             this.meetList.value = result.data_list;
-            this.meetListLoading.value = false;
+            if (!silent) {
+              this.meetListLoading.value = false;
+            }
             // 在加载完会议列表后，再次尝试恢复当前会议状态
             this.restoreCurrentMeeting();
           },
           () => {
-            this.meetListLoading.value = false;
+            if (!silent) {
+              this.meetListLoading.value = false;
+            }
           }
         );
       });
@@ -242,7 +270,7 @@ export class MeetController {
    */
   private async openMeetingWindow(meetId: string, topic: string): Promise<void> {
     try {
-      const userID = await $storage.get("userID");
+      const userID = await $token.getUserId();
       const roomId = this.meetIdToRoomId(meetId);
       new WebviewWindow("meet-room", {
         url: `/meet-room/${meetId}?uid=` + userID,
@@ -324,7 +352,7 @@ export class MeetController {
 
     // 直接执行取消操作，不再弹出确认框
     try {
-      const userID = await $storage.get("userID");
+      const userID = await $token.getUserId();
       $network.request(
         "meetStatusChange",
         {
@@ -380,7 +408,7 @@ export class MeetController {
 
     // 直接执行结束操作，不再弹出确认框
     try {
-      const userID = await $storage.get("userID");
+      const userID = await $token.getUserId();
       $network.request(
         "meetStatusChange",
         {

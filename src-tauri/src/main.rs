@@ -9,28 +9,12 @@ use scopeguard;
 use tokio::fs as async_fs;
 use std::time::{Duration, Instant};
 
+// macOS 原生动画将通过 Tauri 的窗口 API 实现
+
 
 // 全局操作队列管理，避免阻塞主线程
 lazy_static! {
     static ref OPERATION_SEMAPHORE: Semaphore = Semaphore::new(5); // 最多5个并发操作
-}
-
-
-// 操作队列管理函数，避免主线程阻塞
-async fn execute_with_semaphore<F, Fut, T>(operation: F) -> Result<T, String>
-where
-    F: FnOnce() -> Fut,
-    Fut: std::future::Future<Output = Result<T, String>>,
-{
-    let permit = OPERATION_SEMAPHORE
-        .acquire()
-        .await
-        .map_err(|_| "系统繁忙，请稍后再试".to_string())?;
-
-    // 执行操作并确保许可释放
-    let result = operation().await;
-    drop(permit); // 显式释放许可
-    result
 }
 
 
@@ -94,7 +78,59 @@ async fn save_file_to_downloads(file_data: Vec<u8>, file_name: String) -> Result
     Ok(file_path_str)
 }
 
-/// 平滑放大窗口并在放大过程中实时居中
+/// 使用 macOS 原生动画放大窗口并居中
+/// 
+/// # Arguments
+/// * `app` - Tauri应用句柄
+/// * `target_width` - 目标宽度（默认1620）
+/// * `target_height` - 目标高度（默认1080）
+/// * `duration_ms` - 动画时长（秒），默认0.3秒
+/// 
+/// # Returns
+/// * `Ok(())` - 动画成功完成
+/// * `Err(String)` - 动画失败的错误信息
+#[tauri::command]
+async fn expand_window(
+    app: tauri::AppHandle,
+    target_width: Option<f64>,
+    target_height: Option<f64>,
+    duration_ms: Option<f64>,
+) -> Result<(), String> {
+    let target_width = target_width.unwrap_or(1620.0);
+    let target_height = target_height.unwrap_or(1080.0);
+    let duration_ms_u64 = ((duration_ms.unwrap_or(0.3)) * 1000.0) as u64;
+    
+    // 使用已有的动画方法
+    animate_window_expand_and_center(app, target_width, target_height, Some(duration_ms_u64)).await
+}
+
+/// 使用 macOS 原生动画缩小窗口并居中
+/// 
+/// # Arguments
+/// * `app` - Tauri应用句柄
+/// * `target_width` - 目标宽度（默认240）
+/// * `target_height` - 目标高度（默认280）
+/// * `duration_ms` - 动画时长（秒），默认0.3秒
+/// 
+/// # Returns
+/// * `Ok(())` - 动画成功完成
+/// * `Err(String)` - 动画失败的错误信息
+#[tauri::command]
+async fn shrink_window(
+    app: tauri::AppHandle,
+    target_width: Option<f64>,
+    target_height: Option<f64>,
+    duration_ms: Option<f64>,
+) -> Result<(), String> {
+    let target_width = target_width.unwrap_or(240.0);
+    let target_height = target_height.unwrap_or(280.0);
+    let duration_ms_u64 = ((duration_ms.unwrap_or(0.3)) * 1000.0) as u64;
+    
+    // 使用已有的动画方法
+    animate_window_expand_and_center(app, target_width, target_height, Some(duration_ms_u64)).await
+}
+
+/// 平滑放大窗口并在放大过程中实时居中（保留旧方法以兼容）
 /// 
 /// # Arguments
 /// * `app` - Tauri应用句柄
@@ -223,6 +259,12 @@ async fn animate_window_expand_and_center(
                     return;
                 }
 
+                // 动画完成后，禁用窗口可调整大小（禁用缩放按钮）
+                if let Err(e) = window_clone.set_resizable(false) {
+                    let _ = tx.send(Err(format!("禁用窗口缩放失败: {}", e)));
+                    return;
+                }
+
                 // 动画成功完成
                 let _ = tx.send(Ok(()));
                 return;
@@ -260,7 +302,9 @@ fn main() {
             .invoke_handler(tauri::generate_handler![
                 close_meeting_window,
                 save_file_to_downloads,
-                animate_window_expand_and_center
+                animate_window_expand_and_center,
+                expand_window,
+                shrink_window
             ])
             .setup(|_app| {
                 Ok(())

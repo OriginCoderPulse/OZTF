@@ -6,6 +6,8 @@ import { permissionBgColor, projectStatusColor } from "./Tab.config";
 import ProjectAdd from "../EntryContent/Project/ProjectAdd/ProjectAdd.tsx";
 import Svg from "@/Components/Svg/Svg.tsx";
 import "./Tab.scss";
+import router from "@/router.ts";
+import { invoke } from "@tauri-apps/api/core";
 
 export default defineComponent({
   name: "Tab",
@@ -154,19 +156,11 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      $storage
-        .get("permission")
+      $token
+        .getPermission()
         .then((result) => {
-          // 处理权限值：如果是数组，取第一个；如果是字符串，直接使用
-          let permissionValue: string;
-          if (Array.isArray(result)) {
-            permissionValue = result[0] || "CEO";
-          } else if (typeof result === "string") {
-            permissionValue = result;
-          } else {
-            permissionValue = "CEO"; // 默认值
-          }
-          permission.value = permissionValue;
+          console.log(result);
+          permission.value = result || "CEO";
         })
         .catch(() => {
           permission.value = "CEO"; // 如果获取失败，使用默认值
@@ -189,6 +183,29 @@ export default defineComponent({
               alignContent: "center",
               padding: "4px 6px",
               borderRadius: "5px",
+            }}
+            onClick={async () => {
+              router.replace({
+                name: "Middle",
+                query: { target: "Login" }
+              });
+              // 使用 macOS 原生动画缩小窗口
+              await invoke("shrink_window", {
+                targetWidth: 240,
+                targetHeight: 280,
+                durationMs: 0.3,
+              });
+
+              // 移除token，等待移除完成
+              await $storage.remove("authorization");
+
+              // 断开会议 WebSocket 连接
+              if (window.$ws) {
+                window.$ws.disconnectMeetWebSocket();
+              }
+
+              // 跳转到登录页
+
             }}
           >
             <span
