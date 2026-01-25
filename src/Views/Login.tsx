@@ -19,10 +19,7 @@ export default defineComponent({
                 // 保存authorization token（永久有效）到IndexedDB
                 await $storage.set("authorization", authorization);
 
-                // 连接会议 WebSocket
-                if (window.$ws) {
-                    window.$ws.initMeetWebSocket();
-                }
+                // WebSocket 已在应用初始化时连接，无需再次连接
 
                 // 使用 macOS 原生动画放大窗口
                 await invoke("expand_window", {

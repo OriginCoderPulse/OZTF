@@ -38,12 +38,8 @@ export class MeetController {
       // 刷新会议列表（静默刷新，不设置loading）
       this.initMeetList(true);
     };
-    // 使用 window.$event 确保全局事件总线可用
-    if (window.$event) {
-      window.$event.on("meetStatusChange", this._handleMeetStatusChange);
-    } else {
-      console.error("[MeetController] $event 未初始化，无法监听会议状态变更");
-    }
+    // 使用 $event 确保全局事件总线可用
+    $event.on("meetStatusChange", this._handleMeetStatusChange);
 
     // 监听会议创建事件
     window.addEventListener("meet-created", this.handleMeetCreated);
@@ -68,8 +64,8 @@ export class MeetController {
 
   public destroy() {
     // 移除事件监听
-    if (this._handleMeetStatusChange && window.$event) {
-      window.$event.off("meetStatusChange", this._handleMeetStatusChange);
+    if (this._handleMeetStatusChange) {
+      $event.off("meetStatusChange", this._handleMeetStatusChange);
       this._handleMeetStatusChange = null;
     }
     window.removeEventListener("meet-created", this.handleMeetCreated);

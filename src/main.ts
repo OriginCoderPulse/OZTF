@@ -68,10 +68,7 @@ router.isReady().then(async () => {
       // 有authorization token，跳转到/main并设置窗口大小为1620*1080（使用replace，不允许返回）
       await router.replace({ name: "Main" });
 
-      // 连接会议 WebSocket
-      if (window.$ws) {
-        window.$ws.initMeetWebSocket();
-      }
+      // WebSocket 已在应用初始化时连接，无需再次连接
 
       // 使用 macOS 原生动画放大窗口
       try {

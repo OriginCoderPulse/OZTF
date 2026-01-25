@@ -60,7 +60,9 @@ declare global {
     };
     $config: {
       appName: string;
+      baseUrl: string;
       meetWebBaseURL: string;
+      wsUrl: string;
       urls: {
         [key: string]: {
           method: string["GET" | "POST" | "DELETE" | "PUT"];
@@ -166,6 +168,7 @@ declare global {
   const $popup: Window["$popup"];
   const $network: Window["$network"];
   const $event: Window["$event"];
+  const $ws: Window["$ws"];
   const $config: Window["$config"];
   const $timer: Window["$timer"];
   const $message: Window["$message"];

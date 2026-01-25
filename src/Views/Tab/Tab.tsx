@@ -199,10 +199,7 @@ export default defineComponent({
               // 移除token，等待移除完成
               await $storage.remove("authorization");
 
-              // 断开会议 WebSocket 连接
-              if (window.$ws) {
-                window.$ws.disconnectMeetWebSocket();
-              }
+              // WebSocket 连接保持，只在应用关闭时断开
 
               // 跳转到登录页
 
