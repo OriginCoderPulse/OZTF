@@ -21,7 +21,7 @@ interface TabChild {
   status: string;
   /** 是否超时 */
   isOverdue?: boolean;
-  /** utils角色列表（可选，用于Super用户或项目负责人） */
+  /** utils角色列表（可选，用于CEO用户或项目负责人） */
   utils?: UtilsItem[];
   /** 项目角色标识（可选，用于普通成员） */
   pr?: string;

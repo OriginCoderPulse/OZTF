@@ -245,7 +245,7 @@ export class DeveloperController {
   public canManageMembers = computed(() => {
     if (!this.projectDetail.value?.user_role) return false;
     const userRole = this.projectDetail.value.user_role;
-    return userRole === "Super" || userRole === "Manager";
+    return userRole === "CEO" || userRole === "Manager";
   });
 
   /**

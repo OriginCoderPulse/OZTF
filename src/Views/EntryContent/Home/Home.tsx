@@ -1,5 +1,5 @@
 import { defineComponent, onMounted } from "vue";
-import SuperHome from "./Permission/Super/SuperHome.tsx";
+import CEOHome from "./Permission/CEO/CEOHome.tsx";
 import RMDHome from "./Permission/RMD/RMDHome.tsx";
 import DeveloperHome from "./Permission/Developer/DeveloperHome.tsx";
 import "./Home.scss";
@@ -16,7 +16,7 @@ export default defineComponent({
     });
 
     const permissionHome = {
-      CEO: <SuperHome />,
+      CEO: <CEOHome />,
       RMD: <RMDHome />,
       Dev: <DeveloperHome />,
     };
