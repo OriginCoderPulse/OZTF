@@ -22,7 +22,6 @@ export default defineComponent({
           const numericRoomId = $roomformat.roomIdToNumber(roomId);
           controller.initRoom(roomId, numericRoomId);
         } catch (error: any) {
-          console.error("RoomId 转换失败:", error);
           $message.error({
             message: "会议ID格式错误: " + (error?.message || "未知错误"),
           });
@@ -33,7 +32,7 @@ export default defineComponent({
     onUnmounted(() => {
       // 组件卸载时，尝试删除内部参与人
       if (meetId) {
-        controller.cleanup(meetId).catch(console.error);
+        controller.cleanup(meetId).catch(() => {});
       }
     });
 
@@ -288,7 +287,6 @@ export default defineComponent({
                   const numericRoomId = $roomformat.roomIdToNumber(roomId);
                   controller.exitMeeting(numericRoomId);
                 } catch (error: any) {
-                  console.error("RoomId 转换失败:", error);
                   $message.error({
                     message: "会议ID格式错误: " + (error?.message || "未知错误"),
                   });

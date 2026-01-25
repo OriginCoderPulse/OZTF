@@ -56,7 +56,6 @@ router.isReady().then(async () => {
       try {
         await appWindow.show();
       } catch (error) {
-        console.error("显示窗口失败:", error);
       }
       return;
     }
@@ -78,14 +77,12 @@ router.isReady().then(async () => {
           durationMs: 0.3,
         });
       } catch (error) {
-        console.error("设置窗口大小失败:", error);
       }
     } else {
       // 没有authorization token，跳转到登录页
       await router.push({ name: "Login" });
     }
   } catch (error) {
-    console.error("初始化失败:", error);
     // 出错时默认跳转到登录页
     await router.push({ name: "Login" });
   }
@@ -95,6 +92,5 @@ router.isReady().then(async () => {
     const appWindow = getCurrentWindow();
     await appWindow.show();
   } catch (error) {
-    console.error("显示窗口失败:", error);
   }
 });

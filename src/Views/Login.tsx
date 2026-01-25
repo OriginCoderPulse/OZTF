@@ -31,7 +31,6 @@ export default defineComponent({
                 // 跳转到主页面
 
             } catch (error) {
-                console.error("登录失败:", error);
                 $message.error({ message: `登录失败: ${error}` });
             }
         };

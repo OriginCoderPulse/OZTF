@@ -1,5 +1,4 @@
 import { defineComponent, ref, onMounted, onUnmounted, watch } from "vue";
-import { io, Socket } from "socket.io-client";
 import "./Qrcode.scss";
 import Svg from "../Svg/Svg";
 
@@ -48,7 +47,6 @@ export default defineComponent({
         const isLoading = ref<boolean>(true);
         const errorMessage = ref<string>("");
         const refresh = ref<boolean>(false);
-        let socket: Socket | null = null;
 
         const qrImgBorder = {
             "pending": "1px solid rgba(251, 251, 161, 0.2)",
@@ -87,66 +85,43 @@ export default defineComponent({
             );
         };
 
-        // 连接 WebSocket
+        // 订阅二维码状态（使用统一的WebSocket连接）
         const connectWebSocket = () => {
-            if (!qrcodeId.value || socket) {
+            if (!qrcodeId.value) {
                 return;
             }
 
-            // 创建 WebSocket 连接
-            const wsUrl = ($config as any).wsUrl || "http://localhost:1024";
-            socket = io(`${wsUrl}/qrcode`, {
-                transports: ["websocket"],
-                reconnection: true,
-                reconnectionDelay: 1000,
-                reconnectionAttempts: 5,
-            });
+            // 使用统一的WebSocket连接订阅二维码
+            $ws.subscribeQrcode(qrcodeId.value, {
+                onStatus: (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => {
+                    status.value = data.status as any;
+                    statusText.value = data.statusText || "";
 
-            socket.on("connect", () => {
-                console.log("[QrcodeWebSocket] 连接成功");
-                // 订阅二维码状态
-                socket?.emit("subscribe", { qrcodeId: qrcodeId.value });
-            });
-
-            socket.on("subscribed", (data: any) => {
-                console.log("[QrcodeWebSocket] 订阅成功:", data);
-            });
-
-            socket.on("status", (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => {
-                console.log("[QrcodeWebSocket] 收到状态更新:", data);
-                status.value = data.status as any;
-                statusText.value = data.statusText || "";
-
-                if (data.status === "authorized" && data.authorization) {
-                    // 已认证，断开连接并返回authorization
-                    disconnectWebSocket();
-                    props.onScanned?.(data.authorization);
-                } else if (data.status === "expired") {
-                    // 已过期，断开连接
-                    disconnectWebSocket();
-                    refresh.value = true;
-                } else if (data.status === "scanned") {
-                    refresh.value = true;
-                }
-            });
-
-            socket.on("error", (error: any) => {
-                console.error("[QrcodeWebSocket] 错误:", error);
-            });
-
-            socket.on("disconnect", () => {
-                console.log("[QrcodeWebSocket] 连接断开");
+                    if (data.status === "authorized" && data.authorization) {
+                        // 已认证，取消订阅并返回authorization
+                        disconnectWebSocket();
+                        props.onScanned?.(data.authorization);
+                    } else if (data.status === "expired") {
+                        // 已过期，取消订阅
+                        disconnectWebSocket();
+                        refresh.value = true;
+                    } else if (data.status === "scanned") {
+                        refresh.value = true;
+                    }
+                },
+                onSubscribed: (data: any) => {
+                },
+                onError: (error: any) => {
+                },
+                onDisconnect: () => {
+                },
             });
         };
 
-        // 断开 WebSocket
+        // 取消订阅二维码
         const disconnectWebSocket = () => {
-            if (socket) {
-                if (qrcodeId.value) {
-                    socket.emit("unsubscribe", { qrcodeId: qrcodeId.value });
-                }
-                socket.disconnect();
-                socket = null;
+            if (qrcodeId.value) {
+                $ws.unsubscribeQrcode(qrcodeId.value);
             }
         };
 

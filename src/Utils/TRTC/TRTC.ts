@@ -103,7 +103,6 @@ class TRTC {
 
       return { audio: audioGranted, video: videoGranted };
     } catch (error: any) {
-      console.error("请求媒体权限失败:", error);
       // 如果用户拒绝权限，返回 false
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
         return { audio: false, video: false };
@@ -117,7 +116,6 @@ class TRTC {
     return this.ensureInitialized().then(async () => {
       return new Promise<{ audio: boolean; video: boolean; status: boolean }>(
         async (resolve, reject) => {
-          console.log("createTRTC", this._initialized, this._userSig);
           if (!this._initialized || !this._userSig) {
             reject();
             return;
@@ -126,7 +124,6 @@ class TRTC {
           try {
             const room = TRTCSDK.create();
             this._rooms.set(roomId, room);
-            console.log("createRoom", this._rooms, room);
 
             // 实际请求权限
             const permissions = await this.requestMediaPermissions();
@@ -136,7 +133,6 @@ class TRTC {
               status: true,
             });
           } catch (error: any) {
-            console.error("创建TRTC房间失败:", error);
             resolve({ audio: false, video: false, status: false });
           }
         }
@@ -163,7 +159,6 @@ class TRTC {
 
   exitRoom(roomId: number): Promise<void> {
     const room = this._rooms.get(roomId);
-    console.log("exitRoom", room, this._rooms);
     if (!room) {
       return Promise.reject(new Error(`Room ${roomId} does not exist`));
     }
@@ -200,8 +195,6 @@ class TRTC {
     if (!element) {
       return Promise.reject(new Error(`View element '${view}' not found in document`));
     }
-
-    console.log(view);
 
     return room.startLocalVideo({ view }) as Promise<void>;
   }

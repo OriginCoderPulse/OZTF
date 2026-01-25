@@ -159,7 +159,6 @@ export default defineComponent({
       $token
         .getPermission()
         .then((result) => {
-          console.log(result);
           permission.value = result || "CEO";
         })
         .catch(() => {

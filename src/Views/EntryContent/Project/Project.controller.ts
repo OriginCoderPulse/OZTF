@@ -46,7 +46,6 @@ export class ProjectController {
           this.projectRole.value = data.projectRole || "D";
         },
         (error: any) => {
-          console.error("获取项目角色失败:", error);
           this.projectRole.value = "D";
         }
       );

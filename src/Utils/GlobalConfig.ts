@@ -1,8 +1,8 @@
 class GlobalConfig {
   appName = "壹零贰肆";
-  baseUrl = "http://oztf.site:1024/oztf/api/v1/"
+  baseUrl = "http://localhost:1024/oztf/api/v1/"
   meetWebBaseURL = "https://oztf.site/";
-  wsUrl = "http://oztf.site:1024";
+  wsUrl = "http://localhost:1024";
   urls = {
     initial: {
       method: "POST",

@@ -34,7 +34,6 @@ export class MeetController {
   public init() {
     // 监听会议状态变更事件（通过 $event 下发）
     this._handleMeetStatusChange = (data: { meetId: string; status: string; oldStatus: string; timestamp: string }) => {
-      console.log("[MeetController] 收到会议状态变更事件:", data);
       // 刷新会议列表（静默刷新，不设置loading）
       this.initMeetList(true);
     };
@@ -217,12 +216,9 @@ export class MeetController {
           // 检查房间是否存在，如果存在才退出
           if ($trtc.hasRoom(this.currentRoomId.value)) {
             await $trtc.exitRoom(this.currentRoomId.value);
-          } else {
-            console.log("房间不存在，跳过退出:", this.currentRoomId.value);
           }
         } catch (error: any) {
           // 如果退出失败（房间可能已经不存在或已关闭），继续执行
-          console.log("退出原会议失败:", error?.message || error);
         }
       }
 
@@ -241,7 +237,6 @@ export class MeetController {
           }
         } catch (closeError: any) {
           // 窗口可能已经关闭，继续执行
-          console.log("关闭窗口失败:", closeError?.message || closeError);
         }
       }
 
@@ -254,7 +249,6 @@ export class MeetController {
       // 进入新会议
       await this.openMeetingWindow(newMeetId, topic);
     } catch (error: any) {
-      console.log(error);
       $message.error({
         message: "切换会议失败: " + (error?.message || "未知错误"),
       });
@@ -373,7 +367,6 @@ export class MeetController {
               // 清除存储的状态
               await $storage.remove("currentMeetingId");
             } catch (error: any) {
-              console.log("退出会议房间失败:", error);
             }
           }
           // 刷新会议列表
@@ -386,7 +379,6 @@ export class MeetController {
         }
       );
     } catch (error: any) {
-      console.log(error);
       $message.error({
         message: "取消会议失败: " + (error?.message || "未知错误"),
       });
@@ -429,7 +421,6 @@ export class MeetController {
               // 清除存储的状态
               await $storage.remove("currentMeetingId");
             } catch (error: any) {
-              console.log("退出会议房间失败:", error);
             }
           }
           // 刷新会议列表
@@ -442,7 +433,6 @@ export class MeetController {
         }
       );
     } catch (error: any) {
-      console.log(error);
       $message.error({
         message: "结束会议失败: " + (error?.message || "未知错误"),
       });
@@ -479,7 +469,6 @@ export class MeetController {
   public copyMeetingInfo(meet: MeetList) {
     // 获取 web 端基础 URL
     const webBaseURL = $config.meetWebBaseURL;
-    console.log(webBaseURL, "webBaseURL");
     const externalLink = `${webBaseURL}${meet.meetId}`;
 
     // 格式化开始时间

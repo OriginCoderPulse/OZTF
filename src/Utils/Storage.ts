@@ -63,7 +63,6 @@ class Storage {
         };
       });
     } catch (err: Error | any) {
-      console.error(`[Storage.get] Error:`, err);
       return "";
     }
   }
@@ -89,7 +88,6 @@ class Storage {
         };
       });
     } catch (err: Error | any) {
-      console.error(`[Storage.set] Error:`, err);
       throw new Error(err?.message || "设置存储失败");
     }
   }
@@ -114,7 +112,6 @@ class Storage {
         };
       });
     } catch (err: Error | any) {
-      console.error(`[Storage.remove] Error:`, err);
       throw new Error(err?.message || "删除存储失败");
     }
   }
@@ -139,7 +136,6 @@ class Storage {
         };
       });
     } catch (err: Error | any) {
-      console.error(`[Storage.clearAll] Error:`, err);
       throw new Error(err?.message || "清空存储失败");
     }
   }

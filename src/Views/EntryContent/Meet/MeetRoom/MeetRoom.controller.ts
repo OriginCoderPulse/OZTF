@@ -83,7 +83,6 @@ export class MeetRoomController {
             });
 
             $trtc.listenRoomProperties(roomId, TRTCSDK.EVENT.NETWORK_QUALITY, (event, room) => {
-              console.log("网络质量:", event, room);
             });
 
             // 监听远端音频可用事件 - 当远端用户发布音频时触发
@@ -219,12 +218,10 @@ export class MeetRoomController {
             });
           })
           .catch((error: any) => {
-            console.error("加入房间失败:", error);
             // invoke("close_meeting_window")
           });
       }
     } catch (error: any) {
-      console.error("初始化房间失败:", error);
       // invoke("close_meeting_window")
     }
   }
@@ -392,7 +389,6 @@ export class MeetRoomController {
     try {
       const userID = await $token.getUserId();
       if (!userID) {
-        console.warn("无法删除内部参与人: userID 不存在");
         return;
       }
 
@@ -405,18 +401,15 @@ export class MeetRoomController {
         participantId: userID,
           },
           () => {
-            console.log("成功删除内部参与人:", userID);
             resolve();
           },
           (error: any) => {
-            console.error("删除内部参与人失败:", error);
             // 即使失败也继续，不阻塞退出流程
             resolve();
           }
         );
       });
     } catch (error: any) {
-      console.error("删除内部参与人异常:", error);
     }
   }
 
@@ -514,7 +507,6 @@ export class MeetRoomController {
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("close_meeting_window");
     } catch (error: any) {
-      console.error("退出会议失败:", error);
         $message.error({
           message: "退出房间失败，请重试",
       });
@@ -551,7 +543,6 @@ export class MeetRoomController {
             resolve();
       },
       (error: any) => {
-            console.error("结束会议接口调用失败:", error);
         // 即使失败也继续，但记录错误
             resolve();
           }
@@ -565,7 +556,6 @@ export class MeetRoomController {
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("close_meeting_window");
     } catch (error: any) {
-      console.error("结束会议失败:", error);
       }
   };
 
@@ -601,7 +591,6 @@ export class MeetRoomController {
   public copyMeetingInfo() {
     // 获取 web 端基础 URL（从环境变量或配置中获取，如果没有则使用默认值）
     const webBaseURL = $config.meetWebBaseURL;
-    console.log(webBaseURL, "webBaseURL");
     const externalLink = `${webBaseURL}${this._meetId.value}`;
 
     // 格式化开始时间

@@ -323,7 +323,6 @@ export class DeveloperController {
       this.exportingFeatures.value = false;
     } catch (error: any) {
       clearTimeout(timeoutId);
-      console.error("导出失败:", error);
       $message.error({ message: error.message || "导出失败,请再次尝试..." });
       this.exportingFeatures.value = false;
     }

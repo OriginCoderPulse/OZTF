@@ -1,45 +1,47 @@
 import { io, Socket } from "socket.io-client";
 
 class WebSocketManager {
-    private meetSocket: Socket | null = null;
+    private socket: Socket | null = null;
     private isConnected = false;
     private wsUrl: string;
+    private qrcodeCallbacks: Map<string, {
+        onStatus?: (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => void;
+        onSubscribed?: (data: any) => void;
+        onError?: (error: any) => void;
+        onDisconnect?: () => void;
+    }> = new Map();
 
     constructor() {
-        this.wsUrl = $config.wsUrl || "http://localhost:1024";
+        this.wsUrl = $config.wsUrl;
     }
 
     /**
-     * 初始化会议 WebSocket 连接
+     * 初始化PC端统一 WebSocket 连接（只连接一次）
      */
-    public initMeetWebSocket() {
-        if (this.meetSocket) {
-            console.log("[WebSocket] 会议 WebSocket 已连接，跳过重复连接");
+    public init() {
+        if (this.socket) {
             return;
         }
 
-        console.log("[WebSocket] 开始连接会议 WebSocket...");
-
-        // 创建 WebSocket 连接
-        this.meetSocket = io(`${this.wsUrl}/meet`, {
+        // 创建统一的 WebSocket 连接
+        this.socket = io(`${this.wsUrl}/pc`, {
             transports: ["websocket"],
             reconnection: true,
             reconnectionDelay: 1000,
             reconnectionAttempts: 5,
         });
 
-        this.meetSocket.on("connect", () => {
-            console.log("[WebSocket] 会议 WebSocket 连接成功");
+        this.socket.on("connect", () => {
             this.isConnected = true;
-            // 订阅会议列表更新
-            this.meetSocket?.emit("subscribe");
+            // 自动订阅会议列表更新
+            this.socket?.emit("subscribe:meet");
         });
 
-        this.meetSocket.on("subscribed", (data: any) => {
-            console.log("[WebSocket] 订阅成功:", data);
+        // ========== 会议相关事件 ==========
+        this.socket.on("subscribed:meet", (data: any) => {
         });
 
-        this.meetSocket.on("meetStatusChange", (data: {
+        this.socket.on("meetStatusChange", (data: {
             changes?: Array<{ meetId: string; status: string; oldStatus: string }>;
             meetId?: string;
             status?: string;
@@ -48,7 +50,6 @@ class WebSocketManager {
             timestamp: string;
             type: string;
         }) => {
-            console.log("[WebSocket] 收到会议状态变更:", data);
             // 通过事件总线下发事件
             // 支持批量变更和单个变更两种格式
             if (data.changes && Array.isArray(data.changes)) {
@@ -68,27 +69,79 @@ class WebSocketManager {
             }
         });
 
-        this.meetSocket.on("error", (error: any) => {
-            console.error("[WebSocket] 会议 WebSocket 错误:", error);
+        // ========== 二维码相关事件 ==========
+        this.socket.on("subscribed:qrcode", (data: any) => {
+            const callbacks = this.qrcodeCallbacks.get(data.qrcodeId);
+            callbacks?.onSubscribed?.(data);
         });
 
-        this.meetSocket.on("disconnect", () => {
-            console.log("[WebSocket] 会议 WebSocket 连接断开");
+        this.socket.on("qrcodeStatus", (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => {
+            const callbacks = this.qrcodeCallbacks.get(data.qrcodeId);
+            callbacks?.onStatus?.(data);
+        });
+
+        // ========== 通用事件 ==========
+        this.socket.on("error", (error: any) => {
+        });
+
+        this.socket.on("disconnect", () => {
             this.isConnected = false;
+            // 通知所有二维码回调
+            this.qrcodeCallbacks.forEach((callbacks) => {
+                callbacks.onDisconnect?.();
+            });
         });
     }
 
     /**
-     * 断开会议 WebSocket 连接
+     * 订阅二维码状态
+     * @param qrcodeId 二维码ID
+     * @param callbacks 回调函数
      */
-    public disconnectMeetWebSocket() {
-        if (this.meetSocket) {
-            this.meetSocket.emit("unsubscribe");
-            this.meetSocket.disconnect();
-            this.meetSocket = null;
-            this.isConnected = false;
-            console.log("[WebSocket] 会议 WebSocket 已断开");
+    public subscribeQrcode(
+        qrcodeId: string,
+        callbacks?: {
+            onStatus?: (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => void;
+            onSubscribed?: (data: any) => void;
+            onError?: (error: any) => void;
+            onDisconnect?: () => void;
         }
+    ) {
+        // 保存回调（无论连接状态如何，先保存回调）
+        this.qrcodeCallbacks.set(qrcodeId, callbacks || {});
+
+        // 如果已连接，立即发送订阅请求
+        if (this.socket && this.isConnected) {
+            this.socket.emit("subscribe:qrcode", { qrcodeId });
+            return;
+        }
+
+        // 如果未连接，等待连接成功后再订阅
+        if (this.socket) {
+            const connectHandler = () => {
+                this.socket?.emit("subscribe:qrcode", { qrcodeId });
+                this.socket?.off("connect", connectHandler);
+            };
+            this.socket.on("connect", connectHandler);
+        } else {
+            callbacks?.onError?.("WebSocket 未初始化");
+        }
+    }
+
+    /**
+     * 取消订阅二维码状态
+     * @param qrcodeId 二维码ID
+     */
+    public unsubscribeQrcode(qrcodeId: string) {
+        if (!this.socket || !this.isConnected) {
+            return;
+        }
+
+        // 移除回调
+        this.qrcodeCallbacks.delete(qrcodeId);
+
+        // 发送取消订阅请求
+        this.socket.emit("unsubscribe:qrcode", { qrcodeId });
     }
 
     /**
@@ -99,10 +152,21 @@ class WebSocketManager {
     }
 
     /**
-     * 销毁所有连接
+     * 销毁连接
      */
     public destroy() {
-        this.disconnectMeetWebSocket();
+        if (this.socket) {
+            // 取消所有订阅
+            this.socket.emit("unsubscribe:meet");
+            this.qrcodeCallbacks.forEach((_, qrcodeId) => {
+                this.socket?.emit("unsubscribe:qrcode", { qrcodeId });
+            });
+
+            this.socket.disconnect();
+            this.socket = null;
+            this.isConnected = false;
+            this.qrcodeCallbacks.clear();
+        }
     }
 }
 
@@ -118,7 +182,7 @@ export default {
             window.$ws = wsManagerInstance;
 
             // 应用启动时立即连接 WebSocket（只连接一次）
-            wsManagerInstance.initMeetWebSocket();
+            wsManagerInstance.init();
         } else {
             // 如果已经存在实例，直接使用
             app.config.globalProperties.$ws = wsManagerInstance;

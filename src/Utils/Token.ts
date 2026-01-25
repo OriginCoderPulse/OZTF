@@ -21,7 +21,6 @@ class Token {
             const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
             return JSON.parse(decoded);
         } catch (error) {
-            console.error("[Token.parseToken] 解析 token 失败:", error);
             return null;
         }
     }
@@ -44,7 +43,6 @@ class Token {
             // 支持 userId 和 userID 两种字段名
             return payload.userId || payload.userID || "";
         } catch (error) {
-            console.error("[Token.getUserId] 获取 userID 失败:", error);
             return "";
         }
     }
@@ -60,14 +58,12 @@ class Token {
             }
 
             const payload = this.parseToken(token);
-            console.log("[Token.getPermission] payload:", payload);
             if (!payload) {
                 return "";
             }
 
             return payload.permission || "";
         } catch (error) {
-            console.error("[Token.getPermission] 获取 permission 失败:", error);
             return "";
         }
     }
@@ -79,7 +75,6 @@ class Token {
         try {
             return await $storage.get("authorization");
         } catch (error) {
-            console.error("[Token.getToken] 获取 token 失败:", error);
             return "";
         }
     }

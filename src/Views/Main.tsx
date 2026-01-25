@@ -39,7 +39,6 @@ export default defineComponent({
       try {
         const userID = await $token.getUserId();
         if (!userID || userID.trim() === "") {
-          console.error("无法获取userID，请先登录");
           return;
         }
 
@@ -53,13 +52,11 @@ export default defineComponent({
                   resolve();
             },
             (error: any) => {
-              console.error("初始化失败:", error);
               reject(error);
             }
           );
         });
       } catch (error) {
-        console.error("初始化失败:", error);
       }
 
       // 监听项目添加成功事件

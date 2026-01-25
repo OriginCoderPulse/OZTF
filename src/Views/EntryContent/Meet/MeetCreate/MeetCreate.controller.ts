@@ -153,7 +153,6 @@ export class MeetCreateController {
             window.dispatchEvent(new CustomEvent("meet-created"));
           },
           (error: any) => {
-            console.log(error);
             this.submitting.value = false;
             $message.error({ message: "创建会议失败: " + (error || "未知错误") });
           }

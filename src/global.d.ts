@@ -53,8 +53,17 @@ declare global {
       emit: (event: string, ...args: any[]) => void;
     };
     $ws: {
-      initMeetWebSocket: () => void;
-      disconnectMeetWebSocket: () => void;
+      init: () => void;
+      subscribeQrcode: (
+        qrcodeId: string,
+        callbacks?: {
+          onStatus?: (data: { qrcodeId: string; status: string; statusText: string; authorization?: string }) => void;
+          onSubscribed?: (data: any) => void;
+          onError?: (error: any) => void;
+          onDisconnect?: () => void;
+        }
+      ) => void;
+      unsubscribeQrcode: (qrcodeId: string) => void;
       getConnectionStatus: () => boolean;
       destroy: () => void;
     };
