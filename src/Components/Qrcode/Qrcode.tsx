@@ -109,9 +109,9 @@ export default defineComponent({
                         refresh.value = true;
                     }
                 },
-                onSubscribed: (data: any) => {
+                onSubscribed: () => {
                 },
-                onError: (error: any) => {
+                onError: () => {
                 },
                 onDisconnect: () => {
                 },
