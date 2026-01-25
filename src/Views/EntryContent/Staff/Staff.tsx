@@ -1,6 +1,6 @@
 /// <reference path="./Staff.d.ts" />
 
-import { defineComponent, onMounted, onUnmounted } from "vue";
+import { defineComponent, Fragment, onMounted, onUnmounted } from "vue";
 import { staffConfig } from "./Staff.config.ts";
 import { StaffController } from "./Staff.controller.ts";
 import "./Staff.scss";
@@ -29,10 +29,10 @@ export default defineComponent({
     return () => (
       <div class="staff" v-loading={!controller.requestComplete.value}>
         {controller.requestComplete.value ? (
-          <>
+          <Fragment>
             <div class="staff-detail">
-              <div className="staff-header"></div>
-              <div className="staff-content">
+              <div class="staff-header"></div>
+              <div class="staff-content">
                 <div class="staff-list">
                   <Table
                     titles={["名称", "性别", "部门", "职位", "状态", "入职日期"]}
@@ -128,8 +128,6 @@ export default defineComponent({
                           | "Probation"
                           | "Inactive"
                           | undefined;
-                        const isCEO =
-                          row._raw?.department === "CEO" && row._raw?.occupation === "CEO";
                         return status ? (
                           <div class="staff-status">
                             <div
@@ -324,7 +322,7 @@ export default defineComponent({
                 </div>
               </div>
             </div>
-          </>
+          </Fragment>
         ) : null}
       </div>
     );

@@ -52,24 +52,6 @@ class GlobalConfig {
       retry: false,
       cache: false,
     },
-    projectFeatureExport: {
-      method: "POST",
-      path: ["project", "feature", "export"],
-      retry: false,
-      cache: false,
-    },
-    departmentStats: {
-      method: "POST",
-      path: ["staff", "department-stats"],
-      retry: true,
-      cache: true,
-    },
-    salaryLevelStats: {
-      method: "POST",
-      path: ["staff", "salary-level-stats"],
-      retry: true,
-      cache: true,
-    },
     projectGetRole: {
       method: "POST",
       path: ["project", "getRole"],
@@ -121,18 +103,6 @@ class GlobalConfig {
     qrcodeGenerate: {
       method: "POST",
       path: ["qrcode", "generate"],
-      retry: false,
-      cache: false,
-    },
-    qrcodeScan: {
-      method: "POST",
-      path: ["qrcode", "scan"],
-      retry: false,
-      cache: false,
-    },
-    qrcodeAuthorize: {
-      method: "POST",
-      path: ["qrcode", "authorize"],
       retry: false,
       cache: false,
     },
