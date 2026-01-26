@@ -23,7 +23,7 @@ class GlobalConfig {
       cache: true,
     },
     projectAdd: {
-      method: "POST",
+      method: "PUT",
       path: ["project", "add"],
       retry: false,
       cache: false,
@@ -59,7 +59,7 @@ class GlobalConfig {
       cache: false,
     },
     meetCreateRoom: {
-      method: "POST",
+      method: "PUT",
       path: ["meet", "create-room"],
       retry: false,
       cache: false,
@@ -77,13 +77,13 @@ class GlobalConfig {
       cache: false,
     },
     meetAddInnerParticipant: {
-      method: "POST",
+      method: "PUT",
       path: ["meet", "add-inner-participant"],
       retry: false,
       cache: false,
     },
     meetRemoveInnerParticipant: {
-      method: "POST",
+      method: "DELETE",
       path: ["meet", "remove-inner-participant"],
       retry: false,
       cache: false,
